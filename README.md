@@ -1,6 +1,6 @@
-<img src="https://sergey-filimonov.nyc3.digitaloceanspaces.com/open-parse/open-parse-logo.webp" width="150" />
+<img src="https://sergey-filimonov.nyc3.digitaloceanspaces.com/open-parse/open-parse-with-text-tp-logo.webp" width="450" />
 
-# open-parse: 
+
 
 Open-Parse streamlines the process of preparing complex documents for analysis by LLMs.
 
@@ -22,11 +22,13 @@ from pathlib import Path
 
 data = openparse.digest(
 		source=Path("./sample.pdf"),
-  	parse_tables=True
+		parse_tables=True
 )
 
 pprint(data)
 ```
+
+
 
 ## Requirements
 
