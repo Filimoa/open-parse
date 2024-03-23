@@ -1,0 +1,110 @@
+[build-system]
+requires = ["hatchling >= 1.13.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "open-parse"
+description = "ADDME"
+readme = "README.md"
+requires-python = ">=3.8"
+license = "MIT"
+authors = [
+    { name = "Sebastián Ramírez", email = "tiangolo@gmail.com" },
+]
+classifiers = [
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: System Administrators",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python",
+    "Topic :: Internet",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development",
+    "Typing :: Typed",
+    "Development Status :: 4 - Beta",
+    "Environment :: Web Environment",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "starlette>=0.36.3,<0.37.0",
+    "pydantic>=1.7.4,!=1.8,!=1.8.1,!=2.0.0,!=2.0.1,!=2.1.0,<3.0.0",
+    "typing-extensions>=4.8.0",
+]
+dynamic = ["version"]
+
+[project.urls]
+Homepage = "https://github.com/Filimoa/open-parse"
+Documentation = "ADDME"
+Repository = "https://github.com/Filimoa/open-parse"
+
+[project.optional-dependencies]
+all = [
+    "httpx >=0.23.0",
+    "jinja2 >=2.11.2",
+    "python-multipart >=0.0.7",
+    "itsdangerous >=1.1.0",
+    "pyyaml >=5.3.1",
+    "ujson >=4.0.1,!=4.0.2,!=4.1.0,!=4.2.0,!=4.3.0,!=5.0.0,!=5.1.0",
+    "orjson >=3.2.1",
+    "email_validator >=2.0.0",
+    "uvicorn[standard] >=0.12.0",
+    "pydantic-settings >=2.0.0",
+    "pydantic-extra-types >=2.0.0",
+]
+
+
+[tool.mypy]
+strict = true
+
+[[tool.mypy.overrides]]
+module = "fastapi.concurrency"
+warn_unused_ignores = false
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "fastapi.tests.*"
+ignore_missing_imports = true
+check_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = "docs_src.*"
+disallow_incomplete_defs = false
+disallow_untyped_defs = false
+disallow_untyped_calls = false
+
+[tool.pytest.ini_options]
+addopts = [
+  "--strict-config",
+  "--strict-markers",
+]
+
+
+[tool.ruff]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501",  # line too long, handled by black
+    "B008",  # do not perform function calls in argument defaults
+    "W191",  # indentation contains tabs
+]
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401"]
+
+
+

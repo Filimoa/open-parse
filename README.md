@@ -1,74 +1,31 @@
-# open-parse
+<img src="https://sergey-filimonov.nyc3.digitaloceanspaces.com/open-parse/open-parse-logo.webp" width="150" />
 
-_MIT license, high performance, easy to learn, ready for production_
+# open-parse: 
 
-FastAPI is a modern, fast (high-performance), web framework for building APIs with Python 3.8+ based on standard Python type hints.
+Open-Parse streamlines the process of preparing complex documents for analysis by LLMs.
 
 The key features are:
 
-- **Fast:** Very high performance, on par with NodeJS and Go (thanks to Starlette and Pydantic). One of the fastest Python frameworks available.
-- **Fast to code:** Increase the speed to develop features by about 200% to 300%. *
-- **Fewer bugs:** Reduce about 40% of human (developer) induced errors. *
+- **Visually-Driven Document Parsing:** Open-Parse visually analyzes documents for superior LLM input, going beyond naive text splitting.
+- **High-Precision Table Parsing: **Extract tables into clean Markdown formats with accuracy that surpasses traditional tools.
+- **Robust:** Production-ready code. We've parsed millions of documents with this library.
 - **Intuitive:** Great editor support. Completion everywhere. Less time debugging.
 - **Easy:** Designed to be easy to use and learn. Less time reading docs.
-- **Short:** Minimize code duplication. Multiple features from each parameter declaration. Fewer bugs.
-- **Robust:** Get production-ready code. With automatic interactive documentation.
 
-## Requirements
 
-Python 3.8+
-
-FastAPI stands on the shoulders of giants:
-
-* <a href="https://www.starlette.io/" class="external-link" target="_blank">Starlette</a> for the web parts.
-* <a href="https://docs.pydantic.dev/" class="external-link" target="_blank">Pydantic</a> for the data parts.
-
-## Installation
-
-<div class="termy">
-
-```console
-$ pip install fastapi
-
----> 100%
-```
-
-</div>
-
-You will also need an ASGI server, for production such as <a href="https://www.uvicorn.org" class="external-link" target="_blank">Uvicorn</a> or <a href="https://github.com/pgjones/hypercorn" class="external-link" target="_blank">Hypercorn</a>.
-
-<div class="termy">
-
-```console
-$ pip install "uvicorn[standard]"
-
----> 100%
-```
-
-</div>
 
 ## Example
 
-### Create it
+```python
+import openparse
+from pathlib import Path
 
-* Create a file `main.py` with:
+data = openparse.digest(
+		source=Path("./sample.pdf"),
+  	parse_tables=True
+)
 
-```Python
-from typing import Union
-
-from fastapi import FastAPI
-
-app = FastAPI()
-
-
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
-
-
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: Union[str, None] = None):
-    return {"item_id": item_id, "q": q}
+pprint(data)
 ```
 
 <details markdown="1">
@@ -76,20 +33,63 @@ def read_item(item_id: int, q: Union[str, None] = None):
 
 If your code uses `async` / `await`, use `async def`:
 
-```Python hl_lines="9  14"
-from typing import Union
-
-from fastapi import FastAPI
-
-app = FastAPI()
 
 
-@app.get("/")
-async def read_root():
-    return {"Hello": "World"}
+## Requirements
+
+Python 3.8+
+
+FastAPI stands on the shoulders of giants:
+
+- <a href="https://github.com/pymupdf/PyMuPDF" class="external-link" target="_blank">PyMuPDF</a> for handling pdf files
+- <a href="https://huggingface.co/microsoft/table-transformer-detection" class="external-link" target="_blank">Table Transformer</a> for parsing tables
 
 
-@app.get("/items/{item_id}")
-async def read_item(item_id: int, q: Union[str, None] = None):
-    return {"item_id": item_id, "q": q}
+
+## Installation
+
+#### 1. Core Library
+
+
+```console
+pip install open-parse
 ```
+
+**Enabling OCR Support**:
+
+PyMuPDF will already contain all the logic to support OCR functions. But it additionally does need Tesseract’s language support data, so installation of Tesseract-OCR is still required.
+
+The language support folder location must be communicated either via storing it in the environment variable "TESSDATA_PREFIX", or as a parameter in the applicable functions.
+
+So for a working OCR functionality, make sure to complete this checklist:
+
+1. Install Tesseract.
+
+2. Locate Tesseract’s language support folder. Typically you will find it here:
+
+   - Windows: `C:/Program Files/Tesseract-OCR/tessdata`
+
+   - Unix systems: `/usr/share/tesseract-ocr/5/tessdata`
+
+3. Set the environment variable TESSDATA_PREFIX
+
+   - Windows: `setx TESSDATA_PREFIX "C:/Program Files/Tesseract-OCR/tessdata"`
+
+   - Unix systems: `declare -x TESSDATA_PREFIX= /usr/share/tesseract-ocr/5/tessdata`
+
+**Note:** *On Windows systems, this must happen outside Python – before starting your script. Just manipulating os.environ will not work!*
+
+#### 2. ML Table Detection (Optional)
+
+This repository provides an optional feature to parse content from tables using the state-of-the-art Table Transformer (DETR) model. The Table Transformer model, introduced in the paper "PubTables-1M: Towards Comprehensive Table Extraction From Unstructured Documents" by Smock et al., achieves best-in-class results for table extraction and understanding.
+
+
+```console
+pip install "uvicorn[tables]"
+```
+
+
+
+## Documentation
+
+*Coming Soon*
