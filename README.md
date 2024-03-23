@@ -7,7 +7,7 @@ Open-Parse streamlines the process of preparing complex documents for analysis b
 The key features are:
 
 - **Visually-Driven Document Parsing:** Open-Parse visually analyzes documents for superior LLM input, going beyond naive text splitting.
-- **High-Precision Table Parsing: ** Extract tables into clean Markdown formats with accuracy that surpasses traditional tools.
+- **High-Precision Table Parsing:** Extract tables into clean Markdown formats with accuracy that surpasses traditional tools.
 - **Robust:** Production-ready code. We've parsed millions of documents with this library.
 - **Intuitive:** Great editor support. Completion everywhere. Less time debugging.
 - **Easy:** Designed to be easy to use and learn. Less time reading docs.
