@@ -28,13 +28,6 @@ data = openparse.digest(
 pprint(data)
 ```
 
-<details markdown="1">
-<summary>Or use <code>async def</code>...</summary>
-
-If your code uses `async` / `await`, use `async def`:
-
-
-
 ## Requirements
 
 Python 3.8+
