@@ -32,7 +32,7 @@ def crop_img_with_padding(
     bottom = min(image.height, bottom + padding)
 
     try:
-        return image.crop((left, top, right, bottom))
+        return image.crop((left, top, right, bottom)).convert("RGB")
     except Exception as e:
         raise ValueError(f"Failed to crop the image: {e}")
 

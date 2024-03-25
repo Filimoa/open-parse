@@ -10,7 +10,6 @@ from pydantic import BaseModel, model_validator
 
 Size = Tuple[int, int]
 BBox = Tuple[float, float, float, float]
-MIN_CONFIDENCE = 0.95
 
 
 class _TableCellModelOutput(BaseModel):
