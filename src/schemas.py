@@ -1,10 +1,7 @@
-from typing import Literal, Optional, Sequence, Any, DefaultDict, TypedDict, List, Tuple
-from dataclasses import dataclass, field
+from typing import Literal, Optional, Sequence, Any, DefaultDict, TypedDict, List
 from collections import defaultdict, namedtuple
 from enum import Enum
-import hashlib
 
-import textwrap
 from pydantic import (
     BaseModel,
     field_validator,
@@ -13,16 +10,14 @@ from pydantic import (
     root_validator,
 )
 
-from src.dependencies import openai
 from src import consts
 
 
 AggregatePosition = namedtuple("AggregatePosition", ["min_page", "min_y0", "min_x0"])
 
 
-class PrevNextSimilarity(TypedDict):
+class PrevNodeSimilarity(TypedDict):
     prev_similarity: float
-    next_similarity: float
     node: "Node"
 
 
@@ -177,38 +172,6 @@ class TextElement(BaseModel):
         return x_overlap and y_overlap
 
 
-class TableElement(BaseModel):
-    text: str
-    page: int
-    bbox: Bbox
-    position: float
-    variant: Literal[NodeVariant.TABLE] = NodeVariant.TABLE
-    tokens: int = field(init=False)
-
-    @property
-    def area(self) -> float:
-        return (self.bbox.x1 - self.bbox.x0) * (self.bbox.y1 - self.bbox.y0)
-
-    @property
-    def image_hash(self) -> str:
-        img_bytes = self.image.tobytes()
-
-        hash_obj = hashlib.new("MD5")
-        hash_obj.update(img_bytes)
-
-        return hash_obj.hexdigest()
-
-    def __post_init__(self) -> None:
-        # assert self.x0 <= self.x1, "x0 must be less than x1"
-        # assert self.y0 <= self.y1, "y0 must be less than y1"
-        self.tokens = openai.num_tokens(self.text)
-
-
-######################
-### NODE ELEMENTS ###
-######################
-
-
 class Node(BaseModel):
     elements: list[TextElement]
 
@@ -318,6 +281,17 @@ class Node(BaseModel):
 ######################
 
 
+class TableElement(BaseModel):
+    text: str
+    page: int
+    bbox: Bbox
+    variant: Literal[NodeVariant.TABLE] = NodeVariant.TABLE
+
+    @property
+    def area(self) -> float:
+        return (self.bbox.x1 - self.bbox.x0) * (self.bbox.y1 - self.bbox.y0)
+
+
 ################
 ### DOCUMENT ###
 ################
@@ -328,25 +302,6 @@ class FileMetadata(BaseModel):
     num_pages: int
 
 
-class PageMetadata(BaseModel):
-    page_height: int
-    page_width: int
-    page_num: int
-    page_label: Optional[int] = None
-    metadata: Optional[str] = None
-
-    @field_validator("page_height", "page_width", mode="before")
-    @classmethod
-    def coerce_to_int(cls, v: str, info: ValidationInfo) -> int:
-        return int(v)
-
-
 class ParsedDoc(BaseModel):
-    elements: Sequence[TextElement | TableElement]
-    page_metadata: Sequence[PageMetadata]
+    nodes: List["Node"]
     file_metadata: FileMetadata
-
-
-######################
-### MISC ###
-######################

@@ -1,10 +1,9 @@
 from typing import Union, List, Optional, Literal, Self, Tuple, Any, Sequence
 
-import fitz  # type: ignore
+import fitz
 from pydantic import BaseModel, conlist, validator, root_validator
-from PIL import Image  # type: ignore
 
-from src.utils import _read_pdf_as_imgs
+from src.tables.utils import _read_doc_as_imgs
 from .ml import find_table_bboxes, get_table_content
 from .geometry import _calc_bbox_intersection, _convert_img_cords_to_pdf_cords
 

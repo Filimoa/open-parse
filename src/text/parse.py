@@ -4,6 +4,26 @@ import fitz
 from src.schemas import Node, TextElement, LineElement, Bbox
 
 
+def flags_decomposer(flags):
+    """Make font flags human readable."""
+    l = []
+    if flags & 2**0:
+        l.append("superscript")
+    if flags & 2**1:
+        l.append("italic")
+    if flags & 2**2:
+        l.append("serifed")
+    else:
+        l.append("sans")
+    if flags & 2**3:
+        l.append("monospaced")
+    else:
+        l.append("proportional")
+    if flags & 2**4:
+        l.append("bold")
+    return ", ".join(l)
+
+
 def _lines_from_ocr_output(lines: dict, error_margin: float = 0) -> list[LineElement]:
     """
     Creates LineElement objects from given lines, combining overlapping ones.

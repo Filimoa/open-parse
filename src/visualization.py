@@ -1,28 +1,23 @@
 import random
-from typing import Union, List, Sequence
+from typing import Union, List, Sequence, Optional
 from pathlib import Path
 
 import fitz
 
-from src.schemas import TextElement, TableElement, PrevNextSimilarity
+from src.utils import load_doc
+from src.schemas import Node, PrevNodeSimilarity
 
 
 def draw_bboxes(
     file: str | Path | fitz.Document,
-    elements: Sequence[TextElement | TableElement],
+    elements: list[Node],
     draw_sub_elements: bool = False,
 ) -> fitz.Document:
     if draw_sub_elements:
         raise NotImplementedError("Sub-elements are not yet supported.")
 
-    if isinstance(file, str) or isinstance(file, Path):
-        pdf = fitz.open(file)
-    elif isinstance(file, fitz.Document):
-        pdf = fitz.open()
-        pdf.insert_pdf(file)
+    pdf = load_doc(file)
 
-    else:
-        raise TypeError(f"Invalid type for file: {type(file)}")
     for page in pdf:
         page.wrap_contents()
 
@@ -46,31 +41,33 @@ def draw_bboxes(
     return pdf
 
 
-def display_pdf(
-    file: fitz.Document,
-    page_num: int,
+def display_doc(
+    doc: fitz.Document,
+    page_nums: Optional[list[int]] = None,
 ) -> None:
+    """
+    Display a single page of a PDF file using IPython.
+    """
     try:
         from IPython.display import Image, display  # type: ignore
     except ImportError:
         raise ImportError(
             "IPython is required to display PDFs. Please install it with `pip install ipython`."
         )
-    page = file[page_num]
-    img_data = page.get_pixmap().tobytes("png")
-    display(Image(data=img_data))
+
+    if not page_nums:
+        page_nums = list(range(doc.page_count))
+    for page_num in page_nums:
+        page = doc[page_num]
+        img_data = page.get_pixmap().tobytes("png")
+        display(Image(data=img_data))
 
 
 def draw_prev_next_sim_bboxes(
     file: Union[str, Path, fitz.Document],
-    elements: List[PrevNextSimilarity],
+    elements: List[PrevNodeSimilarity],
 ) -> fitz.Document:
-    if isinstance(file, (str, Path)):
-        pdf = fitz.open(file)
-    elif isinstance(file, fitz.Document):
-        pdf = fitz.open(stream=file.write(), filetype="pdf")
-    else:
-        raise TypeError(f"Invalid type for file: {type(file)}")
+    pdf = load_doc(file)
 
     for page in pdf:
         page.wrap_contents()

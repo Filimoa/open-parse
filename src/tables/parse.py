@@ -1,18 +1,23 @@
-from typing import Union, List, Optional, Literal, Self, Tuple, Any, Sequence
+from typing import Union, List, Any, Sequence
 
-import fitz  # type: ignore
+import fitz
 
-from src.utils import _read_pdf_as_imgs
+from src.tables.utils import _read_doc_as_imgs
 from .schemas import (
     Size,
     BBox,
     Table,
 )
-from .ml import find_table_bboxes, get_table_content
 
 
-def parse_tables(pdf_document: fitz.Document) -> List[Table]:
-    pdf_as_imgs = _read_pdf_as_imgs(pdf_document)
+def parse(pdf_document: fitz.Document) -> List[Table]:
+    try:
+        from .ml import find_table_bboxes, get_table_content
+    except ImportError:
+        raise ImportError(
+            "Table detection and extraction requires the `torch` and `transformers` libraries to be installed."
+        )
+    pdf_as_imgs = _read_doc_as_imgs(pdf_document)
 
     pages_with_tables = {}
     for page_num, img in enumerate(pdf_as_imgs):

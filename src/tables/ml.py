@@ -3,7 +3,7 @@ import time
 from typing import Union, List, Optional, Literal, Self, Tuple, Any, Sequence
 
 from PIL import Image  # type: ignore
-import torch  # type: ignore
+import torch
 from torchvision import transforms  # type: ignore
 from transformers import AutoModelForObjectDetection  # type: ignore
 from transformers import TableTransformerForObjectDetection  # type: ignore
@@ -15,7 +15,7 @@ from .schemas import (
     BBox,
     Table,
 )
-from src.utils import _crop_img_with_padding
+from .utils import _crop_img_with_padding
 from .geometry import _convert_table_cords_to_img_cords
 
 t0 = time.time()

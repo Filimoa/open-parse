@@ -1,5 +1,5 @@
 from src.consts import MAX_EMBEDDING_TOKENS
-from src.schemas import LineElement, TextElement, Bbox, Node, _combine_nodes_spatially
+from src.schemas import LineElement, TextElement, Bbox, Node
 import pytest
 
 
