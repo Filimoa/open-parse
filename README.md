@@ -1,16 +1,15 @@
-<div style="text-align: center;">
+<div style="text-align: center">
     <img src="https://sergey-filimonov.nyc3.digitaloceanspaces.com/open-parse/open-parse-with-text-tp-logo.webp" width="350" />
 </div>
+<br/>
 
-
-
-Open-Parse streamlines the process of preparing complex documents for analysis by LLMs.
+Open-Parse streamlines the process of preparing complex documents for analysis by LLMs. Our goal is to expose state-of-the-art deep learning models with a few lines of code while also providing flexible heuristic options for faster, basic parsing. 
 
 The key features are:
 
 - **Visually-Driven Document Parsing:** Open-Parse visually analyzes documents for superior LLM input, going beyond naive text splitting.
 - **High-Precision Table Parsing:** Extract tables into clean Markdown formats with accuracy that surpasses traditional tools.
-- **Robust:** Production-ready code. We've parsed millions of documents with this library.
+- **Extensible:** Easily implement your own post-processing steps.
 - **Intuitive:** Great editor support. Completion everywhere. Less time debugging.
 - **Easy:** Designed to be easy to use and learn. Less time reading docs.
 
@@ -36,7 +35,7 @@ pprint(data)
 
 Python 3.8+
 
-FastAPI stands on the shoulders of giants:
+OpenParse stands on the shoulders of giants:
 
 - <a href="https://github.com/pymupdf/PyMuPDF" class="external-link" target="_blank">PyMuPDF</a> for handling pdf files
 - <a href="https://huggingface.co/microsoft/table-transformer-detection" class="external-link" target="_blank">Table Transformer</a> for parsing tables
@@ -82,7 +81,7 @@ This repository provides an optional feature to parse content from tables using 
 
 
 ```console
-pip install "uvicorn[tables]"
+pip install "open-parse[tables]"
 ```
 
 
