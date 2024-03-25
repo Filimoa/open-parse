@@ -29,6 +29,7 @@ data = openparse.digest(
 pprint(data)
 ```
 
+Try the sample notebook <a href="https://github.com/pymupdf/PyMuPDF" class="external-link" target="_blank">here</a>
 
 
 ## Requirements
