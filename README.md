@@ -7,8 +7,9 @@ Open-Parse streamlines the process of preparing complex documents for analysis b
 
 The key features are:
 
-- **Visually-Driven Document Parsing:** Open-Parse visually analyzes documents for superior LLM input, going beyond naive text splitting.
-- **High-Precision Table Parsing:** Extract tables into clean Markdown formats with accuracy that surpasses traditional tools.
+- **Visually-Driven:** Open-Parse visually analyzes documents for superior LLM input, going beyond naive text splitting.
+- **Markdown Support:**  Basic markdown support for parsing headings, bold and italics.
+- **High-Precision Table Support:** Extract tables into clean Markdown formats with accuracy that surpasses traditional tools.
 - **Extensible:** Easily implement your own post-processing steps.
 - **Intuitive:** Great editor support. Completion everywhere. Less time debugging.
 - **Easy:** Designed to be easy to use and learn. Less time reading docs.
@@ -90,3 +91,6 @@ pip install "open-parse[tables]"
 ## Documentation
 
 *Coming Soon*
+
+
+

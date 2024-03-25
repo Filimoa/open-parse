@@ -3,8 +3,6 @@ from typing import Union, List, Optional, Literal, Tuple, Any, Sequence
 import fitz
 from pydantic import BaseModel, model_validator
 
-from src.tables.utils import doc_to_imgs
-
 
 ###############
 ### SCHEMAS ###
@@ -22,31 +20,32 @@ class _TableCellModelOutput(BaseModel):
         "table column",
         "table",
         "table column header",
+        "table projected row header",  # WHAT IS THIS
     ]
     confidence: float
     bbox: BBox  # note: image coordinates
 
 
 class _TableModelOutput(BaseModel):
-    label: Literal["table",]
+    label: Literal["table", "table rotated"]
     confidence: float
     bbox: BBox  # note: image coordinates
 
 
-class TableHeaderCell(BaseModel):
+class _TableHeaderCell(BaseModel):
     bbox: BBox
     content: Optional[str] = None
     variant: Literal["header"] = "header"
 
 
-class TableDataCell(BaseModel):
+class _TableDataCell(BaseModel):
     bbox: BBox
     content: Optional[str] = None
     variant: Literal["data"] = "data"
 
 
-class TableHeader(BaseModel):
-    cells: List[TableHeaderCell]
+class _TableHeader(BaseModel):
+    cells: List[_TableHeaderCell]
 
     def sort_cells(self) -> None:
         self.cells.sort(key=lambda cell: (cell.bbox[1], cell.bbox[0]))
@@ -60,8 +59,8 @@ class TableHeader(BaseModel):
         return (x0, y0, x1, y1)
 
 
-class TableRow(BaseModel):
-    cells: List[TableDataCell]
+class _TableRow(BaseModel):
+    cells: List[_TableDataCell]
 
     def sort_cells(self) -> None:
         self.cells.sort(key=lambda cell: (cell.bbox[1], cell.bbox[0]))
@@ -75,10 +74,10 @@ class TableRow(BaseModel):
         return (x0, y0, x1, y1)
 
 
-class Table(BaseModel):
+class _Table(BaseModel):
     bbox: BBox
-    headers: List[TableHeader]
-    rows: List[TableRow]
+    headers: List[_TableHeader]
+    rows: List[_TableRow]
 
     ###################
     ### TABLE UTILS ###
@@ -101,19 +100,6 @@ class Table(BaseModel):
         values["rows"] = rows
         return values
 
-    def pprint(self) -> None:
-        column_widths = self._calc_col_widths()
-
-        self._print_horizontal_border(column_widths)
-
-        for header in self.headers:
-            self._print_row(header.cells, column_widths)
-            self._print_horizontal_border(column_widths)
-
-        for row in self.rows:
-            self._print_row(row.cells, column_widths)
-            self._print_horizontal_border(column_widths)
-
     def _calc_col_widths(self) -> List[int]:
         max_widths = [
             max(len(cell.content or "") for cell in column)
@@ -124,20 +110,26 @@ class Table(BaseModel):
         ]
         return max_widths
 
-    def _print_row(
+    def _generate_row_str(
         self,
-        cells: Sequence[Union[TableHeaderCell, TableDataCell]],
+        cells: Sequence[Union[_TableHeaderCell, _TableDataCell]],
         column_widths: List[int],
-    ) -> None:
+    ) -> str:
+        """
+        Generates the string for a single row based on the cell contents and column widths.
+        """
         row_content = "|".join(
             " {} ".format(cell.content.ljust(width) if cell.content else " " * width)
             for cell, width in zip(cells, column_widths)
         )
-        print("|{}|".format(row_content))
+        return "|{}|".format(row_content)
 
-    def _print_horizontal_border(self, column_widths: List[int]) -> None:
+    def _generate_horizontal_border_str(self, column_widths: List[int]) -> str:
+        """
+        Generates the horizontal border string based on the column widths.
+        """
         border = "+".join("-" * (width + 2) for width in column_widths)
-        print("+{}+".format(border))
+        return "+{}+".format(border)
 
     def sort(self) -> None:
         self.headers.sort(
@@ -160,3 +152,97 @@ class Table(BaseModel):
             for rcell in row.cells:
                 cell_rect = fitz.Rect(rcell.bbox)
                 rcell.content = pdf_page.get_textbox(cell_rect)
+
+    def to_str(self) -> str:
+        """
+        Generates a string representation of the table, including headers and rows,
+        suitable for printing or logging.
+        """
+        column_widths = self._calc_col_widths()
+        table_str = self._generate_horizontal_border_str(column_widths) + "\n"
+
+        for header in self.headers:
+            table_str += self._generate_row_str(header.cells, column_widths) + "\n"
+            table_str += self._generate_horizontal_border_str(column_widths) + "\n"
+
+        for row in self.rows:
+            table_str += self._generate_row_str(row.cells, column_widths) + "\n"
+            table_str += self._generate_horizontal_border_str(column_widths) + "\n"
+
+        return table_str.rstrip()
+
+    def pprint(self) -> None:
+        print(self.to_str())
+
+    def to_html_str(self) -> str:
+        """
+        Generates an HTML string representation of the table.
+
+        Currently uses image coordinates - should be converted to PDF coordinates.
+        """
+        html_str = '<table border="1">\n'  # Start of table
+
+        # Generate header rows
+        if self.headers:
+            html_str += "<thead>\n"
+            for header in self.headers:
+                html_str += "<tr>\n"
+                for cell in header.cells:
+                    min_width = round(cell.bbox[2] - cell.bbox[0])
+                    html_str += f'<th style="min-width:{min_width}px;">{cell.content or ""}</th>\n'
+                html_str += "</tr>\n"
+            html_str += "</thead>\n"
+
+        # Generate data rows
+        html_str += "<tbody>\n"
+        for row in self.rows:
+            html_str += "<tr>\n"
+            for cell in row.cells:  # type: ignore
+                min_width = round(cell.bbox[2] - cell.bbox[0])
+                html_str += (
+                    f'<td style="min-width:{min_width}px;">{cell.content or ""}</td>\n'
+                )
+            html_str += "</tr>\n"
+        html_str += "</tbody>\n"
+
+        html_str += "</table>"  # End of table
+        return html_str
+
+    def to_markdown_str(self) -> str:
+        """
+        Generates a Markdown string representation of the table.
+        """
+        column_widths = self._calc_col_widths()
+        markdown_str = ""
+
+        # Generate header rows
+        if self.headers:
+            for header in self.headers:
+                header_row = (
+                    "| "
+                    + " | ".join(
+                        cell.content.ljust(width) if cell.content else " " * width
+                        for cell, width in zip(header.cells, column_widths)
+                    )
+                    + " |"
+                )
+                markdown_str += header_row + "\n"
+
+                separator_row = (
+                    "|:" + ":|:".join("-" * width for width in column_widths) + ":|"
+                )
+                markdown_str += separator_row + "\n"
+
+        # Generate data rows
+        for row in self.rows:
+            data_row = (
+                "| "
+                + " | ".join(
+                    cell.content.ljust(width) if cell.content else " " * width
+                    for cell, width in zip(row.cells, column_widths)
+                )
+                + " |"
+            )
+            markdown_str += data_row + "\n"
+
+        return markdown_str.rstrip()

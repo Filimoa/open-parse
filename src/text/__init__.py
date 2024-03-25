@@ -1,1 +1,1 @@
-from .parse import parse
+from .parse import ingest

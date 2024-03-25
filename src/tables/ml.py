@@ -1,6 +1,6 @@
 import logging
 import time
-from typing import Union, List, Optional, Literal, Self, Tuple, Any, Sequence
+from typing import Union, List, Optional, Literal, Tuple, Any, Sequence
 
 from PIL import Image  # type: ignore
 import torch
@@ -13,14 +13,23 @@ from .schemas import (
     _TableModelOutput,
     Size,
     BBox,
-    Table,
+    _Table,
+    _TableHeader,
+    _TableRow,
+    _TableHeaderCell,
+    _TableDataCell,
 )
 from .utils import crop_img_with_padding
-from .geometry import _convert_table_cords_to_img_cords
+from .geometry import (
+    _convert_img_cords_to_pdf_cords,
+    _convert_table_cords_to_img_cords,
+    _calc_bbox_intersection,
+)
 
 t0 = time.time()
 
-MIN_CONFIDENCE = 0.95
+MIN_TABLE_CONFIDENCE = 0.8
+MIN_CELL_CONFIDENCE = 0.5
 cuda_available = torch.cuda.is_available()
 user_preferred_device = "cuda"
 device = torch.device(
@@ -180,13 +189,112 @@ def find_table_bboxes(image: Image.Image) -> List[_TableModelOutput]:
     }
 
     detected_tables = _table_outputs_to_objs(outputs, image.size, detection_id2label)
+    print(detected_tables)
 
-    tables = [t for t in detected_tables if t.confidence > MIN_CONFIDENCE]
+    tables = [t for t in detected_tables if t.confidence > MIN_TABLE_CONFIDENCE]
 
     return tables
 
 
-def get_table_content(page_dims: Size, img: Image.Image, table_bbox: BBox) -> Table:
+def table_from_model_outputs(
+    image_size: Size,
+    page_size: Size,
+    table_bbox: BBox,
+    table_cells: List[_TableCellModelOutput],
+) -> "_Table":
+    headers = [
+        cell
+        for cell in table_cells
+        if cell.label == "table column header" and cell.confidence > MIN_CELL_CONFIDENCE
+    ]
+    rows = [
+        cell
+        for cell in table_cells
+        if cell.label == "table row" and cell.confidence > MIN_CELL_CONFIDENCE
+    ]
+    cols = [
+        cell
+        for cell in table_cells
+        if cell.label == "table column" and cell.confidence > MIN_CELL_CONFIDENCE
+    ]
+
+    header_objs = _preprocess_header_cells(headers, cols, image_size, page_size)
+    row_objs = _process_row_cells(rows, cols, header_objs, image_size, page_size)
+
+    return _Table(bbox=table_bbox, headers=header_objs, rows=row_objs)
+
+
+def _preprocess_header_cells(
+    header_rows: List[_TableCellModelOutput],
+    cols: List[_TableCellModelOutput],
+    image_size: Size,
+    page_size: Size,
+) -> List[_TableHeader]:
+    header_cells = []
+    for header in header_rows:
+        header_row_cells = []
+        for col in cols:
+            cell_bbox = _calc_bbox_intersection(header.bbox, col.bbox, safety_margin=5)
+            if cell_bbox:
+                cell_bbox = _convert_img_cords_to_pdf_cords(
+                    cell_bbox, page_size, image_size
+                )
+                header_row_cells.append(
+                    _TableHeaderCell(
+                        bbox=cell_bbox,
+                    )
+                )
+        header_cells.append(_TableHeader(cells=header_row_cells))
+    return header_cells
+
+
+def _process_row_cells(
+    rows: List[_TableCellModelOutput],
+    cols: List[_TableCellModelOutput],
+    headers: List[_TableHeader],
+    image_size: Size,
+    page_size: Size,
+) -> List[_TableRow]:
+    """
+    Process row cells by checking against header cells for overlaps and converting coordinates.
+    """
+    data_cells = []
+    for row in rows:
+        row_cells = []
+        for col in cols:
+            cell_bbox = _calc_bbox_intersection(row.bbox, col.bbox, safety_margin=5)
+            if cell_bbox:
+                cell_bbox_pdf = _convert_img_cords_to_pdf_cords(
+                    cell_bbox, page_size, image_size
+                )
+                if not _is_overlapping_with_headers(cell_bbox_pdf, headers):
+                    row_cells.append(
+                        _TableDataCell(
+                            bbox=cell_bbox_pdf,
+                        )
+                    )
+        if row_cells:
+            data_cells.append(_TableRow(cells=row_cells))
+    return data_cells
+
+
+def _is_overlapping_with_headers(cell_bbox: BBox, headers: List[_TableHeader]) -> bool:
+    """
+    Some rows are also headers, we need to drop these. Check if a given cell's bounding box overlaps with any of the header cells' bounding boxes.
+    """
+    for header in headers:
+        for hcell in header.cells:
+            if (
+                cell_bbox[0] < hcell.bbox[2]
+                and cell_bbox[2] > hcell.bbox[0]
+                and cell_bbox[1] < hcell.bbox[3]
+                and cell_bbox[3] > hcell.bbox[1]
+            ):
+                return True
+    return False
+
+
+def get_table_content(page_dims: Size, img: Image.Image, table_bbox: BBox) -> _Table:
     OFFSET = 10
     table_img = crop_img_with_padding(img, table_bbox, padding=OFFSET)
     structure_id2label = {
@@ -208,4 +316,4 @@ def get_table_content(page_dims: Size, img: Image.Image, table_bbox: BBox) -> Ta
             detection_bbox=cell.bbox,
         )
 
-    return Table.from_model_outputs(img.size, page_dims, table_bbox, cells)
+    return table_from_model_outputs(img.size, page_dims, table_bbox, cells)

@@ -135,12 +135,18 @@ class CombineBullets(ProcessingStep):
         raise NotImplementedError("Not yet implemented.")
 
 
+class CombineHeadingsWithClosestText(ProcessingStep):
+    def process(self, nodes: List[Node]) -> List[Node]:
+        raise NotImplementedError("Not yet implemented.")
+
+
 steps = [
     RemoveFullPageStubs(max_area_pct=0.5),
     CombineNodesSpatially(x_error_margin=4, y_error_margin=4, criteria="both_small"),
     CombineNodesSpatially(x_error_margin=0, y_error_margin=0, criteria="both_small"),
     # CombineBullets(),
     RemoveMetadataElements(),
+    # CombineHeadingsWithClosestText(),
     RemoveStubs(),
     RemoveRepeatedElements(threshold=2),
 ]

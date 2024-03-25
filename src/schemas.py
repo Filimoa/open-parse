@@ -26,6 +26,26 @@ class NodeVariant(Enum):
     IMAGE = "image"
 
 
+def flags_decomposer(flags: int) -> str:
+    """Make font flags human readable."""
+    l = []
+    if flags & 2**0:
+        l.append("superscript")
+    if flags & 2**1:
+        l.append("italic")
+    if flags & 2**2:
+        l.append("serifed")
+    else:
+        l.append("sans")
+    if flags & 2**3:
+        l.append("monospaced")
+    else:
+        l.append("proportional")
+    if flags & 2**4:
+        l.append("bold")
+    return ", ".join(l)
+
+
 class Bbox(BaseModel):
     page: int
     page_height: float
@@ -133,7 +153,7 @@ class LineElement(BaseModel):
             next_span = self.spans[i + 1] if i < len(self.spans) - 1 else None
             combined_text += span.formatted_text(previous_span, next_span)
 
-        cleaned_text = self.cleanup_markdown_formatting(combined_text)
+        cleaned_text = self._clean_markdown_formatting(combined_text)
         return cleaned_text
 
     @property
@@ -156,7 +176,7 @@ class LineElement(BaseModel):
         MIN_HEADING_SIZE = 16
         return all(span.size >= MIN_HEADING_SIZE and span.is_bold for span in spans)
 
-    def cleanup_markdown_formatting(self, text: str) -> str:
+    def _clean_markdown_formatting(self, text: str) -> str:
         """
         Uses regex to clean up markdown formatting, ensuring symbols don't surround whitespace.
         """
@@ -364,7 +384,6 @@ class Node(BaseModel):
 
 class TableElement(BaseModel):
     text: str
-    page: int
     bbox: Bbox
     variant: Literal[NodeVariant.TABLE] = NodeVariant.TABLE
 

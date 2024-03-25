@@ -29,9 +29,9 @@ class DocumentParse:
     ):
         doc = load_doc(file)
 
-        self.text_elems = text.parse(doc)
+        self.text_elems = text.ingest(doc)
         if parse_tables:
-            self.table_elems = tables.parse(doc)
+            self.table_elems = tables.ingest(doc)
 
         # Parse images (optional)
 

@@ -1,5 +1,5 @@
 import logging
-from typing import Union, List, Tuple, Any
+from typing import List, Tuple, Any
 
 import fitz
 from PIL import Image  # type: ignore
