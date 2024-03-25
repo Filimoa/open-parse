@@ -9,7 +9,7 @@ readme = "README.md"
 requires-python = ">=3.8"
 license = "MIT"
 authors = [
-    { name = "Sebastián Ramírez", email = "tiangolo@gmail.com" },
+    { name = "Sergey Filimonov", email = "hello@sergey.fyi" },
 ]
 classifiers = [
     "Intended Audience :: Information Technology",
@@ -64,21 +64,6 @@ all = [
 [tool.mypy]
 strict = true
 
-[[tool.mypy.overrides]]
-module = "fastapi.concurrency"
-warn_unused_ignores = false
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = "fastapi.tests.*"
-ignore_missing_imports = true
-check_untyped_defs = true
-
-[[tool.mypy.overrides]]
-module = "docs_src.*"
-disallow_incomplete_defs = false
-disallow_untyped_defs = false
-disallow_untyped_calls = false
 
 [tool.pytest.ini_options]
 addopts = [

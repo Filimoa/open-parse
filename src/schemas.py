@@ -1,10 +1,12 @@
 from typing import Literal, Optional, Sequence, Any, DefaultDict, TypedDict, List
 from collections import defaultdict, namedtuple
 from enum import Enum
+import re
 
 from pydantic import (
     BaseModel,
     model_validator,
+    computed_field,
 )
 
 from src import consts
@@ -70,32 +72,101 @@ class Bbox(BaseModel):
 #####################
 
 
-class LineElement(BaseModel):
+class TextSpan(BaseModel):
     text: str
-    bbox: tuple[float, float, float, float]
-    _font_size: Optional[float] = None
-    _font_flags: Optional[int] = None
+    flags: int
+    size: float
 
     @property
     def is_bold(self) -> bool:
-        if self._font_flags is None:
-            return False
-        return bool(self._font_flags & 2**4)
+        return bool(self.flags & 2**4)
 
     @property
     def is_italic(self) -> bool:
-        if self._font_flags is None:
-            return False
-        return bool(self._font_flags & 2**1)
+        return bool(self.flags & 2**1)
 
     @property
     def is_heading(self) -> bool:
-        MIN_HEADING_SIZE = 14
-        return (
-            self._font_size is not None
-            and self._font_size >= MIN_HEADING_SIZE
-            and self.is_bold
-        )
+        MIN_HEADING_SIZE = 16
+        return self.size >= MIN_HEADING_SIZE and bool(self.flags & 2**4)
+
+    def formatted_text(
+        self,
+        previous_span: Optional["TextSpan"] = None,
+        next_span: Optional["TextSpan"] = None,
+    ) -> str:
+        """Format text considering adjacent spans to avoid redundant markdown symbols."""
+        formatted = self.text
+
+        # Check if style changes at the beginning
+        if self.is_bold and (previous_span is None or not previous_span.is_bold):
+            formatted = f"**{formatted}"
+        if self.is_italic and (previous_span is None or not previous_span.is_italic):
+            formatted = f"*{formatted}"
+
+        # Check if style changes at the end
+        if self.is_bold and (next_span is None or not next_span.is_bold):
+            formatted = f"{formatted}**"
+        if self.is_italic and (next_span is None or not next_span.is_italic):
+            formatted = f"{formatted}*"
+
+        return formatted
+
+
+class LineElement(BaseModel):
+    bbox: tuple[float, float, float, float]
+    spans: List[TextSpan]
+    style: Optional[str] = None
+
+    @computed_field  # type: ignore
+    @property
+    def text(self) -> str:
+        """
+        Combine spans into a single text string, respecting markdown syntax.
+        """
+        if not self.spans:
+            return ""
+
+        combined_text = ""
+        for i, span in enumerate(self.spans):
+            previous_span = self.spans[i - 1] if i > 0 else None
+            next_span = self.spans[i + 1] if i < len(self.spans) - 1 else None
+            combined_text += span.formatted_text(previous_span, next_span)
+
+        cleaned_text = self.cleanup_markdown_formatting(combined_text)
+        return cleaned_text
+
+    @property
+    def is_bold(self) -> bool:
+        # ignore last span for formatting, often see weird trailing spans
+        spans = self.spans[:-1] if len(self.spans) > 1 else self.spans
+
+        return all(span.is_bold for span in spans)
+
+    @property
+    def is_italic(self) -> bool:
+        # ignore last span for formatting, often see weird trailing spans
+        spans = self.spans[:-1] if len(self.spans) > 1 else self.spans
+        return all(span.is_italic for span in spans)
+
+    @property
+    def is_heading(self) -> bool:
+        # ignore last span for formatting, often see weird trailing spans
+        spans = self.spans[:-1] if len(self.spans) > 1 else self.spans
+        MIN_HEADING_SIZE = 16
+        return all(span.size >= MIN_HEADING_SIZE and span.is_bold for span in spans)
+
+    def cleanup_markdown_formatting(self, text: str) -> str:
+        """
+        Uses regex to clean up markdown formatting, ensuring symbols don't surround whitespace.
+        """
+        # Pattern to find bold or italic markers that surround spaces (including cases with multiple spaces)
+        pattern = r"(\*\*|_)\s+\1"
+
+        # Replace found patterns with a single space
+        cleaned_text = re.sub(pattern, " ", text)
+
+        return cleaned_text
 
     def overlaps(self, other: "LineElement", error_margin: float = 0.0) -> bool:
         x_overlap = not (
@@ -110,22 +181,26 @@ class LineElement(BaseModel):
 
         return x_overlap and y_overlap
 
-    def same_level(self, other: "LineElement", error_margin: float = 0.0) -> bool:
+    def is_at_similar_height(
+        self, other: "LineElement", error_margin: float = 0.0
+    ) -> bool:
         y_distance = abs(self.bbox[1] - other.bbox[1])
 
         return y_distance <= error_margin
 
     def combine(self, other: "LineElement") -> "LineElement":
+        """
+        Used for spans
+        """
         new_bbox = (
             min(self.bbox[0], other.bbox[0]),
             min(self.bbox[1], other.bbox[1]),
             max(self.bbox[2], other.bbox[2]),
             max(self.bbox[3], other.bbox[3]),
         )
-        return LineElement(
-            text=self.text + " " + other.text,
-            bbox=new_bbox,
-        )
+        new_spans = self.spans + other.spans
+
+        return LineElement(bbox=new_bbox, spans=new_spans)
 
 
 class TextElement(BaseModel):
