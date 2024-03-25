@@ -3,10 +3,10 @@ from abc import ABC, abstractmethod
 from collections import defaultdict
 
 
-from src.schemas import Node, TextElement, LineElement, Bbox
+from src.schemas import Node
 
 
-class PipelineStep(ABC):
+class ProcessingStep(ABC):
     @abstractmethod
     def process(self, nodes: List[Node]) -> List[Node]:
         """
@@ -15,7 +15,7 @@ class PipelineStep(ABC):
         raise NotImplementedError("Subclasses must implement this method.")
 
 
-class RemoveFullPageStubs(PipelineStep):
+class RemoveFullPageStubs(ProcessingStep):
     def __init__(self, max_area_pct: float):
         self.max_area_pct = max_area_pct
 
@@ -37,7 +37,7 @@ class RemoveFullPageStubs(PipelineStep):
         return res
 
 
-class RemoveMetadataElements(PipelineStep):
+class RemoveMetadataElements(ProcessingStep):
     def __init__(self, min_y0_pct: float = 0.12, max_y0_pct: float = 0.88):
         self.min_y0_pct = min_y0_pct
         self.max_y0_pct = max_y0_pct
@@ -64,7 +64,7 @@ class RemoveMetadataElements(PipelineStep):
         return res
 
 
-class RemoveRepeatedElements(PipelineStep):
+class RemoveRepeatedElements(ProcessingStep):
     def __init__(self, threshold: int = 2):
         self.threshold = threshold
 
@@ -83,12 +83,12 @@ class RemoveRepeatedElements(PipelineStep):
         ]
 
 
-class RemoveStubs(PipelineStep):
+class RemoveStubs(ProcessingStep):
     def process(self, nodes: List[Node]) -> List[Node]:
         return [node for node in nodes if not node.is_stub]
 
 
-class CombineNodesSpatially(PipelineStep):
+class CombineNodesSpatially(ProcessingStep):
     def __init__(
         self,
         x_error_margin: float = 0,
@@ -130,7 +130,7 @@ class CombineNodesSpatially(PipelineStep):
         return combined_nodes
 
 
-class CombineBullets(PipelineStep):
+class CombineBullets(ProcessingStep):
     def process(self, nodes: List[Node]) -> List[Node]:
         raise NotImplementedError("Not yet implemented.")
 
@@ -139,14 +139,14 @@ steps = [
     RemoveFullPageStubs(max_area_pct=0.5),
     CombineNodesSpatially(x_error_margin=4, y_error_margin=4, criteria="both_small"),
     CombineNodesSpatially(x_error_margin=0, y_error_margin=0, criteria="both_small"),
-    CombineBullets(),
+    # CombineBullets(),
     RemoveMetadataElements(),
     RemoveStubs(),
     RemoveRepeatedElements(threshold=2),
 ]
 
 
-def run_pipeline(nodes: List[Node], steps: List[PipelineStep]) -> List[Node]:
+def run_pipeline(nodes: List[Node], steps: List[ProcessingStep] = steps) -> List[Node]:
     for step in steps:
         nodes = step.process(nodes)
     return nodes

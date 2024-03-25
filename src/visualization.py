@@ -10,27 +10,28 @@ from src.schemas import Node, PrevNodeSimilarity
 
 def draw_bboxes(
     file: str | Path | fitz.Document,
-    elements: list[Node],
+    nodes: list[Node],
     draw_sub_elements: bool = False,
 ) -> fitz.Document:
     if draw_sub_elements:
         raise NotImplementedError("Sub-elements are not yet supported.")
 
     pdf = load_doc(file)
+    flattened_bboxes = [bbox for node in nodes for bbox in node.bbox]
 
     for page in pdf:
         page.wrap_contents()
 
-        for element in elements:
-            if element.page != page.number:
+        for bbox in flattened_bboxes:
+            if bbox.page != page.number:
                 continue
             r = fitz.Rect(
-                p0=element.bbox.page,
-                p1=element.bbox.page,
-                x0=element.bbox.x0,
-                y0=element.bbox.y0,
-                x1=element.bbox.x1,
-                y1=element.bbox.y1,
+                p0=bbox.page,
+                p1=bbox.page,
+                x0=bbox.x0,
+                y0=bbox.y0,
+                x1=bbox.x1,
+                y1=bbox.y1,
             )
             color = (
                 random.randint(0, 255) / 256,

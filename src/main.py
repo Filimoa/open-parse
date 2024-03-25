@@ -7,8 +7,11 @@ from src.utils import load_doc
 from src import text, tables
 from src.schemas import Node, TextElement, TableElement
 
+# def get_element_variants(elements: List[Union[TextElement, TableElement]]) ->
+
 
 def elements_to_nodes(elements: List[Union[TextElement, TableElement]]) -> List[Node]:
+
     raise NotImplementedError
 
 
@@ -26,9 +29,9 @@ class DocumentParse:
     ):
         doc = load_doc(file)
 
-        text_elems = text.parse(doc)
+        self.text_elems = text.parse(doc)
         if parse_tables:
-            table_elems = tables.parse(doc)
+            self.table_elems = tables.parse(doc)
 
         # Parse images (optional)
 

@@ -4,14 +4,11 @@ from enum import Enum
 
 from pydantic import (
     BaseModel,
-    field_validator,
-    ValidationInfo,
-    validator,
-    root_validator,
+    model_validator,
 )
 
 from src import consts
-
+from src.utils import num_tokens
 
 AggregatePosition = namedtuple("AggregatePosition", ["min_page", "min_y0", "min_x0"])
 
@@ -40,17 +37,19 @@ class Bbox(BaseModel):
     def area(self) -> float:
         return (self.x1 - self.x0) * (self.y1 - self.y0)
 
-    @validator("x1")
-    def x1_must_be_greater_than_x0(cls, v, values, **kwargs):
-        if "x0" in values and v <= values["x0"]:
+    @model_validator(mode="before")
+    @classmethod
+    def x1_must_be_greater_than_x0(cls, data: Any) -> Any:
+        if "x0" in data and data["x1"] <= data["x0"]:
             raise ValueError("x1 must be greater than x0")
-        return v
+        return data
 
-    @validator("y1")
-    def y1_must_be_greater_than_y0(cls, v, values, **kwargs):
-        if "y0" in values and v <= values["y0"]:
+    @model_validator(mode="before")
+    @classmethod
+    def y1_must_be_greater_than_y0(cls, data: Any) -> Any:
+        if "y0" in data and data["y1"] <= data["y0"]:
             raise ValueError("y1 must be greater than y0")
-        return v
+        return data
 
     def combine(self, other: "Bbox") -> "Bbox":
         if self.page != other.page:
@@ -75,7 +74,28 @@ class LineElement(BaseModel):
     text: str
     bbox: tuple[float, float, float, float]
     _font_size: Optional[float] = None
-    _font_flags: Optional[str] = None
+    _font_flags: Optional[int] = None
+
+    @property
+    def is_bold(self) -> bool:
+        if self._font_flags is None:
+            return False
+        return bool(self._font_flags & 2**4)
+
+    @property
+    def is_italic(self) -> bool:
+        if self._font_flags is None:
+            return False
+        return bool(self._font_flags & 2**1)
+
+    @property
+    def is_heading(self) -> bool:
+        MIN_HEADING_SIZE = 14
+        return (
+            self._font_size is not None
+            and self._font_size >= MIN_HEADING_SIZE
+            and self.is_bold
+        )
 
     def overlaps(self, other: "LineElement", error_margin: float = 0.0) -> bool:
         x_overlap = not (
@@ -107,20 +127,6 @@ class LineElement(BaseModel):
             bbox=new_bbox,
         )
 
-    @classmethod
-    def from_get_textpage_ocr_output(cls, ocr_output: dict[str, Any]) -> "LineElement":
-        return cls(
-            text=ocr_output["text"],
-            bbox=(
-                ocr_output["left"],
-                ocr_output["top"],
-                ocr_output["right"],
-                ocr_output["bottom"],
-            ),
-            _font_size=ocr_output.get("font_size"),
-            _font_flags=ocr_output.get("font_flags"),
-        )
-
 
 class TextElement(BaseModel):
     text: str
@@ -130,7 +136,7 @@ class TextElement(BaseModel):
 
     @property
     def tokens(self) -> int:
-        return openai.num_tokens(self.text)
+        return num_tokens(self.text)
 
     @property
     def is_stub(self) -> bool:

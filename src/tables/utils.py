@@ -14,7 +14,7 @@ BBox = Tuple[float, float, float, float]
 ###################
 
 
-def _crop_img_with_padding(
+def crop_img_with_padding(
     image: Image.Image, bbox: BBox, padding: int = 10
 ) -> Image.Image:
     if padding < 0:
@@ -37,7 +37,7 @@ def _crop_img_with_padding(
         raise ValueError(f"Failed to crop the image: {e}")
 
 
-def _read_doc_as_imgs(doc: fitz.Document) -> List[Image.Image]:
+def doc_to_imgs(doc: fitz.Document) -> List[Image.Image]:
     images = []
     try:
         if not doc.is_pdf:

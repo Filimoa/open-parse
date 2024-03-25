@@ -15,7 +15,7 @@ from .schemas import (
     BBox,
     Table,
 )
-from .utils import _crop_img_with_padding
+from .utils import crop_img_with_padding
 from .geometry import _convert_table_cords_to_img_cords
 
 t0 = time.time()
@@ -188,7 +188,7 @@ def find_table_bboxes(image: Image.Image) -> List[_TableModelOutput]:
 
 def get_table_content(page_dims: Size, img: Image.Image, table_bbox: BBox) -> Table:
     OFFSET = 10
-    table_img = _crop_img_with_padding(img, table_bbox, padding=OFFSET)
+    table_img = crop_img_with_padding(img, table_bbox, padding=OFFSET)
     structure_id2label = {
         **structure_model.config.id2label,
         len(structure_model.config.id2label): "no object",
