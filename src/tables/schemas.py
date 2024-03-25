@@ -83,6 +83,11 @@ class Table(BaseModel):
     headers: List[TableHeader]
     rows: List[TableRow]
 
+    # text: Optional[str] = None
+    # page: Optional[int] = None
+    # image: Optional[Image.Image] = None
+    # tokens: Optional[List[str]] = None
+
     ###################
     ### TABLE UTILS ###
     ###################
@@ -255,7 +260,7 @@ class Table(BaseModel):
         cell_bbox: BBox, headers: List[TableHeader]
     ) -> bool:
         """
-        Check if a given cell's bounding box overlaps with any of the header cells' bounding boxes.
+        Some rows are also headers, we need to drop these. Check if a given cell's bounding box overlaps with any of the header cells' bounding boxes.
         """
         for header in headers:
             for hcell in header.cells:
