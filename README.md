@@ -19,15 +19,21 @@ The key features are:
 ## Example
 
 ```python
-import openparse
-from pathlib import Path
+from openparse import DocumentParser
 
-data = openparse.digest(
-		source=Path("./sample.pdf"),
-		parse_tables=True
+parser = DocumentParser(
+    table_args={
+        "parse": True,
+        "args": {
+            "min_table_confidence": 0.75,
+            "min_cell_confidence": 0.95,
+            "table_output_format": "markdown",
+        },
+    },
 )
 
-pprint(data)
+parsed = parser.parse("path/to/sample.pdf")
+
 ```
 
 Try the sample notebook <a href="https://github.com/pymupdf/PyMuPDF" class="external-link" target="_blank">here</a>
