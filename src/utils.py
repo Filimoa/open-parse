@@ -15,7 +15,9 @@ def num_tokens(string: Optional[str]) -> int:
 def load_doc(
     file: str | Path | fitz.Document,
 ) -> fitz.Document:
-    if isinstance(file, str) or isinstance(file, Path):
+    if isinstance(file, str):
+        pdf = fitz.open(Path(file))
+    elif isinstance(file, Path):
         pdf = fitz.open(file)
     elif isinstance(file, fitz.Document):
         pdf = fitz.open()

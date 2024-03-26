@@ -1,5 +1,5 @@
 import logging
-from typing import List, Tuple, Any
+from typing import List, Tuple, Any, Literal
 
 import fitz
 from PIL import Image  # type: ignore
@@ -15,24 +15,39 @@ BBox = Tuple[float, float, float, float]
 
 
 def crop_img_with_padding(
-    image: Image.Image, bbox: BBox, padding: int = 10
+    image: Image.Image, bbox: BBox, padding_pct: float
 ) -> Image.Image:
-    if padding < 0:
-        raise ValueError("Padding must be non-negative")
+    """
+    Adds whitespace outside the image. Recomennded by the model authors.
+    """
+    if padding_pct < 0:
+        raise ValueError("Padding percentage must be non-negative")
+    if padding_pct >= 1:
+        raise ValueError("Padding percentage must be less than 1")
 
-    left, top, right, bottom = bbox
+    left, top, right, bottom = map(int, bbox)
+
     if not (0 <= left < right <= image.width) or not (
         0 <= top < bottom <= image.height
     ):
         raise ValueError("Bounding box is out of the image boundaries")
 
-    left = max(0, left - padding)
-    top = max(0, top - padding)
-    right = min(image.width, right + padding)
-    bottom = min(image.height, bottom + padding)
-
     try:
-        return image.crop((left, top, right, bottom)).convert("RGB")
+        cropped_image = image.crop((left, top, right, bottom))
+
+        width = right - left
+        height = bottom - top
+        padding_x = int(width * padding_pct)
+        padding_y = int(height * padding_pct)
+
+        new_width = width + 2 * padding_x
+        new_height = height + 2 * padding_y
+
+        padded_image = Image.new("RGB", (new_width, new_height), color="white")
+        padded_image.paste(cropped_image, (padding_x, padding_y))
+
+        return padded_image
+
     except Exception as e:
         raise ValueError(f"Failed to crop the image: {e}")
 
@@ -60,3 +75,37 @@ def doc_to_imgs(doc: fitz.Document) -> List[Image.Image]:
         logging.error(f"An error occurred while reading the PDF: {e}")
 
     return images
+
+
+def _display_cells_on_img(
+    image: Image.Image,
+    cells,
+    show_cell_types: Literal["all", "headers", "rows", "columns"] = "all",
+    use_blank_image: bool = False,
+    min_cell_confidence: float = 0.95,
+) -> None:
+    """
+    Used for debugging to visualize the detected cells on the cropped table image.
+    """
+    from PIL import ImageDraw
+    from IPython.display import display  # type: ignore
+
+    cropped_table_visualized = image.copy()
+    if use_blank_image:
+        cropped_table_visualized = Image.new("RGB", image.size, color="white")
+    draw = ImageDraw.Draw(cropped_table_visualized)
+
+    for cell in cells:
+        if cell.confidence < min_cell_confidence:
+            continue
+
+        if show_cell_types == "headers" and not cell.is_header:
+            continue
+        elif show_cell_types == "rows" and not cell.is_row:
+            continue
+        elif show_cell_types == "columns" and not cell.is_column:
+            continue
+
+        draw.rectangle(cell.bbox, outline="red")
+
+    display(cropped_table_visualized)

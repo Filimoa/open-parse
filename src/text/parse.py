@@ -1,7 +1,7 @@
 from typing import List
 import fitz
 
-from src.schemas import Node, TextElement, LineElement, Bbox, TextSpan
+from src.schemas import TextElement, LineElement, Bbox, TextSpan
 
 
 def _lines_from_ocr_output(lines: dict, error_margin: float = 0) -> list[LineElement]:
@@ -33,7 +33,9 @@ def _lines_from_ocr_output(lines: dict, error_margin: float = 0) -> list[LineEle
     return combined
 
 
-def ingest(doc: fitz.Document) -> List[Node]:
+def ingest(
+    doc: fitz.Document,
+) -> List[TextElement]:
     """Parses text elements from a given pdf document."""
     elements = []
     for page_num, page in enumerate(doc):
@@ -59,4 +61,5 @@ def ingest(doc: fitz.Document) -> List[Node]:
                     lines=lines,
                 )
             )
-    return [Node(elements=[e]) for e in elements]
+    return elements
+    # return [Node(elements=[e]) for e in elements]

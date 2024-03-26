@@ -1,7 +1,7 @@
-from typing import Optional, List, Sequence, Literal
+from typing import Optional, List, Sequence, Literal, TypedDict, Union
 from abc import ABC, abstractmethod
 from collections import defaultdict
-
+from dataclasses import dataclass
 
 from src.schemas import Node
 
@@ -140,7 +140,7 @@ class CombineHeadingsWithClosestText(ProcessingStep):
         raise NotImplementedError("Not yet implemented.")
 
 
-steps = [
+default_pipeline = [
     RemoveFullPageStubs(max_area_pct=0.5),
     CombineNodesSpatially(x_error_margin=4, y_error_margin=4, criteria="both_small"),
     CombineNodesSpatially(x_error_margin=0, y_error_margin=0, criteria="both_small"),
@@ -150,9 +150,3 @@ steps = [
     RemoveStubs(),
     RemoveRepeatedElements(threshold=2),
 ]
-
-
-def run_pipeline(nodes: List[Node], steps: List[ProcessingStep] = steps) -> List[Node]:
-    for step in steps:
-        nodes = step.process(nodes)
-    return nodes

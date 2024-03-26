@@ -31,37 +31,7 @@ def _calc_bbox_intersection(
     return None
 
 
-def _convert_table_cords_to_img_cords(
-    crop_offset: Size,
-    original_image_size: Size,
-    cropped_image_size: Size,
-    detection_bbox: BBox,
-) -> BBox:
-    """
-    Calculate the original coordinates of a detection in the cropped and resized image.
-
-    :param cropped_bbox: Bounding box of the cropped area in the original image.
-    :param crop_offset: Offset (top-left corner) of the cropped area.
-    :param original_image_size: Size of the original image before cropping and resizing.
-    :param cropped_image_size: Size of the image after cropping and before resizing.
-    :param detection_bbox: Detected bounding box in the cropped and resized image.
-
-    :return: Transformed bounding box coordinates in the context of the original image.
-    """
-    scale_x = original_image_size[0] / cropped_image_size[0]
-    scale_y = original_image_size[1] / cropped_image_size[1]
-
-    original_bbox = (
-        detection_bbox[0] * scale_x + crop_offset[0],
-        detection_bbox[1] * scale_y + crop_offset[1],
-        detection_bbox[2] * scale_x + crop_offset[0],
-        detection_bbox[3] * scale_y + crop_offset[1],
-    )
-
-    return original_bbox
-
-
-def _convert_img_cords_to_pdf_cords(
+def convert_img_cords_to_pdf_cords(
     bbox: BBox,
     page_size: Size,
     image_size: Size,
@@ -74,3 +44,35 @@ def _convert_img_cords_to_pdf_cords(
         bbox[2] * scale_x,
         bbox[3] * scale_y,
     )
+
+
+def convert_croppped_cords_to_full_img_cords(
+    padding_pct: float,
+    cropped_image_size: Size,
+    detection_bbox: BBox,
+    bbox: BBox,
+) -> BBox:
+    # Calculate the padding added around the cropped image
+    cropped_width, cropped_height = cropped_image_size
+    width_without_padding = cropped_width / (1 + 2 * padding_pct)
+    height_without_padding = cropped_height / (1 + 2 * padding_pct)
+
+    padding_x = (cropped_width - width_without_padding) / 2
+    padding_y = (cropped_height - height_without_padding) / 2
+
+    left, top, right, bottom = detection_bbox
+
+    # Remove padding from the detection bbox
+    left_adj = left - padding_x
+    top_adj = top - padding_y
+    right_adj = right - padding_x
+    bottom_adj = bottom - padding_y
+
+    # Add the original bbox's top-left corner to map back to original image coordinates
+    orig_left, orig_top, _, _ = bbox
+    left_adj += orig_left
+    top_adj += orig_top
+    right_adj += orig_left
+    bottom_adj += orig_top
+
+    return (left_adj, top_adj, right_adj, bottom_adj)
