@@ -1,49 +1,75 @@
-from typing import List, Literal, Union
-from dataclasses import dataclass
+from typing import List, Literal, Union, TypedDict
+from pydantic import BaseModel, Field
 
-import fitz
-
-from src.tables.utils import doc_to_imgs
 from src.schemas import TableElement, Bbox
-from typing import TypedDict
 
 
-class TableTransformersArgs(TypedDict, total=False):
+class TableTransformersArgsDict(TypedDict, total=False):
+    parsing_algorithm: Literal["table-transformers"]
     min_table_confidence: float
     min_cell_confidence: float
     table_output_format: Literal["str", "markdown", "html"]
 
 
-@dataclass
-class ParsedTableTransformersArgs:
-    min_table_confidence: float = 0.75
-    min_cell_confidence: float = 0.95
-    table_output_format: Literal["str", "markdown", "html"] = "str"
+class PyMuPDFArgsDict(TypedDict, total=False):
+    parsing_algorithm: Literal["pymupdf"]
+    table_output_format: Literal["str", "markdown", "html"]
 
 
-def merge_with_defaults(
-    user_args: Union[TableTransformersArgs, None]
-) -> ParsedTableTransformersArgs:
-    args = ParsedTableTransformersArgs()
-
-    if user_args:
-        for key, value in user_args.items():
-            if hasattr(args, key):
-                setattr(args, key, value)
-
-    return args
+class ParsingArgs(BaseModel):
+    parsing_algorithm: str
+    table_output_format: Literal["str", "markdown", "html"] = Field(default="str")
 
 
-def ingest(
-    doc: fitz.Document, parsing_args: Union[TableTransformersArgs, None] = None
+class TableTransformersArgs(ParsingArgs):
+    min_table_confidence: float = Field(default=0.75, ge=0.0, le=1.0)
+    min_cell_confidence: float = Field(default=0.95, ge=0.0, le=1.0)
+    parsing_algorithm: Literal["table-transformers"] = Field(
+        default="table-transformers"
+    )
+
+
+class PyMuPDFArgs(ParsingArgs):
+    parsing_algorithm: Literal["pymupdf"] = Field(default="pymupdf")
+
+
+def args_dict_to_model(
+    args_dict: Union[
+        TableTransformersArgsDict,
+        PyMuPDFArgsDict,
+        None,
+    ]
+) -> ParsingArgs:
+    if args_dict is None:
+        args_dict = PyMuPDFArgsDict()
+    parsing_algorithm = args_dict.get("parsing_algorithm", "table-transformers")
+
+    if parsing_algorithm == "table-transformers":
+        return TableTransformersArgs(**args_dict)
+    elif parsing_algorithm == "pymupdf":
+        return PyMuPDFArgs(**args_dict)
+    else:
+        raise ValueError(f"Unsupported parsing_algorithm: {parsing_algorithm}")
+
+
+def _ingest_with_pymupdf(
+    doc_path: str,
+    parsing_args: PyMuPDFArgs,
+) -> List[TableElement]:
+    raise NotImplementedError("PyMuPDF table parsing is not yet implemented.")
+
+
+def _ingest_with_table_transformers(
+    doc_path: str,
+    args: TableTransformersArgs,
 ) -> List[TableElement]:
     try:
-        from .ml import find_table_bboxes, get_table_content
+        from src.tables.utils import doc_to_imgs
+        from .table_transformers.ml import find_table_bboxes, get_table_content
     except ImportError as e:
         raise ImportError(
             "Table detection and extraction requires the `torch`, `torchvision` and `transformers` libraries to be installed."
         )
-    args = merge_with_defaults(parsing_args)
     pdf_as_imgs = doc_to_imgs(doc)
 
     pages_with_tables = {}
@@ -83,3 +109,16 @@ def ingest(
             )
 
     return tables
+
+
+def ingest(
+    doc: fitz.Document,
+    parsing_args: Union[TableTransformersArgsDict, PyMuPDFArgsDict, None] = None,
+) -> List[TableElement]:
+    args = args_dict_to_model(parsing_args)
+    if isinstance(args, TableTransformersArgs):
+        return _ingest_with_table_transformers(doc, args)
+    elif isinstance(args, PyMuPDFArgs):
+        return _ingest_with_pymupdf(doc, args)
+    else:
+        raise ValueError(f"Unsupported parsing_algorithm: {args.parsing_algorithm}")

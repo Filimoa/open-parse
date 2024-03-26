@@ -4,6 +4,34 @@ import fitz
 from src.schemas import TextElement, LineElement, Bbox, TextSpan
 
 
+def flags_decomposer(flags: int) -> str:
+    """Make font flags human readable."""
+    l = []
+    if flags & 2**0:
+        l.append("superscript")
+    if flags & 2**1:
+        l.append("italic")
+    if flags & 2**2:
+        l.append("serifed")
+    else:
+        l.append("sans")
+    if flags & 2**3:
+        l.append("monospaced")
+    else:
+        l.append("proportional")
+    if flags & 2**4:
+        l.append("bold")
+    return ", ".join(l)
+
+
+def is_bold(flags) -> bool:
+    return bool(flags & 2**4)
+
+
+def is_italic(flags) -> bool:
+    return bool(flags & 2**1)
+
+
 def _lines_from_ocr_output(lines: dict, error_margin: float = 0) -> list[LineElement]:
     """
     Creates LineElement objects from given lines, combining overlapping ones.
@@ -13,7 +41,12 @@ def _lines_from_ocr_output(lines: dict, error_margin: float = 0) -> list[LineEle
     for line in lines:
         bbox = line["bbox"]
         spans = [
-            TextSpan(text=span["text"], flags=span["flags"], size=span["size"])
+            TextSpan(
+                text=span["text"],
+                is_bold=is_bold(span["flags"]),
+                is_italic=is_italic(span["flags"]),
+                size=span["size"],
+            )
             for span in line["spans"]
         ]
 

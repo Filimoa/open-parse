@@ -9,7 +9,6 @@ from pydantic import (
     computed_field,
 )
 
-from src import consts
 from src.utils import num_tokens
 
 AggregatePosition = namedtuple("AggregatePosition", ["min_page", "min_y0", "min_x0"])
@@ -24,26 +23,6 @@ class NodeVariant(Enum):
     TEXT = "text"
     TABLE = "table"
     IMAGE = "image"
-
-
-def flags_decomposer(flags: int) -> str:
-    """Make font flags human readable."""
-    l = []
-    if flags & 2**0:
-        l.append("superscript")
-    if flags & 2**1:
-        l.append("italic")
-    if flags & 2**2:
-        l.append("serifed")
-    else:
-        l.append("sans")
-    if flags & 2**3:
-        l.append("monospaced")
-    else:
-        l.append("proportional")
-    if flags & 2**4:
-        l.append("bold")
-    return ", ".join(l)
 
 
 class Bbox(BaseModel):
@@ -94,21 +73,14 @@ class Bbox(BaseModel):
 
 class TextSpan(BaseModel):
     text: str
-    flags: int
+    is_bold: bool
+    is_italic: bool
     size: float
-
-    @property
-    def is_bold(self) -> bool:
-        return bool(self.flags & 2**4)
-
-    @property
-    def is_italic(self) -> bool:
-        return bool(self.flags & 2**1)
 
     @property
     def is_heading(self) -> bool:
         MIN_HEADING_SIZE = 16
-        return self.size >= MIN_HEADING_SIZE and bool(self.flags & 2**4)
+        return self.size >= MIN_HEADING_SIZE and self.is_bold
 
     def formatted_text(
         self,
@@ -137,6 +109,12 @@ class LineElement(BaseModel):
     bbox: tuple[float, float, float, float]
     spans: List[TextSpan]
     style: Optional[str] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def round_bbox_vals(cls, data: Any) -> Any:
+        data["bbox"] = tuple(round(val, 2) for val in data["bbox"])
+        return data
 
     @computed_field  # type: ignore
     @property
@@ -234,18 +212,6 @@ class TextElement(BaseModel):
         return num_tokens(self.text)
 
     @property
-    def is_stub(self) -> bool:
-        return self.tokens < 50
-
-    @property
-    def is_small(self) -> bool:
-        return self.tokens < consts.TOKENIZATION_LOWER_LIMIT
-
-    @property
-    def is_large(self) -> bool:
-        return self.tokens > consts.TOKENIZATION_UPPER_LIMIT
-
-    @property
     def page(self) -> int:
         return self.bbox.page
 
@@ -275,6 +241,8 @@ class TextElement(BaseModel):
 
 class Node(BaseModel):
     elements: list[TextElement]
+    tokenization_lower_limit: int = 128
+    tokenization_upper_limit: int = 1024
 
     @property
     def tokens(self) -> int:
@@ -286,11 +254,11 @@ class Node(BaseModel):
 
     @property
     def is_small(self) -> bool:
-        return self.tokens < consts.TOKENIZATION_LOWER_LIMIT
+        return self.tokens < self.tokenization_lower_limit
 
     @property
     def is_large(self) -> bool:
-        return self.tokens > consts.TOKENIZATION_UPPER_LIMIT
+        return self.tokens > self.tokenization_upper_limit
 
     @property
     def bbox(self) -> List[Bbox]:

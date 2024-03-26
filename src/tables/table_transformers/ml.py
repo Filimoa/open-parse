@@ -8,9 +8,7 @@ from torchvision import transforms  # type: ignore
 from transformers import AutoModelForObjectDetection  # type: ignore
 from transformers import TableTransformerForObjectDetection  # type: ignore
 
-from .schemas import (
-    _TableCellModelOutput,
-    _TableModelOutput,
+from src.tables.schemas import (
     Size,
     BBox,
     _Table,
@@ -19,13 +17,13 @@ from .schemas import (
     _TableHeaderCell,
     _TableDataCell,
 )
-
+from .schemas import _TableCellModelOutput, _TableModelOutput
 from .geometry import (
     convert_img_cords_to_pdf_cords,
     convert_croppped_cords_to_full_img_cords,
     _calc_bbox_intersection,
 )
-from .utils import crop_img_with_padding
+from src.tables.utils import crop_img_with_padding
 
 
 t0 = time.time()
