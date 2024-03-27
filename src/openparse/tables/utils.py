@@ -75,7 +75,7 @@ def doc_to_imgs(doc) -> List[Image.Image]:
     return images
 
 
-def _display_cells_on_img(
+def display_cells_on_img(
     image: Image.Image,
     cells,
     show_cell_types: Literal["all", "headers", "rows", "columns"] = "all",
@@ -85,8 +85,14 @@ def _display_cells_on_img(
     """
     Used for debugging to visualize the detected cells on the cropped table image.
     """
-    from IPython.display import display  # type: ignore
-    from PIL import ImageDraw
+    try:
+        from IPython.display import display  # type: ignore
+        from PIL import ImageDraw  # type: ignore
+    except ImportError:
+        logging.error(
+            "IPython or PIL is not installed to display cells on the image. Skipping"
+        )
+        return
 
     cropped_table_visualized = image.copy()
     if use_blank_image:

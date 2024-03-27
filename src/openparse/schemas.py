@@ -310,6 +310,9 @@ class Node(BaseModel):
     elements: Tuple[Union[TextElement, TableElement], ...] = Field(exclude=True)
     _tokenization_lower_limit: int = consts.TOKENIZATION_LOWER_LIMIT
     _tokenization_upper_limit: int = consts.TOKENIZATION_UPPER_LIMIT
+    _coordinates: Literal["top-left", "bottom-left"] = (
+        consts.COORDINATE_SYSTEM
+    )  # controlled globally for now, should be moved into elements
 
     @computed_field  # type: ignore
     @cached_property
@@ -442,6 +445,17 @@ class Node(BaseModel):
         When called in a Jupyter environment, this will display the node as Markdown, which Jupyter will then render as HTML.
         """
         return self.text
+
+    def __add__(self, other: "Node") -> "Node":
+        """
+        Allows two Node instances to be combined using the '+' operator.
+        The combined Node instance will contain elements from both nodes.
+        """
+        if not isinstance(other, Node):
+            return NotImplemented()
+
+        new_elems = self.elements + other.elements
+        return Node(elements=new_elems)
 
     model_config = ConfigDict(frozen=True)
 

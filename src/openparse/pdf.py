@@ -7,7 +7,8 @@ from pdfminer.high_level import extract_pages
 from pdfminer.layout import LTPage
 from pypdf import PdfReader, PdfWriter
 
-from openparse.schemas import Bbox
+from openparse.schemas import Bbox, Node
+from openparse import consts
 
 
 class Pdf:
@@ -56,7 +57,7 @@ class Pdf:
         This function dynamically imports PyMuPDF (fitz), requiring it only if this method is called.
         """
         try:
-            import fitz
+            import fitz  # type: ignore
         except ImportError:
             raise ImportError(
                 "PyMuPDF (fitz) is not installed. This method requires PyMuPDF."
@@ -73,12 +74,12 @@ class Pdf:
         self,
         bboxes: List[Bbox],
         coordinates: Literal[
-            "pymupdf",
-            "pdfminer",
+            "top-left",
+            "bottom-left",
         ],
     ):
         try:
-            import fitz
+            import fitz  # type: ignore
         except ImportError:
             raise ImportError(
                 "PyMuPDF (fitz) is not installed. This method requires PyMuPDF."
@@ -92,7 +93,7 @@ class Pdf:
             for bbox in bboxes:
                 if bbox.page != page.number:
                     continue
-                if coordinates == "pdfminer":
+                if coordinates == "bottom-left":
                     bbox = self._flip_coordinates(bbox)
                 r = fitz.Rect(
                     x0=bbox.x0,
@@ -110,12 +111,8 @@ class Pdf:
 
     def display_with_bboxes(
         self,
-        bboxes: Union[List[Bbox], List[List[Bbox]]],
+        nodes: List[Node],
         page_nums: Optional[List[int]] = None,
-        coordinates: Literal[
-            "pymupdf",
-            "pdfminer",
-        ] = "pdfminer",
     ):
         """
         Display a single page of a PDF file using IPython.
@@ -126,8 +123,11 @@ class Pdf:
             raise ImportError(
                 "IPython is required to display PDFs. Please install it with `pip install ipython`."
             )
+        assert nodes, "At least one node is required."
+
+        bboxes = [node.bbox for node in nodes]
         flattened_bboxes = self._flatten_bboxes(bboxes)
-        marked_up_doc = self._draw_bboxes(flattened_bboxes, coordinates)
+        marked_up_doc = self._draw_bboxes(flattened_bboxes, nodes[0]._coordinates)
         if not page_nums:
             page_nums = list(range(marked_up_doc.page_count))
         for page_num in page_nums:
@@ -137,15 +137,14 @@ class Pdf:
 
     def export_with_bboxes(
         self,
-        bboxes: Union[List[Bbox], List[List[Bbox]]],
+        nodes: List[Node],
         output_pdf: Union[str, Path],
-        coordinates: Literal[
-            "pymupdf",
-            "pdfminer",
-        ] = "pdfminer",
     ) -> None:
+        assert nodes, "At least one node is required."
+
+        bboxes = [node.bbox for node in nodes]
         flattened_bboxes = self._flatten_bboxes(bboxes)
-        marked_up_doc = self._draw_bboxes(flattened_bboxes, coordinates)
+        marked_up_doc = self._draw_bboxes(flattened_bboxes, nodes[0]._coordinates)
         marked_up_doc.save(str(output_pdf))
 
     def _flip_coordinates(self, bbox: Bbox) -> Bbox:

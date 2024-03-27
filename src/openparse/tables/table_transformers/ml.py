@@ -19,7 +19,7 @@ from ..schemas import (
     _TableHeaderCell,
     _TableRow,
 )
-from ..utils import _display_cells_on_img, crop_img_with_padding
+from ..utils import display_cells_on_img, crop_img_with_padding
 from .geometry import (
     _calc_bbox_intersection,
     convert_croppped_cords_to_full_img_cords,
@@ -343,9 +343,7 @@ def get_table_content(
         )
 
     if verbose:
-        _display_cells_on_img(
-            img, cells, "all", min_cell_confidence=min_cell_confidence
-        )
+        display_cells_on_img(img, cells, "all", min_cell_confidence=min_cell_confidence)
 
     return table_from_model_outputs(
         img, page_dims, table_bbox, cells, min_cell_confidence

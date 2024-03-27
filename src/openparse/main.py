@@ -41,14 +41,15 @@ class DocumentParser:
         table_args (Optional[Union[TableTransformersArgsDict, PyMuPDFArgsDict]]): Arguments to customize table parsing.
     """
 
+    _verbose: bool = False
+
     def __init__(
         self,
+        *,
         processing_pipeline: Optional[List[ProcessingStep]] = None,
         table_args: Union[TableTransformersArgsDict, PyMuPDFArgsDict, None] = None,
     ):
-
-        if not processing_pipeline:
-            processing_pipeline = default_pipeline
+        self.processing_pipeline = processing_pipeline or default_pipeline
 
         self.table_args = table_args
 
@@ -65,11 +66,13 @@ class DocumentParser:
         table_args_obj = None
         if self.table_args:
             table_args_obj = _table_args_dict_to_model(self.table_args)
-            table_elems = tables.ingest(doc, table_args_obj)
+            table_elems = tables.ingest(doc, table_args_obj, verbose=self._verbose)
             table_nodes = self._elems_to_nodes(table_elems)
 
         nodes = text_nodes + table_nodes
-        processed_nodes = run_pipeline(nodes)
+        processed_nodes = run_pipeline(
+            nodes, self.processing_pipeline, verbose=self._verbose
+        )
 
         parsed_doc = ParsedDocument(
             nodes=processed_nodes,

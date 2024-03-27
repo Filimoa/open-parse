@@ -32,6 +32,7 @@ class PyMuPDFArgs(ParsingArgs):
 def _ingest_with_pymupdf(
     doc: Pdf,
     parsing_args: PyMuPDFArgs,
+    verbose: bool = False,
 ) -> List[TableElement]:
     pdoc = doc.to_pymupdf_doc()
     tables = []
@@ -47,6 +48,9 @@ def _ingest_with_pymupdf(
                 text = pymupdf.output_to_markdown(headers, lines)
             elif parsing_args.table_output_format == "html":
                 text = pymupdf.output_to_html(headers, lines)
+
+            if verbose:
+                print(f"Page {page_num} - Table {i + 1}:\n{text}\n")
 
             # Flip y-coordinates to match the top-left origin system
             bbox = pymupdf.combine_header_and_table_bboxes(tab.bbox, tab.header.bbox)
@@ -72,6 +76,7 @@ def _ingest_with_pymupdf(
 def _ingest_with_table_transformers(
     doc: Pdf,
     args: TableTransformersArgs,
+    verbose: bool = False,
 ) -> List[TableElement]:
     try:
         from openparse.tables.utils import doc_to_imgs
@@ -94,7 +99,7 @@ def _ingest_with_table_transformers(
         page_dims = (page.rect.width, page.rect.height)
         for table_bbox in table_bboxes:
             table = get_table_content(
-                page_dims, img, table_bbox.bbox, args.min_cell_confidence
+                page_dims, img, table_bbox.bbox, args.min_cell_confidence, verbose
             )
             table._run_ocr(page)
 
@@ -109,20 +114,22 @@ def _ingest_with_table_transformers(
             fy0 = page.rect.height - table_bbox.bbox[3]
             fy1 = page.rect.height - table_bbox.bbox[1]
 
-            tables.append(
-                TableElement(
-                    bbox=Bbox(
-                        page=page_num,
-                        x0=table_bbox.bbox[0],
-                        y0=fy0,
-                        x1=table_bbox.bbox[2],
-                        y1=fy1,
-                        page_width=page.rect.width,
-                        page_height=page.rect.height,
-                    ),
-                    text=table_text,
-                )
+            table_elem = TableElement(
+                bbox=Bbox(
+                    page=page_num,
+                    x0=table_bbox.bbox[0],
+                    y0=fy0,
+                    x1=table_bbox.bbox[2],
+                    y1=fy1,
+                    page_width=page.rect.width,
+                    page_height=page.rect.height,
+                ),
+                text=table_text,
             )
+            if verbose:
+                print(f"Page {page_num}:\n{table_text}\n")
+
+            tables.append(table_elem)
 
     return tables
 
@@ -130,10 +137,11 @@ def _ingest_with_table_transformers(
 def ingest(
     doc: Pdf,
     parsing_args: Union[TableTransformersArgs, PyMuPDFArgs, None] = None,
+    verbose: bool = False,
 ) -> List[TableElement]:
     if isinstance(parsing_args, TableTransformersArgs):
-        return _ingest_with_table_transformers(doc, parsing_args)
+        return _ingest_with_table_transformers(doc, parsing_args, verbose)
     elif isinstance(parsing_args, PyMuPDFArgs):
-        return _ingest_with_pymupdf(doc, parsing_args)
+        return _ingest_with_pymupdf(doc, parsing_args, verbose)
     else:
         raise ValueError("Unsupported parsing_algorithm.")
