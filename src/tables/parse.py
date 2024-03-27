@@ -5,18 +5,6 @@ from src.schemas import TableElement, Bbox
 from src.pdf import Pdf
 
 
-class TableTransformersArgsDict(TypedDict, total=False):
-    parsing_algorithm: Literal["table-transformers"]
-    min_table_confidence: float
-    min_cell_confidence: float
-    table_output_format: Literal["str", "markdown", "html"]
-
-
-class PyMuPDFArgsDict(TypedDict, total=False):
-    parsing_algorithm: Literal["pymupdf"]
-    table_output_format: Literal["str", "markdown", "html"]
-
-
 class ParsingArgs(BaseModel):
     parsing_algorithm: str
     table_output_format: Literal["str", "markdown", "html"] = Field(default="str")
@@ -32,25 +20,6 @@ class TableTransformersArgs(ParsingArgs):
 
 class PyMuPDFArgs(ParsingArgs):
     parsing_algorithm: Literal["pymupdf"] = Field(default="pymupdf")
-
-
-def args_dict_to_model(
-    args_dict: Union[
-        TableTransformersArgsDict,
-        PyMuPDFArgsDict,
-        None,
-    ]
-) -> ParsingArgs:
-    if args_dict is None:
-        args_dict = PyMuPDFArgsDict()
-    parsing_algorithm = args_dict.get("parsing_algorithm", "table-transformers")
-
-    if parsing_algorithm == "table-transformers":
-        return TableTransformersArgs(**args_dict)
-    elif parsing_algorithm == "pymupdf":
-        return PyMuPDFArgs(**args_dict)
-    else:
-        raise ValueError(f"Unsupported parsing_algorithm: {parsing_algorithm}")
 
 
 def _ingest_with_pymupdf(
@@ -115,12 +84,11 @@ def _ingest_with_table_transformers(
 
 def ingest(
     doc: Pdf,
-    parsing_args: Union[TableTransformersArgsDict, PyMuPDFArgsDict, None] = None,
+    parsing_args: Union[TableTransformersArgs, PyMuPDFArgs, None] = None,
 ) -> List[TableElement]:
-    args = args_dict_to_model(parsing_args)
-    if isinstance(args, TableTransformersArgs):
-        return _ingest_with_table_transformers(doc, args)
-    elif isinstance(args, PyMuPDFArgs):
-        return _ingest_with_pymupdf(doc, args)
+    if isinstance(parsing_args, TableTransformersArgs):
+        return _ingest_with_table_transformers(doc, parsing_args)
+    elif isinstance(parsing_args, PyMuPDFArgs):
+        return _ingest_with_pymupdf(doc, parsing_args)
     else:
-        raise ValueError(f"Unsupported parsing_algorithm: {args.parsing_algorithm}")
+        raise ValueError(f"Unsupported parsing_algorithm.")

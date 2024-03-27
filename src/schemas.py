@@ -1,4 +1,14 @@
-from typing import Literal, Optional, Sequence, Any, DefaultDict, TypedDict, List, Tuple
+from typing import (
+    Literal,
+    Optional,
+    Sequence,
+    Any,
+    DefaultDict,
+    TypedDict,
+    List,
+    Tuple,
+    Union,
+)
 from collections import defaultdict, namedtuple
 from functools import cache
 from enum import Enum
@@ -34,7 +44,6 @@ class Bbox(BaseModel):
     y1: float
 
     @property
-    @cache
     def area(self) -> float:
         return (self.x1 - self.x0) * (self.y1 - self.y0)
 
@@ -231,7 +240,7 @@ class TextElement(BaseModel):
     variant: Literal[NodeVariant.TEXT] = NodeVariant.TEXT
 
     def is_at_similar_height(
-        self, other: "TextElement", error_margin: float = 1
+        self, other: Union["TableElement", "TextElement"], error_margin: float = 1
     ) -> bool:
         y_distance = abs(self.bbox.y1 - other.bbox.y1)
 
@@ -271,8 +280,43 @@ class TextElement(BaseModel):
     model_config = ConfigDict(frozen=True)
 
 
+######################
+### TABLE ELEMENTS ###
+######################
+
+
+class TableElement(BaseModel):
+    text: str
+    bbox: Bbox
+    variant: Literal[NodeVariant.TABLE] = NodeVariant.TABLE
+
+    @property
+    def area(self) -> float:
+        return (self.bbox.x1 - self.bbox.x0) * (self.bbox.y1 - self.bbox.y0)
+
+    @property
+    def page(self) -> int:
+        return self.bbox.page
+
+    @property
+    def tokens(self) -> int:
+        return num_tokens(self.text)
+
+    def is_at_similar_height(
+        self, other: Union["TableElement", "TextElement"], error_margin: float = 1
+    ) -> bool:
+        y_distance = abs(self.bbox.y1 - other.bbox.y1)
+
+        return y_distance <= error_margin
+
+
+#############
+### NODES ###
+#############
+
+
 class Node(BaseModel):
-    elements: Tuple[TextElement, ...]
+    elements: Tuple[Union[TextElement, TableElement], ...]
     _tokenization_lower_limit: int = consts.TOKENIZATION_LOWER_LIMIT
     _tokenization_upper_limit: int = consts.TOKENIZATION_UPPER_LIMIT
 
@@ -400,21 +444,6 @@ class Node(BaseModel):
         return Node(elements=self.elements + other.elements)
 
     model_config = ConfigDict(frozen=True)
-
-
-######################
-### TABLE ELEMENTS ###
-######################
-
-
-class TableElement(BaseModel):
-    text: str
-    bbox: Bbox
-    variant: Literal[NodeVariant.TABLE] = NodeVariant.TABLE
-
-    @property
-    def area(self) -> float:
-        return (self.bbox.x1 - self.bbox.x0) * (self.bbox.y1 - self.bbox.y0)
 
 
 ################

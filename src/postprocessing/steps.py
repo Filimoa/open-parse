@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from src.schemas import Node
 
 
-class ProcessingStep(ABC):
+class PostProcessingStep(ABC):
     @abstractmethod
     def process(self, nodes: List[Node]) -> List[Node]:
         """
@@ -15,26 +15,12 @@ class ProcessingStep(ABC):
         raise NotImplementedError("Subclasses must implement this method.")
 
 
-class CombineNodesSplitAcrossPages(ProcessingStep):
-    def __init__(self, openai_client: Optional[] = None):
-        self.max_area_pct = max_area_pct
+class CombineNodesSplitAcrossPages(PostProcessingStep):
+    def __init__(self):
+        pass
 
     def process(self, nodes: List[Node]) -> List[Node]:
-        res = []
-        for node in nodes:
-            node_bbox = node.bbox[0]
-            page_area = node_bbox.page_width * node_bbox.page_height
-
-            if node.num_pages > 1:
-                res.append(node)
-                continue
-            elif node_bbox.area / page_area < self.max_area_pct:
-                res.append(node)
-                continue
-            elif not node.is_stub:
-                res.append(node)
-                continue
-        return res
+        raise NotImplementedError("CombineNodesSplitAcrossPages not implemented")
 
 
 default_pipeline = [

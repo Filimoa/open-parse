@@ -32,11 +32,11 @@ def is_italic(flags) -> bool:
     return bool(flags & 2**1)
 
 
-def _lines_from_ocr_output(lines: dict, error_margin: float = 0) -> list[LineElement]:
+def _lines_from_ocr_output(lines: dict, error_margin: float = 0) -> List[LineElement]:
     """
     Creates LineElement objects from given lines, combining overlapping ones.
     """
-    combined: list[LineElement] = []
+    combined: List[LineElement] = []
 
     for line in lines:
         bbox = line["bbox"]
@@ -50,7 +50,7 @@ def _lines_from_ocr_output(lines: dict, error_margin: float = 0) -> list[LineEle
             for span in line["spans"]
         ]
 
-        line_element = LineElement(bbox=bbox, spans=spans)
+        line_element = LineElement(bbox=bbox, spans=tuple(spans))
         for i, other in enumerate(combined):
             overlaps = line_element.overlaps(other, error_margin=error_margin)
             similar_height = line_element.is_at_similar_height(
@@ -92,7 +92,7 @@ def ingest(
                         page_height=page.rect.height,
                     ),
                     text="\n".join(line.text for line in lines),
-                    lines=lines,
+                    lines=tuple(lines),
                 )
             )
     return elements
