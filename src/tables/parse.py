@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 
 from src.schemas import TableElement, Bbox
 from src.pdf import Pdf
+from . import pymupdf
 
 
 class ParsingArgs(BaseModel):
@@ -26,7 +27,39 @@ def _ingest_with_pymupdf(
     doc: Pdf,
     parsing_args: PyMuPDFArgs,
 ) -> List[TableElement]:
-    raise NotImplementedError("PyMuPDF table parsing is not yet implemented.")
+    pdoc = doc.to_pymupdf_doc()
+    tables = []
+    for page_num, page in enumerate(pdoc):
+        tabs = page.find_tables()
+        for i, tab in enumerate(tabs.tables):
+            headers = tab.header.names
+            lines = tab.extract()
+
+            if parsing_args.table_output_format == "str":
+                pymupdf.output_to_markdown(headers, lines)
+            elif parsing_args.table_output_format == "markdown":
+                pymupdf.output_to_markdown(headers, lines)
+            elif parsing_args.table_output_format == "html":
+                pymupdf.output_to_html(headers, lines)
+
+            # Flip y-coordinates to match the top-left origin system
+            fy0 = page.rect.height - tab.bbox[3]
+            fy1 = page.rect.height - tab.bbox[1]
+
+            table = TableElement(
+                bbox=Bbox(
+                    page=page_num,
+                    x0=tab.bbox[0],
+                    y0=fy0,
+                    x1=tab.bbox[2],
+                    y1=fy1,
+                    page_width=page.rect.width,
+                    page_height=page.rect.height,
+                ),
+                text=lines,
+            )
+            tables.append(table)
+    return tables
 
 
 def _ingest_with_table_transformers(
@@ -64,14 +97,18 @@ def _ingest_with_table_transformers(
             elif args.table_output_format == "html":
                 table_text = table.to_html_str()
 
+            # Flip y-coordinates to match the top-left origin system
+            fy0 = page.rect.height - table_bbox.bbox[3]
+            fy1 = page.rect.height - table_bbox.bbox[1]
+
             tables.append(
                 TableElement(
                     bbox=Bbox(
                         page=page_num,
                         x0=table_bbox.bbox[0],
-                        y0=table_bbox.bbox[1],
+                        y0=fy0,
                         x1=table_bbox.bbox[2],
-                        y1=table_bbox.bbox[3],
+                        y1=fy1,
                         page_width=page.rect.width,
                         page_height=page.rect.height,
                     ),

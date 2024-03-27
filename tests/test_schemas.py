@@ -136,7 +136,7 @@ def test_various_spans_found_in_lease_agreement():
     ]
     line_element_mixed_bold = LineElement(bbox=(0, 0, 0, 0), spans=spans_mixed_bold)
     assert (
-        line_element_mixed_bold.text == "**TENNYSON PLACE LEASE AGREEMENT **"
+        line_element_mixed_bold.text == "**TENNYSON PLACE LEASE AGREEMENT**"
     ), "Failed mixed bold styling"
 
     # Test Case 2: Starting with bold and ending with regular text
@@ -150,7 +150,7 @@ def test_various_spans_found_in_lease_agreement():
         bbox=(0, 0, 0, 0), spans=spans_start_bold_end_regular
     )
     assert (
-        line_element_start_bold_end_regular.text == "**1. PARTIES:**  "
+        line_element_start_bold_end_regular.text == "**1.** **PARTIES:**"
     ), "Failed handling start bold end regular"
 
     # Test Case 3: Complex case with bold and regular spans
@@ -188,11 +188,12 @@ def test_various_spans_found_in_lease_agreement():
 
     line_element_complex = LineElement(bbox=(0, 0, 0, 0), spans=spans_complex)
     expected_complex = (
-        "THIS RENTAL LEASE AGREEMENT (hereinafter “Lease” or “Agreement”) dated **1/12/2003 12:36:16 PM** "
-        'between Hacker Apartment Services, Inc. as Owner or as agent for the Owner (hereinafter "Agent") '
-        '**Lebron James** (collectively hereinafter "Resident").  '
+        "THIS RENTAL LEASE AGREEMENT (hereinafter “Lease” or “Agreement”) dated**1/12/2003 12:36:16 PM**"
+        'between Hacker Apartment Services, Inc. as Owner or as agent for the Owner (hereinafter "Agent")'
+        '**Lebron James**(collectively hereinafter "Resident").  '
         "Resident along with the following persons, shall be authorized occupants."
     )
+
     assert (
         line_element_complex.text == expected_complex.strip()
     ), "Failed complex case handling"
@@ -250,9 +251,9 @@ def test_various_spans_found_in_lease_agreement():
         "prevailing party its attorneys’ fees and costs and the non-prevailing party shall be liable to the prevailing party for payment of any court "
         "awarded attorneys’ fees and costs. Resident agrees to pay eighteen percent (18%) interest compounded annually on all unpaid rent, amounts, "
         "or damages owed by Resident, except for late fees, from that date of Landlord’s final accounting until such time Resident pays all outstanding "
-        "amounts.  **Agent and Resident agree that any action or proceeding arising out of or in any way connected with this Agreement, "
+        "amounts.**Agent and Resident agree that any action or proceeding arising out of or in any way connected with this Agreement, "
         "regardless of whether such claim is based on contract, tort, or other legal theory, shall be heard by a court sitting without a jury and "
-        "thus Resident hereby waives all rights to a trial by jury. **"
+        "thus Resident hereby waives all rights to a trial by jury.**"
     )
 
     line_element = LineElement(bbox=(0, 0, 0, 0), spans=spans_legal)

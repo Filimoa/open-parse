@@ -188,6 +188,10 @@ class LineElement(BaseModel):
             ),  # Remove space before closing bold or italic marker
             (r"(\*|_)\s+", r"\1"),  # Remove space after opening italic marker
             (r"\s+(\*|_)", r"\1"),  # Remove space before closing italic marker
+            (
+                r"(\*\*|__)(\*\*|__)",
+                r"\1 \2",
+            ),  # Add a space between adjacent identical markers
         ]
 
         cleaned_text = text

@@ -4,29 +4,42 @@ from typing import List, Union
 from .schemas import BBox, Size
 
 
-def _calc_bbox_intersection(
-    bbox1: BBox, bbox2: BBox, safety_margin: float = 5.0
-) -> Union[BBox, None]:
-    """
-    Calculate the intersection of two bounding boxes with a safety margin, but return the intersection based on the original bounding boxes.
+def _calc_bbox_intersection(bbox1, bbox2, safety_margin=5.0):
+    if safety_margin < 0:
+        raise ValueError("Safety margin cannot be negative.")
 
-    :param bbox1: First bounding box (x1, y1, x2, y2)
-    :param bbox2: Second bounding box (x1, y1, x2, y2)
-    :param margin: Safety margin to expand bounding boxes for intersection calculation
-    :return: The original intersection bounding box (x1, y1, x2, y2), or None if no intersection occurs
-    """
-    x1_expanded = max(bbox1[0] - safety_margin, bbox2[0] - safety_margin)
-    y1_expanded = max(bbox1[1] - safety_margin, bbox2[1] - safety_margin)
-    x2_expanded = min(bbox1[2] + safety_margin, bbox2[2] + safety_margin)
-    y2_expanded = min(bbox1[3] + safety_margin, bbox2[3] + safety_margin)
+    if (
+        bbox1[2] <= bbox1[0]
+        or bbox1[3] <= bbox1[1]
+        or bbox2[2] <= bbox2[0]
+        or bbox2[3] <= bbox2[1]
+    ):
+        raise ValueError("Bounding boxes must have non-zero width and height.")
 
-    if x2_expanded > x1_expanded and y2_expanded > y1_expanded:
-        x1 = max(bbox1[0], bbox2[0], x1_expanded)
-        y1 = max(bbox1[1], bbox2[1], y1_expanded)
-        x2 = min(bbox1[2], bbox2[2], x2_expanded)
-        y2 = min(bbox1[3], bbox2[3], y2_expanded)
+    # Expand bounding boxes
+    x1_expanded_min = min(bbox1[0], bbox2[0]) - safety_margin
+    y1_expanded_min = min(bbox1[1], bbox2[1]) - safety_margin
+    x2_expanded_max = max(bbox1[2], bbox2[2]) + safety_margin
+    y2_expanded_max = max(bbox1[3], bbox2[3]) + safety_margin
 
-        return min(x1, x2), min(y1, y2), max(x1, x2), max(y1, y2)
+    # Check if expanded boxes intersect
+    if (
+        x2_expanded_max <= max(bbox1[0], bbox2[0])
+        or x1_expanded_min >= min(bbox1[2], bbox2[2])
+        or y2_expanded_max <= max(bbox1[1], bbox2[1])
+        or y1_expanded_min >= min(bbox1[3], bbox2[3])
+    ):
+        return None
+
+    # Calculate and return the actual intersection based on original boxes
+    x1 = max(bbox1[0], bbox2[0])
+    y1 = max(bbox1[1], bbox2[1])
+    x2 = min(bbox1[2], bbox2[2])
+    y2 = min(bbox1[3], bbox2[3])
+
+    # Only return the intersection if it's valid
+    if x2 > x1 and y2 > y1:
+        return (x1, y1, x2, y2)
 
     return None
 
