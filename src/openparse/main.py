@@ -59,6 +59,7 @@ class DocumentParser:
         text_elems = text.ingest(doc)
         text_nodes = self._elems_to_nodes(text_elems)
 
+        table_nodes = []
         if self.table_args:
             args_obj = _table_args_dict_to_model(self.table_args)
             table_elems = tables.ingest(doc, args_obj)
