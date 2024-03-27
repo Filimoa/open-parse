@@ -1,7 +1,7 @@
 from typing import List
 
-from src.schemas import TextElement, LineElement, Bbox, TextSpan
-from src.pdf import Pdf
+from openparse.schemas import TextElement, LineElement, Bbox, TextSpan
+from openparse.pdf import Pdf
 
 
 def flags_decomposer(flags: int) -> str:

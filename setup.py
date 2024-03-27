@@ -3,13 +3,16 @@ from setuptools import setup, find_packages
 setup(
     name="openparse",
     version="0.1",
-    packages=find_packages(),
+    packages=["src"],
+    package_dir={'openparse': 'src'},
     install_requires=[
         "PyMuPDF >= 1.23",
         "pillow >= 8.3",
         "pydantic >= 2.0",
         "pypdf >= 4.0.0",
         "pdfminer.six >= 20200401",
+        "tiktoken >= 0.3",
+
     ],
     extras_require={
         "ml": [

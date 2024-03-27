@@ -1,10 +1,10 @@
 from typing import List, Union, TypedDict, Optional, Literal
 from pathlib import Path
 
-from src import text, tables
-from src.processing import run_pipeline, ProcessingStep, default_pipeline
-from src.schemas import Node, TextElement, TableElement
-from src.pdf import Pdf
+from openparse import text, tables
+from openparse.processing import run_pipeline, ProcessingStep, default_pipeline
+from openparse.schemas import Node, TextElement, TableElement
+from openparse.pdf import Pdf
 
 
 class TableTransformersArgsDict(TypedDict, total=False):

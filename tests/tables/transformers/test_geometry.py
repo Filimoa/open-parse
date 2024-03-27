@@ -1,6 +1,6 @@
 import pytest
 
-from src.tables.table_transformers.geometry import (
+from openparse.tables.table_transformers.geometry import (
     _calc_bbox_intersection,
     convert_croppped_cords_to_full_img_cords,
     # _convert_img_cords_to_pdf_cords,

@@ -17,8 +17,8 @@ import re
 
 from pydantic import BaseModel, model_validator, computed_field, ConfigDict
 
-from src.utils import num_tokens
-from src import consts
+from openparse.utils import num_tokens
+from openparse import consts
 
 AggregatePosition = namedtuple("AggregatePosition", ["min_page", "min_y0", "min_x0"])
 

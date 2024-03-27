@@ -1,8 +1,8 @@
 from typing import List, Literal, Union, TypedDict
 from pydantic import BaseModel, Field, ConfigDict
 
-from src.schemas import TableElement, Bbox
-from src.pdf import Pdf
+from openparse.schemas import TableElement, Bbox
+from openparse.pdf import Pdf
 from . import pymupdf
 
 
@@ -72,7 +72,7 @@ def _ingest_with_table_transformers(
     args: TableTransformersArgs,
 ) -> List[TableElement]:
     try:
-        from src.tables.utils import doc_to_imgs
+        from openparse.tables.utils import doc_to_imgs
         from .table_transformers.ml import find_table_bboxes, get_table_content
     except ImportError as e:
         raise ImportError(

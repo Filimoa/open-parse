@@ -8,7 +8,7 @@ from torchvision import transforms  # type: ignore
 from transformers import AutoModelForObjectDetection  # type: ignore
 from transformers import TableTransformerForObjectDetection  # type: ignore
 
-from src.tables.schemas import (
+from openparse.tables.schemas import (
     Size,
     BBox,
     _Table,
@@ -23,7 +23,7 @@ from .geometry import (
     convert_croppped_cords_to_full_img_cords,
     _calc_bbox_intersection,
 )
-from src.tables.utils import crop_img_with_padding, _display_cells_on_img
+from openparse.tables.utils import crop_img_with_padding, _display_cells_on_img
 
 
 t0 = time.time()

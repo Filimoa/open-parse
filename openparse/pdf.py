@@ -7,7 +7,7 @@ from pypdf import PdfReader, PdfWriter
 from pdfminer.high_level import extract_pages
 from pdfminer.layout import LTPage
 
-from src.schemas import Bbox
+from openparse.schemas import Bbox
 
 
 class Pdf:

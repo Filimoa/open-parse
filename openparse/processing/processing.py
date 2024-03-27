@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from collections import defaultdict
 from dataclasses import dataclass
 
-from src.schemas import Node, TextElement, Bbox, NodeVariant
+from openparse.schemas import Node
 
 
 class ProcessingStep(ABC):
@@ -13,52 +13,6 @@ class ProcessingStep(ABC):
         Process a list of Nodes and return a modified list of Nodes.
         """
         raise NotImplementedError("Subclasses must implement this method.")
-
-
-class RemoveTextInsideTables(ProcessingStep):
-    def process(self, nodes: List[Node]) -> List[Node]:
-        # Group all table bounding boxes by page
-        tables_by_page = defaultdict(list)
-        for node in nodes:
-            if node.variant == "table":
-                for table_element in node.elements:
-                    tables_by_page[table_element.page].append(table_element.bbox)
-
-        updated_nodes = []
-        for node in nodes:
-            if node.variant == "table":
-                updated_nodes.append(node)
-                continue
-
-            new_elements = [
-                element
-                for element in node.elements
-                if not (
-                    isinstance(element, TextElement)
-                    and self.is_inside_any_table(
-                        element.bbox, tables_by_page[element.page]
-                    )
-                )
-            ]
-
-            if new_elements:
-                updated_nodes.append(Node(elements=tuple(new_elements)))
-
-        return updated_nodes
-
-    def is_inside_any_table(self, text_bbox: Bbox, table_bboxes: List[Bbox]) -> bool:
-        return any(
-            self.is_contained(text_bbox, table_bbox) for table_bbox in table_bboxes
-        )
-
-    @staticmethod
-    def is_contained(text_bbox: Bbox, table_bbox: Bbox) -> bool:
-        return (
-            text_bbox.x0 >= table_bbox.x0
-            and text_bbox.x1 <= table_bbox.x1
-            and text_bbox.y0 >= table_bbox.y0
-            and text_bbox.y1 <= table_bbox.y1
-        )
 
 
 class RemoveFullPageStubs(ProcessingStep):
@@ -84,7 +38,7 @@ class RemoveFullPageStubs(ProcessingStep):
 
 
 class RemoveMetadataElements(ProcessingStep):
-    def __init__(self, min_y0_pct: float = 0.1, max_y0_pct: float = 0.90):
+    def __init__(self, min_y0_pct: float = 0.12, max_y0_pct: float = 0.88):
         self.min_y0_pct = min_y0_pct
         self.max_y0_pct = max_y0_pct
 
@@ -178,25 +132,27 @@ class CombineNodesSpatially(ProcessingStep):
 
 class CombineBullets(ProcessingStep):
     def process(self, nodes: List[Node]) -> List[Node]:
-        raise NotImplementedError()
+        raise NotImplementedError("Not yet implemented.")
 
 
 class CombineHeadingsWithClosestText(ProcessingStep):
     def process(self, nodes: List[Node]) -> List[Node]:
-        raise NotImplementedError()
+        raise NotImplementedError("Not yet implemented.")
 
 
-# optimzed for pdfminer
 default_pipeline = [
-    RemoveTextInsideTables(),
     RemoveFullPageStubs(max_area_pct=0.5),
-    CombineNodesSpatially(x_error_margin=10, y_error_margin=4, criteria="both_small"),
-    CombineNodesSpatially(x_error_margin=0, y_error_margin=10, criteria="both_small"),
+    CombineNodesSpatially(x_error_margin=4, y_error_margin=4, criteria="both_small"),
+    CombineNodesSpatially(x_error_margin=0, y_error_margin=0, criteria="both_small"),
     # CombineBullets(),
     RemoveMetadataElements(),
-    CombineNodesSpatially(criteria="either_stub"),
-    # SplitLargeElements(),  # Implement
-    RemoveRepeatedElements(threshold=2),
+    # CombineHeadingsWithClosestText(),
     RemoveStubs(),
-    # CombineHeadingsWithClosestText(),  # Implement
+    RemoveRepeatedElements(threshold=2),
 ]
+
+
+class ProcessingArgs(TypedDict, total=False):
+    min_tokens: int
+    max_tokens: int
+    processing_pipeline: List[ProcessingStep]

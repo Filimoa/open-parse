@@ -1,7 +1,7 @@
 from typing import List, Literal
 
-from src.schemas import TextElement
-from src.pdf import Pdf
+from openparse.schemas import TextElement
+from openparse.pdf import Pdf
 
 from . import pdfminer
 from . import pymupdf

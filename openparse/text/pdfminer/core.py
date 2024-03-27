@@ -3,8 +3,8 @@ from typing import List, Any, Union, Iterable
 from pdfminer.layout import LTTextContainer, LTChar, LTTextLine
 from pydantic import BaseModel, model_validator
 
-from src.pdf import Pdf
-from src.schemas import TextElement, LineElement, Bbox, TextSpan
+from openparse.pdf import Pdf
+from openparse.schemas import TextElement, LineElement, Bbox, TextSpan
 
 
 class CharElement(BaseModel):

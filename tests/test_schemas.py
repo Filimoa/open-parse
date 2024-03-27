@@ -1,5 +1,5 @@
-from src.consts import MAX_EMBEDDING_TOKENS
-from src.schemas import LineElement, TextElement, Bbox, Node, TextSpan
+from openparse.consts import MAX_EMBEDDING_TOKENS
+from openparse.schemas import LineElement, TextElement, Bbox, Node, TextSpan
 import pytest
 
 

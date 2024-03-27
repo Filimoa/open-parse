@@ -1,5 +1,5 @@
-from src.text.pdfminer.core import CharElement, _extract_chars, _group_chars_into_spans
-from src.schemas import TextSpan
+from openparse.text.pdfminer.core import CharElement, _extract_chars, _group_chars_into_spans
+from openparse.schemas import TextSpan
 
 
 raw_chars = [

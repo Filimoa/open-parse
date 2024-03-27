@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from collections import defaultdict
 from dataclasses import dataclass
 
-from src.schemas import Node
+from openparse.schemas import Node
 
 
 class PostProcessingStep(ABC):
