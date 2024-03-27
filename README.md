@@ -17,21 +17,14 @@ Open-Parse streamlines the process of preparing complex documents for analysis b
 ## Example
 
 ```python
-from openparse import DocumentParser
+import openparse
 
-parser = DocumentParser(
-    table_args={
-        "parse": True,
-        "args": {
-            "min_table_confidence": 0.75,
-            "min_cell_confidence": 0.95,
-            "table_output_format": "markdown",
-        },
-    },
-)
+basic_doc_path = "./sample-docs/mobile-home-manual.pdf"
+parser = openparse.DocumentParser()
+parsed_basic_doc = parser.parse(basic_doc_path)
 
-parsed = parser.parse("path/to/sample.pdf")
-
+for node in parsed_basic_doc.nodes:
+    display(node)
 ```
 
 **📓 Try the sample notebook** <a href="https://colab.research.google.com/drive/1Z5B5gsnmhFKEFL-5yYIcoox7-jQao8Ep?usp=sharing" class="external-link" target="_blank">here</a>
