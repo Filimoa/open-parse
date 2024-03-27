@@ -39,11 +39,20 @@ def _table_args_dict_to_model(
 
 
 class DocumentParser:
+    """
+    A parser for extracting elements from PDF documents, including text and tables.
+
+    Attributes:
+        processing_pipeline (Optional[List[ProcessingStep]]): A list of steps to process the extracted elements.
+        table_args (Optional[Union[TableTransformersArgsDict, PyMuPDFArgsDict]]): Arguments to customize table parsing.
+    """
+
     def __init__(
         self,
         processing_pipeline: Optional[List[ProcessingStep]] = None,
         table_args: Union[TableTransformersArgsDict, PyMuPDFArgsDict, None] = None,
     ):
+
         if not processing_pipeline:
             processing_pipeline = default_pipeline
 

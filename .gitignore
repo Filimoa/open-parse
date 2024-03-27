@@ -30,5 +30,6 @@ build/
 
 # misc
 trash.py
+.ruff_cache
 test-output.pdf
 
