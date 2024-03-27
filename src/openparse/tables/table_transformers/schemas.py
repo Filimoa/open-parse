@@ -1,7 +1,6 @@
-from typing import Union, List, Optional, Literal, Tuple, Any, Sequence
+from typing import Literal, Tuple
 
 from pydantic import BaseModel
-
 
 ###############
 ### SCHEMAS ###

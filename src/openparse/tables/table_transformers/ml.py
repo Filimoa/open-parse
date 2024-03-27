@@ -1,30 +1,31 @@
 import logging
 import time
-from typing import Union, List, Optional, Literal, Tuple, Any, Sequence
+from typing import Any, List
 
-from PIL import Image  # type: ignore
 import torch  # type: ignore
+from PIL import Image  # type: ignore
 from torchvision import transforms  # type: ignore
-from transformers import AutoModelForObjectDetection  # type: ignore
-from transformers import TableTransformerForObjectDetection  # type: ignore
+from transformers import (
+    AutoModelForObjectDetection,  # type: ignore
+    TableTransformerForObjectDetection,  # type: ignore
+)
 
 from ..schemas import (
-    Size,
     BBox,
+    Size,
     _Table,
-    _TableHeader,
-    _TableRow,
-    _TableHeaderCell,
     _TableDataCell,
+    _TableHeader,
+    _TableHeaderCell,
+    _TableRow,
+)
+from ..utils import _display_cells_on_img, crop_img_with_padding
+from .geometry import (
+    _calc_bbox_intersection,
+    convert_croppped_cords_to_full_img_cords,
+    convert_img_cords_to_pdf_cords,
 )
 from .schemas import _TableCellModelOutput, _TableModelOutput
-from .geometry import (
-    convert_img_cords_to_pdf_cords,
-    convert_croppped_cords_to_full_img_cords,
-    _calc_bbox_intersection,
-)
-from ..utils import crop_img_with_padding, _display_cells_on_img
-
 
 t0 = time.time()
 

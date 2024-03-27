@@ -1,9 +1,8 @@
-from typing import Optional, List, Sequence, Literal, TypedDict, Union
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from dataclasses import dataclass
+from typing import List, Literal
 
-from openparse.schemas import Node, TextElement, Bbox, NodeVariant
+from openparse.schemas import Bbox, Node, TextElement
 
 
 class ProcessingStep(ABC):

@@ -1,6 +1,3 @@
-import pytest
-
-
 # @pytest.mark.parametrize(
 #     "criteria, expected_combine",
 #     [

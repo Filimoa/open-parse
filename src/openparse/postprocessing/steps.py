@@ -1,7 +1,5 @@
-from typing import Optional, List, Sequence, Literal, TypedDict, Union
 from abc import ABC, abstractmethod
-from collections import defaultdict
-from dataclasses import dataclass
+from typing import List
 
 from openparse.schemas import Node
 

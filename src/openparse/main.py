@@ -1,11 +1,10 @@
-from typing import List, Union, TypedDict, Optional, Literal
 from pathlib import Path
+from typing import List, Literal, Optional, TypedDict, Union
 
-from openparse import text
-from openparse import tables
-from openparse.processing import run_pipeline, ProcessingStep, default_pipeline
-from openparse.schemas import Node, TextElement, TableElement
+from openparse import tables, text
 from openparse.pdf import Pdf
+from openparse.processing import ProcessingStep, default_pipeline, run_pipeline
+from openparse.schemas import Node, TableElement, TextElement
 
 
 class TableTransformersArgsDict(TypedDict, total=False):
@@ -25,7 +24,7 @@ def _table_args_dict_to_model(
         TableTransformersArgsDict,
         PyMuPDFArgsDict,
         None,
-    ]
+    ],
 ) -> Union[tables.TableTransformersArgs, tables.PyMuPDFArgs]:
     if args_dict is None:
         args_dict = PyMuPDFArgsDict()
@@ -71,7 +70,7 @@ class DocumentParser:
 
     @staticmethod
     def _elems_to_nodes(
-        elems: Union[List[TextElement], List[TableElement]]
+        elems: Union[List[TextElement], List[TableElement]],
     ) -> List[Node]:
         return [
             Node(

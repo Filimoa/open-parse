@@ -1,5 +1,4 @@
 from __future__ import annotations
-from typing import List, Union
 
 from .schemas import BBox, Size
 

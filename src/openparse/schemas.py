@@ -1,28 +1,26 @@
+import re
+from collections import defaultdict, namedtuple
+from enum import Enum
+from functools import cached_property
 from typing import (
+    Any,
+    List,
     Literal,
     Optional,
-    Sequence,
-    Any,
-    DefaultDict,
-    TypedDict,
-    List,
     Tuple,
+    TypedDict,
     Union,
 )
-from collections import defaultdict, namedtuple
-from functools import cache, cached_property
-from enum import Enum
-import re
 
 from pydantic import (
     BaseModel,
-    model_validator,
-    computed_field,
     ConfigDict,
+    computed_field,
+    model_validator,
 )
 
-from openparse.utils import num_tokens
 from openparse import consts
+from openparse.utils import num_tokens
 
 AggregatePosition = namedtuple("AggregatePosition", ["min_page", "min_y0", "min_x0"])
 
@@ -326,8 +324,10 @@ class Node(BaseModel):
 
     def display(self):
         try:
-            from IPython.display import Markdown  # type: ignore
-            from IPython.display import display  # type: ignore
+            from IPython.display import (
+                Markdown,  # type: ignore
+                display,  # type: ignore
+            )
 
             display(Markdown(self.text))
         except ImportError:

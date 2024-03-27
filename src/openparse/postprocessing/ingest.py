@@ -1,8 +1,7 @@
 from typing import List, TypedDict, Union
-from dataclasses import dataclass
 
-from openparse.schemas import Node
 from openparse.postprocessing.steps import PostProcessingStep, default_pipeline
+from openparse.schemas import Node
 
 
 class ProcessingArgs(TypedDict, total=False):

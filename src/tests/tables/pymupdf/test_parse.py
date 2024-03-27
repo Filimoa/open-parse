@@ -1,4 +1,4 @@
-from openparse.tables.pymupdf.parse import output_to_markdown, output_to_html
+from openparse.tables.pymupdf.parse import output_to_html, output_to_markdown
 
 
 def test_parse_output_to_markdown():

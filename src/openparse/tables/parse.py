@@ -1,8 +1,10 @@
-from typing import List, Literal, Union, TypedDict
-from pydantic import BaseModel, Field, ConfigDict
+from typing import List, Literal, Union
 
-from openparse.schemas import TableElement, Bbox
+from pydantic import BaseModel, ConfigDict, Field
+
 from openparse.pdf import Pdf
+from openparse.schemas import Bbox, TableElement
+
 from . import pymupdf
 
 
@@ -73,8 +75,9 @@ def _ingest_with_table_transformers(
 ) -> List[TableElement]:
     try:
         from openparse.tables.utils import doc_to_imgs
+
         from .table_transformers.ml import find_table_bboxes, get_table_content
-    except ImportError as e:
+    except ImportError:
         raise ImportError(
             "Table detection and extraction requires the `torch`, `torchvision` and `transformers` libraries to be installed."
         )
@@ -133,4 +136,4 @@ def ingest(
     elif isinstance(parsing_args, PyMuPDFArgs):
         return _ingest_with_pymupdf(doc, parsing_args)
     else:
-        raise ValueError(f"Unsupported parsing_algorithm.")
+        raise ValueError("Unsupported parsing_algorithm.")

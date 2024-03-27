@@ -1,7 +1,5 @@
-from openparse.consts import MAX_EMBEDDING_TOKENS
-from openparse.schemas import LineElement, TextElement, Bbox, Node, TextSpan
 import pytest
-
+from openparse.schemas import Bbox, LineElement, Node, TextElement, TextSpan
 
 BOLD_FLAG = 2**4
 ITALIC_FLAG = 2**1

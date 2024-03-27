@@ -1,8 +1,7 @@
 import logging
-from typing import List, Tuple, Any, Literal
+from typing import List, Literal, Tuple
 
 from PIL import Image  # type: ignore
-
 
 Size = Tuple[int, int]
 BBox = Tuple[float, float, float, float]
@@ -86,8 +85,8 @@ def _display_cells_on_img(
     """
     Used for debugging to visualize the detected cells on the cropped table image.
     """
-    from PIL import ImageDraw
     from IPython.display import display  # type: ignore
+    from PIL import ImageDraw
 
     cropped_table_visualized = image.copy()
     if use_blank_image:

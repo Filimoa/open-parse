@@ -1,5 +1,4 @@
 from openparse.tables.table_transformers.schemas import _TableCellModelOutput
-from openparse.tables.table_transformers import ml
 
 # from src.tables.schemas import _TableCellModelOutput
 

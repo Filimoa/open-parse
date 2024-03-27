@@ -1,11 +1,11 @@
-from pathlib import Path
-from typing import Union, List, Optional, Iterator, Literal
-import tempfile
 import random
+import tempfile
+from pathlib import Path
+from typing import Iterator, List, Literal, Optional, Union
 
-from pypdf import PdfReader, PdfWriter
 from pdfminer.high_level import extract_pages
 from pdfminer.layout import LTPage
+from pypdf import PdfReader, PdfWriter
 
 from openparse.schemas import Bbox
 

@@ -1,10 +1,9 @@
 from typing import List, Literal
 
-from openparse.schemas import TextElement
 from openparse.pdf import Pdf
+from openparse.schemas import TextElement
 
-from . import pdfminer
-from . import pymupdf
+from . import pdfminer, pymupdf
 
 
 def ingest(

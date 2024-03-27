@@ -1,10 +1,10 @@
-from typing import List, Any, Union, Iterable
+from typing import Any, Iterable, List, Union
 
-from pdfminer.layout import LTTextContainer, LTChar, LTTextLine
+from pdfminer.layout import LTChar, LTTextContainer, LTTextLine
 from pydantic import BaseModel, model_validator
 
 from openparse.pdf import Pdf
-from openparse.schemas import TextElement, LineElement, Bbox, TextSpan
+from openparse.schemas import Bbox, LineElement, TextElement, TextSpan
 
 
 class CharElement(BaseModel):

@@ -1,6 +1,5 @@
-from openparse.text.pdfminer.core import CharElement, _extract_chars, _group_chars_into_spans
 from openparse.schemas import TextSpan
-
+from openparse.text.pdfminer.core import CharElement, _group_chars_into_spans
 
 raw_chars = [
     CharElement(text="1", fontname="bold", size=9.0),
