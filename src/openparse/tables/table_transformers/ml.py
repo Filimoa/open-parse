@@ -3,12 +3,12 @@ import time
 from typing import Union, List, Optional, Literal, Tuple, Any, Sequence
 
 from PIL import Image  # type: ignore
-import torch
+import torch  # type: ignore
 from torchvision import transforms  # type: ignore
 from transformers import AutoModelForObjectDetection  # type: ignore
 from transformers import TableTransformerForObjectDetection  # type: ignore
 
-from openparse.tables.schemas import (
+from ..schemas import (
     Size,
     BBox,
     _Table,
@@ -23,7 +23,7 @@ from .geometry import (
     convert_croppped_cords_to_full_img_cords,
     _calc_bbox_intersection,
 )
-from openparse.tables.utils import crop_img_with_padding, _display_cells_on_img
+from ..utils import crop_img_with_padding, _display_cells_on_img
 
 
 t0 = time.time()
@@ -318,6 +318,7 @@ def get_table_content(
     img: Image.Image,
     table_bbox: BBox,
     min_cell_confidence: float,
+    verbose: bool = False,
 ) -> _Table:
     OFFSET = 0.05
     table_img = crop_img_with_padding(img, table_bbox, padding_pct=OFFSET)
@@ -340,7 +341,10 @@ def get_table_content(
             bbox=table_bbox,
         )
 
-    # _display_cells_on_img(img, cells, "all", min_cell_confidence=min_cell_confidence)
+    if verbose:
+        _display_cells_on_img(
+            img, cells, "all", min_cell_confidence=min_cell_confidence
+        )
 
     return table_from_model_outputs(
         img, page_dims, table_bbox, cells, min_cell_confidence

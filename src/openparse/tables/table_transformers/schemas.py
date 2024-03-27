@@ -1,6 +1,6 @@
 from typing import Union, List, Optional, Literal, Tuple, Any, Sequence
 
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel
 
 
 ###############

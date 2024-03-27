@@ -10,12 +10,16 @@ from typing import (
     Union,
 )
 from collections import defaultdict, namedtuple
-from functools import cache
+from functools import cache, cached_property
 from enum import Enum
 import re
 
-
-from pydantic import BaseModel, model_validator, computed_field, ConfigDict
+from pydantic import (
+    BaseModel,
+    model_validator,
+    computed_field,
+    ConfigDict,
+)
 
 from openparse.utils import num_tokens
 from openparse import consts
@@ -43,7 +47,7 @@ class Bbox(BaseModel):
     x1: float
     y1: float
 
-    @property
+    @cached_property
     def area(self) -> float:
         return (self.x1 - self.x0) * (self.y1 - self.y0)
 
@@ -88,8 +92,7 @@ class TextSpan(BaseModel):
     is_italic: bool
     size: float
 
-    @property
-    @cache
+    @cached_property
     def is_heading(self) -> bool:
         MIN_HEADING_SIZE = 16
         return self.size >= MIN_HEADING_SIZE and self.is_bold
@@ -131,7 +134,7 @@ class LineElement(BaseModel):
         return data
 
     @computed_field  # type: ignore
-    @property
+    @cached_property
     def text(self) -> str:
         """
         Combine spans into a single text string, respecting markdown syntax.
@@ -148,23 +151,20 @@ class LineElement(BaseModel):
         cleaned_text = self._clean_markdown_formatting(combined_text)
         return cleaned_text
 
-    @property
-    @cache
+    @cached_property
     def is_bold(self) -> bool:
         # ignore last span for formatting, often see weird trailing spans
         spans = self.spans[:-1] if len(self.spans) > 1 else self.spans
 
         return all(span.is_bold for span in spans)
 
-    @property
-    @cache
+    @cached_property
     def is_italic(self) -> bool:
         # ignore last span for formatting, often see weird trailing spans
         spans = self.spans[:-1] if len(self.spans) > 1 else self.spans
         return all(span.is_italic for span in spans)
 
-    @property
-    @cache
+    @cached_property
     def is_heading(self) -> bool:
         # ignore last span for formatting, often see weird trailing spans
         spans = self.spans[:-1] if len(self.spans) > 1 else self.spans
@@ -250,15 +250,15 @@ class TextElement(BaseModel):
 
         return y_distance <= error_margin
 
-    @property
+    @cached_property
     def tokens(self) -> int:
         return num_tokens(self.text)
 
-    @property
+    @cached_property
     def page(self) -> int:
         return self.bbox.page
 
-    @property
+    @cached_property
     def area(self) -> float:
         return (self.bbox.x1 - self.bbox.x0) * (self.bbox.y1 - self.bbox.y0)
 
@@ -294,15 +294,15 @@ class TableElement(BaseModel):
     bbox: Bbox
     variant: Literal[NodeVariant.TABLE] = NodeVariant.TABLE
 
-    @property
+    @cached_property
     def area(self) -> float:
         return (self.bbox.x1 - self.bbox.x0) * (self.bbox.y1 - self.bbox.y0)
 
-    @property
+    @cached_property
     def page(self) -> int:
         return self.bbox.page
 
-    @property
+    @cached_property
     def tokens(self) -> int:
         return num_tokens(self.text)
 

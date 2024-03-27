@@ -1,7 +1,8 @@
 from typing import List, Union, TypedDict, Optional, Literal
 from pathlib import Path
 
-from openparse import text, tables
+from openparse import text
+from openparse import tables
 from openparse.processing import run_pipeline, ProcessingStep, default_pipeline
 from openparse.schemas import Node, TextElement, TableElement
 from openparse.pdf import Pdf
