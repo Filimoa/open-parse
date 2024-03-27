@@ -28,7 +28,7 @@ You can implement you own rules by defining a subclass of `ProcessingStep` and a
 
 #### 4. /Post Processing
 
-There's promising techniques that require an LLM to integrate - we implement these here.  We currently only support OpenAI.
+There's promising techniques that require an LLM to integrate. This is currently unused.
 
 - Using embeddings to combine similar nodes. This is especially useful to combine nodes that stretch across pages.
 - Use an LLM to describe the contents of an image or graph. This helps with recall.
