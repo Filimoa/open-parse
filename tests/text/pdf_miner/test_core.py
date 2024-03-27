@@ -1,4 +1,4 @@
-from src.text.pdfminer.core import CharElement, extract_chars, group_chars_into_spans
+from src.text.pdfminer.core import CharElement, _extract_chars, _group_chars_into_spans
 from src.schemas import TextSpan
 
 
@@ -24,7 +24,7 @@ spans = [
 
 def test_group_chars_into_spans():
     # Test the basic functionality with the given raw_chars and spans
-    result = group_chars_into_spans(raw_chars)
+    result = _group_chars_into_spans(raw_chars)
     assert len(result) == len(
         spans
     ), "The number of spans should match the expected count."
@@ -64,7 +64,7 @@ def test_group_chars_into_spans():
         TextSpan(text="o ", is_bold=False, is_italic=False, size=9.0),
         TextSpan(text="World", is_bold=True, is_italic=True, size=9.0),
     ]
-    mixed_result = group_chars_into_spans(mixed_chars)
+    mixed_result = _group_chars_into_spans(mixed_chars)
     assert len(mixed_result) == len(
         mixed_spans
     ), "The number of spans in mixed styles should match the expected count."

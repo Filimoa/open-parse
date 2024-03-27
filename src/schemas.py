@@ -1,15 +1,14 @@
-from typing import Literal, Optional, Sequence, Any, DefaultDict, TypedDict, List
+from typing import Literal, Optional, Sequence, Any, DefaultDict, TypedDict, List, Tuple
 from collections import defaultdict, namedtuple
+from functools import cache
 from enum import Enum
 import re
 
-from pydantic import (
-    BaseModel,
-    model_validator,
-    computed_field,
-)
+
+from pydantic import BaseModel, model_validator, computed_field, ConfigDict
 
 from src.utils import num_tokens
+from src import consts
 
 AggregatePosition = namedtuple("AggregatePosition", ["min_page", "min_y0", "min_x0"])
 
@@ -35,6 +34,7 @@ class Bbox(BaseModel):
     y1: float
 
     @property
+    @cache
     def area(self) -> float:
         return (self.x1 - self.x0) * (self.y1 - self.y0)
 
@@ -65,6 +65,8 @@ class Bbox(BaseModel):
             y1=max(self.y1, other.y1),
         )
 
+    model_config = ConfigDict(frozen=True)
+
 
 #####################
 ### TEXT ELEMENTS ###
@@ -78,6 +80,7 @@ class TextSpan(BaseModel):
     size: float
 
     @property
+    @cache
     def is_heading(self) -> bool:
         MIN_HEADING_SIZE = 16
         return self.size >= MIN_HEADING_SIZE and self.is_bold
@@ -104,10 +107,12 @@ class TextSpan(BaseModel):
 
         return formatted
 
+    model_config = ConfigDict(frozen=True)
+
 
 class LineElement(BaseModel):
-    bbox: tuple[float, float, float, float]
-    spans: List[TextSpan]
+    bbox: Tuple[float, float, float, float]
+    spans: Tuple[TextSpan, ...]
     style: Optional[str] = None
 
     @model_validator(mode="before")
@@ -135,6 +140,7 @@ class LineElement(BaseModel):
         return cleaned_text
 
     @property
+    @cache
     def is_bold(self) -> bool:
         # ignore last span for formatting, often see weird trailing spans
         spans = self.spans[:-1] if len(self.spans) > 1 else self.spans
@@ -142,12 +148,14 @@ class LineElement(BaseModel):
         return all(span.is_bold for span in spans)
 
     @property
+    @cache
     def is_italic(self) -> bool:
         # ignore last span for formatting, often see weird trailing spans
         spans = self.spans[:-1] if len(self.spans) > 1 else self.spans
         return all(span.is_italic for span in spans)
 
     @property
+    @cache
     def is_heading(self) -> bool:
         # ignore last span for formatting, often see weird trailing spans
         spans = self.spans[:-1] if len(self.spans) > 1 else self.spans
@@ -157,12 +165,25 @@ class LineElement(BaseModel):
     def _clean_markdown_formatting(self, text: str) -> str:
         """
         Uses regex to clean up markdown formatting, ensuring symbols don't surround whitespace.
+        This will fix issues with bold (** or __) and italic (* or _) markdown where there may be
+        spaces between the markers and the text.
         """
-        # Pattern to find bold or italic markers that surround spaces (including cases with multiple spaces)
-        pattern = r"(\*\*|_)\s+\1"
+        patterns = [
+            (
+                r"(\*\*|__)\s+",
+                r"\1",
+            ),  # Remove space after opening bold or italic marker
+            (
+                r"\s+(\*\*|__)",
+                r"\1",
+            ),  # Remove space before closing bold or italic marker
+            (r"(\*|_)\s+", r"\1"),  # Remove space after opening italic marker
+            (r"\s+(\*|_)", r"\1"),  # Remove space before closing italic marker
+        ]
 
-        # Replace found patterns with a single space
-        cleaned_text = re.sub(pattern, " ", text)
+        cleaned_text = text
+        for pattern, replacement in patterns:
+            cleaned_text = re.sub(pattern, replacement, cleaned_text)
 
         return cleaned_text
 
@@ -196,16 +217,25 @@ class LineElement(BaseModel):
             max(self.bbox[2], other.bbox[2]),
             max(self.bbox[3], other.bbox[3]),
         )
-        new_spans = self.spans + other.spans
+        new_spans = tuple(self.spans + other.spans)
 
         return LineElement(bbox=new_bbox, spans=new_spans)
+
+    model_config = ConfigDict(frozen=True)
 
 
 class TextElement(BaseModel):
     text: str
-    lines: list[LineElement]
+    lines: Tuple[LineElement, ...]
     bbox: Bbox
     variant: Literal[NodeVariant.TEXT] = NodeVariant.TEXT
+
+    def is_at_similar_height(
+        self, other: "TextElement", error_margin: float = 1
+    ) -> bool:
+        y_distance = abs(self.bbox.y1 - other.bbox.y1)
+
+        return y_distance <= error_margin
 
     @property
     def tokens(self) -> int:
@@ -238,11 +268,22 @@ class TextElement(BaseModel):
 
         return x_overlap and y_overlap
 
+    model_config = ConfigDict(frozen=True)
+
 
 class Node(BaseModel):
-    elements: list[TextElement]
-    tokenization_lower_limit: int = 128
-    tokenization_upper_limit: int = 1024
+    elements: Tuple[TextElement, ...]
+    _tokenization_lower_limit: int = consts.TOKENIZATION_LOWER_LIMIT
+    _tokenization_upper_limit: int = consts.TOKENIZATION_UPPER_LIMIT
+
+    def display(self):
+        try:
+            from IPython.display import Markdown  # type: ignore
+            from IPython.display import display  # type: ignore
+
+            display(Markdown(self.text))
+        except ImportError:
+            print(self.text)
 
     @property
     def tokens(self) -> int:
@@ -254,11 +295,11 @@ class Node(BaseModel):
 
     @property
     def is_small(self) -> bool:
-        return self.tokens < self.tokenization_lower_limit
+        return self.tokens < self._tokenization_lower_limit
 
     @property
     def is_large(self) -> bool:
-        return self.tokens > self.tokenization_upper_limit
+        return self.tokens > self._tokenization_upper_limit
 
     @property
     def bbox(self) -> List[Bbox]:
@@ -303,7 +344,21 @@ class Node(BaseModel):
 
     @property
     def text(self) -> str:
-        return "\n".join([e.text for e in self.elements])
+        sorted_elements = sorted(
+            self.elements, key=lambda e: (e.page, -e.bbox.y1, e.bbox.x0)
+        )
+
+        texts = []
+        for i in range(len(sorted_elements)):
+            if i > 0 and sorted_elements[i].is_at_similar_height(
+                sorted_elements[i - 1]
+            ):
+                texts.append(" " + sorted_elements[i].text)
+            else:
+                if i > 0:
+                    texts.append("<br>")
+                texts.append(sorted_elements[i].text)
+        return "".join(texts)
 
     def overlaps(
         self, other: "Node", x_error_margin: float = 0.0, y_error_margin: float = 0.0
@@ -343,6 +398,8 @@ class Node(BaseModel):
 
     def combine(self, other: "Node") -> "Node":
         return Node(elements=self.elements + other.elements)
+
+    model_config = ConfigDict(frozen=True)
 
 
 ######################

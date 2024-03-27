@@ -1,11 +1,10 @@
-from typing import List
+from typing import List, Any, Union, Iterable
 
-from src.schemas import TextElement, LineElement, Bbox, TextSpan
-
-from typing import List, Any, Iterable
-from pdfminer.high_level import extract_pages
 from pdfminer.layout import LTTextContainer, LTChar, LTTextLine
 from pydantic import BaseModel, model_validator
+
+from src.pdf import Pdf
+from src.schemas import TextElement, LineElement, Bbox, TextSpan
 
 
 class CharElement(BaseModel):
@@ -28,7 +27,7 @@ class CharElement(BaseModel):
         return data
 
 
-def extract_chars(text_line: LTTextLine) -> List[CharElement]:
+def _extract_chars(text_line: LTTextLine) -> List[CharElement]:
     return [
         CharElement(text=char.get_text(), fontname=char.fontname, size=char.size)
         for char in text_line
@@ -36,7 +35,7 @@ def extract_chars(text_line: LTTextLine) -> List[CharElement]:
     ]
 
 
-def group_chars_into_spans(chars: Iterable[CharElement]) -> List[TextSpan]:
+def _group_chars_into_spans(chars: Iterable[CharElement]) -> List[TextSpan]:
     spans = []
     current_text = ""
     current_style = (False, False, 0.0)
@@ -80,15 +79,15 @@ def group_chars_into_spans(chars: Iterable[CharElement]) -> List[TextSpan]:
     return spans
 
 
-def create_line_element(text_line: LTTextLine) -> LineElement:
+def _create_line_element(text_line: LTTextLine) -> LineElement:
     """Create a LineElement from a text line."""
-    chars = extract_chars(text_line)
-    spans = group_chars_into_spans(chars)
+    chars = _extract_chars(text_line)
+    spans = _group_chars_into_spans(chars)
     bbox = (text_line.x0, text_line.y0, text_line.x1, text_line.y1)
-    return LineElement(bbox=bbox, spans=spans)
+    return LineElement(bbox=bbox, spans=tuple(spans))
 
 
-def get_bbox(lines: List[LineElement]) -> tuple[float, float, float, float]:
+def _get_bbox(lines: List[LineElement]) -> tuple[float, float, float, float]:
     """Get the bounding box of a list of LineElements."""
     x0 = min(line.bbox[0] for line in lines)
     y0 = min(line.bbox[1] for line in lines)
@@ -97,10 +96,12 @@ def get_bbox(lines: List[LineElement]) -> tuple[float, float, float, float]:
     return x0, y0, x1, y1
 
 
-def ingest(file_path: str) -> List[TextElement]:
+def ingest(pdf_input: Union[Pdf]) -> List[TextElement]:
     """Parse PDF and return a list of LineElement objects."""
     elements = []
-    for page_num, page_layout in enumerate(extract_pages(file_path)):
+    page_layouts = pdf_input.extract_layout_pages()
+
+    for page_num, page_layout in enumerate(page_layouts):
         page_width = page_layout.width
         page_height = page_layout.height
         for element in page_layout:
@@ -108,9 +109,11 @@ def ingest(file_path: str) -> List[TextElement]:
                 lines = []
                 for text_line in element:
                     if isinstance(text_line, LTTextLine):
-                        lines.append(create_line_element(text_line))
+                        lines.append(_create_line_element(text_line))
+                if not lines:
+                    continue
+                bbox = _get_bbox(lines)
 
-                bbox = get_bbox(lines)
                 elements.append(
                     TextElement(
                         bbox=Bbox(
@@ -123,7 +126,7 @@ def ingest(file_path: str) -> List[TextElement]:
                             page_height=page_height,
                         ),
                         text="\n".join(line.text for line in lines),
-                        lines=lines,
+                        lines=tuple(lines),
                     )
                 )
 

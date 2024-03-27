@@ -1,7 +1,6 @@
 import logging
 from typing import List, Tuple, Any, Literal
 
-import fitz
 from PIL import Image  # type: ignore
 
 
@@ -52,7 +51,7 @@ def crop_img_with_padding(
         raise ValueError(f"Failed to crop the image: {e}")
 
 
-def doc_to_imgs(doc: fitz.Document) -> List[Image.Image]:
+def doc_to_imgs(doc) -> List[Image.Image]:
     images = []
     try:
         if not doc.is_pdf:

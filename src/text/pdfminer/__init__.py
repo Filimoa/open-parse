@@ -1,1 +1,1 @@
-
+from .core import ingest

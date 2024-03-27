@@ -2,6 +2,7 @@ from typing import List, Literal, Union, TypedDict
 from pydantic import BaseModel, Field
 
 from src.schemas import TableElement, Bbox
+from src.pdf import Pdf
 
 
 class TableTransformersArgsDict(TypedDict, total=False):
@@ -53,14 +54,14 @@ def args_dict_to_model(
 
 
 def _ingest_with_pymupdf(
-    doc_path: str,
+    doc: Pdf,
     parsing_args: PyMuPDFArgs,
 ) -> List[TableElement]:
     raise NotImplementedError("PyMuPDF table parsing is not yet implemented.")
 
 
 def _ingest_with_table_transformers(
-    doc_path: str,
+    doc: Pdf,
     args: TableTransformersArgs,
 ) -> List[TableElement]:
     try:
@@ -70,7 +71,8 @@ def _ingest_with_table_transformers(
         raise ImportError(
             "Table detection and extraction requires the `torch`, `torchvision` and `transformers` libraries to be installed."
         )
-    pdf_as_imgs = doc_to_imgs(doc)
+    pdoc = doc.to_pymupdf_doc()  # type: ignore
+    pdf_as_imgs = doc_to_imgs(pdoc)
 
     pages_with_tables = {}
     for page_num, img in enumerate(pdf_as_imgs):
@@ -78,7 +80,7 @@ def _ingest_with_table_transformers(
 
     tables = []
     for page_num, table_bboxes in pages_with_tables.items():
-        page = doc[page_num]
+        page = pdoc[page_num]
         page_dims = (page.rect.width, page.rect.height)
         for table_bbox in table_bboxes:
             table = get_table_content(
@@ -112,7 +114,7 @@ def _ingest_with_table_transformers(
 
 
 def ingest(
-    doc: fitz.Document,
+    doc: Pdf,
     parsing_args: Union[TableTransformersArgsDict, PyMuPDFArgsDict, None] = None,
 ) -> List[TableElement]:
     args = args_dict_to_model(parsing_args)

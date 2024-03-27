@@ -1,7 +1,7 @@
 from typing import List
-import fitz
 
 from src.schemas import TextElement, LineElement, Bbox, TextSpan
+from src.pdf import Pdf
 
 
 def flags_decomposer(flags: int) -> str:
@@ -67,11 +67,12 @@ def _lines_from_ocr_output(lines: dict, error_margin: float = 0) -> list[LineEle
 
 
 def ingest(
-    doc: fitz.Document,
+    doc: Pdf,
 ) -> List[TextElement]:
     """Parses text elements from a given pdf document."""
     elements = []
-    for page_num, page in enumerate(doc):
+    pdoc = doc.to_pymupdf_doc()
+    for page_num, page in enumerate(pdoc):
         page_ocr = page.get_textpage_ocr(flags=0, full=False)
         for node in page.get_text("dict", textpage=page_ocr, sort=True)["blocks"]:
             if node["type"] != 0:

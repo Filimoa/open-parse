@@ -43,12 +43,15 @@ Try the sample notebook <a href="https://github.com/pymupdf/PyMuPDF" class="exte
 
 Python 3.8+
 
-OpenParse stands on the shoulders of giants:
+**Dealing with PDF's:**
 
-- <a href="https://github.com/pymupdf/PyMuPDF" class="external-link" target="_blank">PyMuPDF</a> for handling pdf files
-- <a href="https://huggingface.co/microsoft/table-transformer-detection" class="external-link" target="_blank">Table Transformer</a> for parsing tables
+- <a href="https://github.com/pdfminer/pdfminer.six" class="external-link" target="_blank">pdfminer.six</a> Fully open source.
 
+**Extracting Tables:**
 
+- <a href="https://github.com/pymupdf/PyMuPDF" class="external-link" target="_blank">PyMuPDF</a> has some table detection functionality. Please see their <a href="https://mupdf.com/licensing/index.html#commercial" class="external-link" target="_blank">license</a>.
+- <a href="https://huggingface.co/microsoft/table-transformer-detection" class="external-link" target="_blank">Table Transformer</a> is a deep learning approach.
+- <a href="https://github.com/poloclub/unitable" class="external-link" target="_blank">unitable</a> is a more recent deep learning approach that seems promising *(coming soon)*
 
 ## Installation
 
@@ -61,7 +64,7 @@ pip install open-parse
 
 **Enabling OCR Support**:
 
-PyMuPDF will already contain all the logic to support OCR functions. But it additionally does need Tesseract’s language support data, so installation of Tesseract-OCR is still required.
+PyMuPDF  will already contain all the logic to support OCR functions. But it additionally does need Tesseract’s language support data, so installation of Tesseract-OCR is still required.
 
 The language support folder location must be communicated either via storing it in the environment variable "TESSDATA_PREFIX", or as a parameter in the applicable functions.
 
@@ -97,6 +100,8 @@ pip install "open-parse[tables]"
 ## Documentation
 
 *Coming Soon*
+
+
 
 
 

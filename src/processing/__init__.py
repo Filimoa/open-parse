@@ -1,1 +1,1 @@
-from .ingest import ProcessingArgs, run_pipeline
+from .ingest import run_pipeline

@@ -26,3 +26,7 @@ archive.zip
 .DS_Store
 
 .venv/
+
+# misc
+trash.py
+test-output.pdf

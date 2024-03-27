@@ -38,7 +38,7 @@ class RemoveFullPageStubs(ProcessingStep):
 
 
 class RemoveMetadataElements(ProcessingStep):
-    def __init__(self, min_y0_pct: float = 0.12, max_y0_pct: float = 0.88):
+    def __init__(self, min_y0_pct: float = 0.10, max_y0_pct: float = 0.90):
         self.min_y0_pct = min_y0_pct
         self.max_y0_pct = max_y0_pct
 
@@ -140,13 +140,29 @@ class CombineHeadingsWithClosestText(ProcessingStep):
         raise NotImplementedError("Not yet implemented.")
 
 
+# default_pipeline = [
+#     RemoveFullPageStubs(max_area_pct=0.5),  # Adjust max_area_pct as needed
+#     CombineNodesSpatially(x_error_margin=4, y_error_margin=4, criteria="both_small"),
+#     CombineNodesSpatially(),  # Default margins and criteria
+#     # CombineBullets(),
+#     RemoveMetadataElements(),
+#     CombineNodesSpatially(x_error_margin=4, y_error_margin=12, criteria="either_stub"),
+#     CombineNodesSpatially(criteria="either_stub"),
+#     # SplitLargeElements(),  # Implement
+#     RemoveRepeatedElements(threshold=2),
+#     # CombineHeadingsWithClosestText(),  # Implement
+# ]
+
+# optimzed for pdfminer
 default_pipeline = [
-    RemoveFullPageStubs(max_area_pct=0.5),
-    CombineNodesSpatially(x_error_margin=4, y_error_margin=4, criteria="both_small"),
-    CombineNodesSpatially(x_error_margin=0, y_error_margin=0, criteria="both_small"),
+    RemoveFullPageStubs(max_area_pct=0.5),  # Adjust max_area_pct as needed
+    CombineNodesSpatially(x_error_margin=10, y_error_margin=4, criteria="both_small"),
+    CombineNodesSpatially(x_error_margin=0, y_error_margin=10, criteria="both_small"),
     # CombineBullets(),
     RemoveMetadataElements(),
-    # CombineHeadingsWithClosestText(),
-    RemoveStubs(),
+    CombineNodesSpatially(criteria="either_stub"),
+    # SplitLargeElements(),  # Implement
     RemoveRepeatedElements(threshold=2),
+    RemoveStubs(),
+    # CombineHeadingsWithClosestText(),  # Implement
 ]

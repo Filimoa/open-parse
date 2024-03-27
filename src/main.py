@@ -1,12 +1,10 @@
 from typing import List, Union, TypedDict
 from pathlib import Path
 
-import fitz
-
 from src import text, tables
 from src.processing import run_pipeline, ProcessingArgs
-from src.utils import load_doc
 from src.schemas import Node
+from src.pdf import Pdf
 
 
 class TableArgs(TypedDict, total=False):
@@ -28,17 +26,14 @@ class DocumentParser:
 
     def parse(
         self,
-        file: str | Path | fitz.Document,
+        file: str | Path,
     ) -> List[Node]:
-        doc = load_doc(file)
+        doc = Pdf(file)
 
         text_elems = text.ingest(doc)
         text_nodes = [
             Node(
                 elements=[e],
-                tokenization_upper_limit=self.processing_args[
-                    "tokenization_upper_limit"
-                ],
             )
             for e in text_elems
         ]
@@ -50,17 +45,3 @@ class DocumentParser:
         all_elems = text_elems + table_elems
         processed_elems = run_pipeline(all_elems, self.processing_args)
         return processed_elems
-
-
-parser = DocumentParser(
-    table_args={
-        "parse": True,
-        "args": {
-            "min_table_confidence": 0.75,
-            "min_cell_confidence": 0.95,
-            "table_output_format": "markdown",
-        },
-    },
-)
-
-parsed = parser.parse("path/to/sample.pdf")
