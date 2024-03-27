@@ -1,10 +1,10 @@
 from pathlib import Path
 from typing import List, Literal, Optional, TypedDict, Union
 
-from openparse import tables, text
+from openparse import tables, text, consts
 from openparse.pdf import Pdf
 from openparse.processing import ProcessingStep, default_pipeline, run_pipeline
-from openparse.schemas import Node, TableElement, TextElement
+from openparse.schemas import Node, TableElement, TextElement, ParsedDocument
 
 
 class TableTransformersArgsDict(TypedDict, total=False):
@@ -20,22 +20,16 @@ class PyMuPDFArgsDict(TypedDict, total=False):
 
 
 def _table_args_dict_to_model(
-    args_dict: Union[
-        TableTransformersArgsDict,
-        PyMuPDFArgsDict,
-        None,
-    ],
+    args_dict: Union[TableTransformersArgsDict, PyMuPDFArgsDict]
 ) -> Union[tables.TableTransformersArgs, tables.PyMuPDFArgs]:
-    if args_dict is None:
-        args_dict = PyMuPDFArgsDict()
-    parsing_algorithm = args_dict.get("parsing_algorithm", "table-transformers")
-
-    if parsing_algorithm == "table-transformers":
+    if args_dict["parsing_algorithm"] == "table-transformers":
         return tables.TableTransformersArgs(**args_dict)
-    elif parsing_algorithm == "pymupdf":
+    elif args_dict["parsing_algorithm"] == "pymupdf":
         return tables.PyMuPDFArgs(**args_dict)
     else:
-        raise ValueError(f"Unsupported parsing_algorithm: {parsing_algorithm}")
+        raise ValueError(
+            f"Unsupported parsing_algorithm: {args_dict['parsing_algorithm']}"
+        )
 
 
 class DocumentParser:
@@ -61,21 +55,32 @@ class DocumentParser:
     def parse(
         self,
         file: str | Path,
-    ) -> List[Node]:
+    ) -> ParsedDocument:
         doc = Pdf(file)
 
         text_elems = text.ingest(doc)
         text_nodes = self._elems_to_nodes(text_elems)
 
         table_nodes = []
+        table_args_obj = None
         if self.table_args:
-            args_obj = _table_args_dict_to_model(self.table_args)
-            table_elems = tables.ingest(doc, args_obj)
+            table_args_obj = _table_args_dict_to_model(self.table_args)
+            table_elems = tables.ingest(doc, table_args_obj)
             table_nodes = self._elems_to_nodes(table_elems)
 
         nodes = text_nodes + table_nodes
-        processed_elems = run_pipeline(nodes)
-        return processed_elems
+        processed_nodes = run_pipeline(nodes)
+
+        parsed_doc = ParsedDocument(
+            nodes=processed_nodes,
+            filename=Path(file).name,
+            num_pages=doc.num_pages,
+            coordinate_system=consts.COORDINATE_SYSTEM,
+            table_parsing_kwargs=(
+                table_args_obj.model_dump() if table_args_obj else None
+            ),
+        )
+        return parsed_doc
 
     @staticmethod
     def _elems_to_nodes(

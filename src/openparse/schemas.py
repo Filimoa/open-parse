@@ -8,26 +8,15 @@ from typing import (
     Literal,
     Optional,
     Tuple,
-    TypedDict,
     Union,
 )
 
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    computed_field,
-    model_validator,
-)
+from pydantic import BaseModel, ConfigDict, computed_field, model_validator, Field
 
 from openparse import consts
 from openparse.utils import num_tokens
 
 AggregatePosition = namedtuple("AggregatePosition", ["min_page", "min_y0", "min_x0"])
-
-
-class PrevNodeSimilarity(TypedDict):
-    prev_similarity: float
-    node: "Node"
 
 
 class NodeVariant(Enum):
@@ -318,22 +307,12 @@ class TableElement(BaseModel):
 
 
 class Node(BaseModel):
-    elements: Tuple[Union[TextElement, TableElement], ...]
+    elements: Tuple[Union[TextElement, TableElement], ...] = Field(exclude=True)
     _tokenization_lower_limit: int = consts.TOKENIZATION_LOWER_LIMIT
     _tokenization_upper_limit: int = consts.TOKENIZATION_UPPER_LIMIT
 
-    def display(self):
-        try:
-            from IPython.display import (
-                Markdown,  # type: ignore
-                display,  # type: ignore
-            )
-
-            display(Markdown(self.text))
-        except ImportError:
-            print(self.text)
-
-    @property
+    @computed_field  # type: ignore
+    @cached_property
     def variant(self) -> Literal["text", "table", "mixed"]:
         unique_variants = set(e.variant for e in self.elements)
         if len(unique_variants) > 1:
@@ -345,23 +324,13 @@ class Node(BaseModel):
         else:
             raise ValueError("Unknown variant")
 
-    @property
+    @computed_field  # type: ignore
+    @cached_property
     def tokens(self) -> int:
         return sum([e.tokens for e in self.elements])
 
-    @property
-    def is_stub(self) -> bool:
-        return self.tokens < 50
-
-    @property
-    def is_small(self) -> bool:
-        return self.tokens < self._tokenization_lower_limit
-
-    @property
-    def is_large(self) -> bool:
-        return self.tokens > self._tokenization_upper_limit
-
-    @property
+    @computed_field  # type: ignore
+    @cached_property
     def bbox(self) -> List[Bbox]:
         elements_by_page = defaultdict(list)
         for element in self.elements:
@@ -390,18 +359,7 @@ class Node(BaseModel):
 
         return bboxes
 
-    @property
-    def num_pages(self) -> int:
-        return len(set(element.bbox.page for element in self.elements))
-
-    @property
-    def start_page(self) -> int:
-        return min(element.bbox.page for element in self.elements)
-
-    @property
-    def end_page(self) -> int:
-        return max(element.bbox.page for element in self.elements)
-
+    @computed_field  # type: ignore
     @property
     def text(self) -> str:
         sorted_elements = sorted(
@@ -416,14 +374,48 @@ class Node(BaseModel):
                 texts.append(" " + sorted_elements[i].text)
             else:
                 if i > 0:
-                    texts.append("<br>")
+                    texts.append("<br><br>")
                 texts.append(sorted_elements[i].text)
         return "".join(texts)
+
+    @property
+    def is_stub(self) -> bool:
+        return self.tokens < 50
+
+    @property
+    def is_small(self) -> bool:
+        return self.tokens < self._tokenization_lower_limit
+
+    @property
+    def is_large(self) -> bool:
+        return self.tokens > self._tokenization_upper_limit
+
+    @property
+    def num_pages(self) -> int:
+        return len(set(element.bbox.page for element in self.elements))
+
+    @property
+    def start_page(self) -> int:
+        return min(element.bbox.page for element in self.elements)
+
+    @property
+    def end_page(self) -> int:
+        return max(element.bbox.page for element in self.elements)
+
+    @property
+    def aggregate_position(self) -> AggregatePosition:
+        """
+        Calculate an aggregate position for the node based on its elements.
+        Returns a tuple of (min_page, min_y0, min_x0) to use as sort keys.
+        """
+        min_page = min(element.bbox.page for element in self.elements)
+        min_y0 = min(element.bbox.y0 for element in self.elements)
+        min_x0 = min(element.bbox.x0 for element in self.elements)
+        return AggregatePosition(min_page, min_y0, min_x0)
 
     def overlaps(
         self, other: "Node", x_error_margin: float = 0.0, y_error_margin: float = 0.0
     ) -> bool:
-        # Iterate through each bounding box in the current node
         for bbox in self.bbox:
             other_bboxes = [
                 other_bbox for other_bbox in other.bbox if other_bbox.page == bbox.page
@@ -445,18 +437,23 @@ class Node(BaseModel):
 
         return False
 
-    @property
-    def aggregate_position(self) -> AggregatePosition:
+    def _repr_markdown_(self):
         """
-        Calculate an aggregate position for the node based on its elements.
-        Returns a tuple of (min_page, min_y0, min_x0) to use as sort keys.
+        When called in a Jupyter environment, this will display the node as Markdown, which Jupyter will then render as HTML.
         """
-        min_page = min(element.bbox.page for element in self.elements)
-        min_y0 = min(element.bbox.y0 for element in self.elements)
-        min_x0 = min(element.bbox.x0 for element in self.elements)
-        return AggregatePosition(min_page, min_y0, min_x0)
-
-    def combine(self, other: "Node") -> "Node":
-        return Node(elements=self.elements + other.elements)
+        return self.text
 
     model_config = ConfigDict(frozen=True)
+
+
+#######################
+### PARSED DOCUMENT ###
+#######################
+
+
+class ParsedDocument(BaseModel):
+    nodes: List[Node]
+    filename: str
+    num_pages: int
+    coordinate_system: Literal["top-left", "bottom-left"] = "bottom-left"
+    table_parsing_kwargs: Optional[dict] = None

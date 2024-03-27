@@ -5,14 +5,14 @@
 
 Open-Parse streamlines the process of preparing complex documents for analysis by LLMs. Our goal is to expose state-of-the-art deep learning models with a few lines of code while also providing flexible heuristic options for faster, basic parsing. 
 
-The key features are:
+### Highlights
 
-- **Visually-Driven:** Open-Parse visually analyzes documents for superior LLM input, going beyond naive text splitting.
-- **Markdown Support:**  Basic markdown support for parsing headings, bold and italics.
-- **High-Precision Table Support:** Extract tables into clean Markdown formats with accuracy that surpasses traditional tools.
-- **Extensible:** Easily implement your own post-processing steps.
-- **Intuitive:** Great editor support. Completion everywhere. Less time debugging.
-- **Easy:** Designed to be easy to use and learn. Less time reading docs.
+- **🔍 Visually-Driven:** Open-Parse visually analyzes documents for superior LLM input, going beyond naive text splitting.
+- **✍️ Markdown Support:**  Basic markdown support for parsing headings, bold and italics.
+- **📊 High-Precision Table Support:** Extract tables into clean Markdown formats with accuracy that surpasses traditional tools.
+- **🛠️ Extensible:** Easily implement your own post-processing steps.
+- **💡Intuitive:** Great editor support. Completion everywhere. Less time debugging.
+- **🎯 Easy:** Designed to be easy to use and learn. Less time reading docs.
 
 
 
@@ -88,11 +88,11 @@ So for a working OCR functionality, make sure to complete this checklist:
 
 #### 2. ML Table Detection (Optional)
 
-This repository provides an optional feature to parse content from tables using the state-of-the-art Table Transformer (DETR) model. The Table Transformer model, introduced in the paper "PubTables-1M: Towards Comprehensive Table Extraction From Unstructured Documents" by Smock et al., achieves best-in-class results for table extraction and understanding.
+This repository provides an optional feature to parse content from tables using the state-of-the-art Table Transformer (DETR) model. The Table Transformer model, introduced in the paper "PubTables-1M: Towards Comprehensive Table Extraction From Unstructured Documents" by Smock et al., achieves best-in-class results for table extraction.
 
 
 ```console
-pip install "open-parse[tables]"
+pip install "open-parse[ml]"
 ```
 
 

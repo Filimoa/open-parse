@@ -22,6 +22,8 @@ class Pdf:
         for page in self.reader.pages:
             self.writer.add_page(page)
 
+        self.num_pages = len(self.reader.pages)
+
     def extract_layout_pages(self) -> Iterator[LTPage]:
         """
         Yields layout objects for each page in the PDF using pdfminer.six.

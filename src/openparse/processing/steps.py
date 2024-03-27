@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from typing import List, Literal
+from typing import List, Literal, Dict
 
 from openparse.schemas import Bbox, Node, TextElement
 
@@ -114,7 +114,7 @@ class RemoveRepeatedElements(ProcessingStep):
         self.threshold = threshold
 
     def process(self, nodes: List[Node]) -> List[Node]:
-        text_counts: dict[str, int] = defaultdict(int)
+        text_counts: Dict[str, int] = defaultdict(int)
         for node in nodes:
             if node.text:
                 text_counts[node.text] += 1
