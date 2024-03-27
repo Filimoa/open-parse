@@ -11,6 +11,13 @@ setup(
         "pypdf >= 4.0.0",
         "pdfminer.six >= 20200401",
     ],
+    extras_require={
+        "ml": [
+            "torch",
+            "torchvision",
+            "transformers",
+        ],
+    },
     author="Sergey Filimonov",
     author_email="hello@sergey.fyi",
     description="Streamlines the process of preparing documents for LLM's.",

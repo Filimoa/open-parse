@@ -334,6 +334,18 @@ class Node(BaseModel):
             print(self.text)
 
     @property
+    def variant(self) -> Literal["text", "table", "mixed"]:
+        unique_variants = set(e.variant for e in self.elements)
+        if len(unique_variants) > 1:
+            return "mixed"
+        elif NodeVariant.TEXT in unique_variants:
+            return "text"
+        elif NodeVariant.TABLE in unique_variants:
+            return "table"
+        else:
+            raise ValueError("Unknown variant")
+
+    @property
     def tokens(self) -> int:
         return sum([e.tokens for e in self.elements])
 
@@ -448,18 +460,3 @@ class Node(BaseModel):
         return Node(elements=self.elements + other.elements)
 
     model_config = ConfigDict(frozen=True)
-
-
-################
-### DOCUMENT ###
-################
-
-
-class FileMetadata(BaseModel):
-    filename: str
-    num_pages: int
-
-
-class ParsedDoc(BaseModel):
-    nodes: List["Node"]
-    file_metadata: FileMetadata

@@ -41,7 +41,7 @@ def _table_args_dict_to_model(
 class DocumentParser:
     def __init__(
         self,
-        processing_pipeline: Optional[list[ProcessingStep]] = None,
+        processing_pipeline: Optional[List[ProcessingStep]] = None,
         table_args: Union[TableTransformersArgsDict, PyMuPDFArgsDict, None] = None,
     ):
         if not processing_pipeline:

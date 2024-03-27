@@ -13,11 +13,21 @@ class _TableHeaderCell(BaseModel):
     content: Optional[str] = None
     variant: Literal["header"] = "header"
 
+    @model_validator(mode="before")
+    def round_bbox(cls, values):
+        values["bbox"] = tuple(round(coord, 0) for coord in values["bbox"])
+        return values
+
 
 class _TableDataCell(BaseModel):
     bbox: BBox
     content: Optional[str] = None
     variant: Literal["data"] = "data"
+
+    @model_validator(mode="before")
+    def round_bbox(cls, values):
+        values["bbox"] = tuple(round(coord, 0) for coord in values["bbox"])
+        return values
 
 
 class _TableHeader(BaseModel):
@@ -58,6 +68,11 @@ class _Table(BaseModel):
     ###################
     ### TABLE UTILS ###
     ###################
+
+    @model_validator(mode="before")
+    def round_bbox(cls, values):
+        values["bbox"] = tuple(round(coord, 0) for coord in values["bbox"])
+        return values
 
     @model_validator(mode="before")
     @classmethod

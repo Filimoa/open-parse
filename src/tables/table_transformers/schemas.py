@@ -29,7 +29,7 @@ class _TableCellModelOutput(BaseModel):
 
     @property
     def is_row(self) -> bool:
-        return self.label in ["table row", "table spanning cell"]
+        return self.label in ["table row"]
 
     @property
     def is_column(self) -> bool:

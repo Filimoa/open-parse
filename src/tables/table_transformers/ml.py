@@ -23,7 +23,7 @@ from .geometry import (
     convert_croppped_cords_to_full_img_cords,
     _calc_bbox_intersection,
 )
-from src.tables.utils import crop_img_with_padding
+from src.tables.utils import crop_img_with_padding, _display_cells_on_img
 
 
 t0 = time.time()
@@ -340,7 +340,7 @@ def get_table_content(
             bbox=table_bbox,
         )
 
-    # _display_cells_on_img(img, cells, "rows", min_cell_confidence=min_cell_confidence)
+    # _display_cells_on_img(img, cells, "all", min_cell_confidence=min_cell_confidence)
 
     return table_from_model_outputs(
         img, page_dims, table_bbox, cells, min_cell_confidence

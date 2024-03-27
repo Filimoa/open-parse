@@ -1,4 +1,7 @@
-def output_to_html(headers: list[str], rows: list[list[str]]) -> str:
+from typing import List, Tuple
+
+
+def output_to_html(headers: List[str], rows: List[List[str]]) -> str:
     html_output = '<table border="1">\n'
 
     html_output += "<tr>"
@@ -18,7 +21,7 @@ def output_to_html(headers: list[str], rows: list[list[str]]) -> str:
     return html_output
 
 
-def output_to_markdown(headers: list[str], rows: list[list[str]]) -> str:
+def output_to_markdown(headers: List[str], rows: List[List[str]]) -> str:
     markdown_output = "| " + " | ".join(headers) + " |\n"
     markdown_output += "|---" * len(headers) + "|\n"
 
@@ -27,3 +30,14 @@ def output_to_markdown(headers: list[str], rows: list[list[str]]) -> str:
         markdown_output += "| " + " | ".join(processed_row) + " |\n"
 
     return markdown_output
+
+
+def combine_header_and_table_bboxes(
+    bbox1: Tuple[float, float, float, float], bbox2: Tuple[float, float, float, float]
+) -> Tuple[float, float, float, float]:
+    x0 = min(bbox1[0], bbox2[0])
+    y0 = min(bbox1[1], bbox2[1])
+    x1 = max(bbox1[2], bbox2[2])
+    y1 = max(bbox1[3], bbox2[3])
+
+    return x0, y0, x1, y1

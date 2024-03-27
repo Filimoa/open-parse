@@ -1,5 +1,5 @@
 from typing import List, Literal, Union, TypedDict
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 from src.schemas import TableElement, Bbox
 from src.pdf import Pdf
@@ -8,7 +8,7 @@ from . import pymupdf
 
 class ParsingArgs(BaseModel):
     parsing_algorithm: str
-    table_output_format: Literal["str", "markdown", "html"] = Field(default="str")
+    table_output_format: Literal["str", "markdown", "html"] = Field(default="html")
 
 
 class TableTransformersArgs(ParsingArgs):
@@ -18,9 +18,13 @@ class TableTransformersArgs(ParsingArgs):
         default="table-transformers"
     )
 
+    model_config = ConfigDict(extra="forbid")
+
 
 class PyMuPDFArgs(ParsingArgs):
     parsing_algorithm: Literal["pymupdf"] = Field(default="pymupdf")
+
+    model_config = ConfigDict(extra="forbid")
 
 
 def _ingest_with_pymupdf(
@@ -36,27 +40,28 @@ def _ingest_with_pymupdf(
             lines = tab.extract()
 
             if parsing_args.table_output_format == "str":
-                pymupdf.output_to_markdown(headers, lines)
+                text = pymupdf.output_to_markdown(headers, lines)
             elif parsing_args.table_output_format == "markdown":
-                pymupdf.output_to_markdown(headers, lines)
+                text = pymupdf.output_to_markdown(headers, lines)
             elif parsing_args.table_output_format == "html":
-                pymupdf.output_to_html(headers, lines)
+                text = pymupdf.output_to_html(headers, lines)
 
             # Flip y-coordinates to match the top-left origin system
-            fy0 = page.rect.height - tab.bbox[3]
-            fy1 = page.rect.height - tab.bbox[1]
+            bbox = pymupdf.combine_header_and_table_bboxes(tab.bbox, tab.header.bbox)
+            fy0 = page.rect.height - bbox[3]
+            fy1 = page.rect.height - bbox[1]
 
             table = TableElement(
                 bbox=Bbox(
                     page=page_num,
-                    x0=tab.bbox[0],
+                    x0=bbox[0],
                     y0=fy0,
-                    x1=tab.bbox[2],
+                    x1=bbox[2],
                     y1=fy1,
                     page_width=page.rect.width,
                     page_height=page.rect.height,
                 ),
-                text=lines,
+                text=text,
             )
             tables.append(table)
     return tables

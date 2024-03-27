@@ -21,10 +21,11 @@ site_build
 venv
 docs.zip
 archive.zip
+*.egg-info
 
 # macOS
 .DS_Store
-
+build/
 .venv/
 
 # misc
