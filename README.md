@@ -1,6 +1,6 @@
-<div style="text-align: center">
+<p align="center">
     <img src="https://sergey-filimonov.nyc3.digitaloceanspaces.com/open-parse/open-parse-with-text-tp-logo.webp" width="350" />
-</div>
+</p>
 <br/>
 
 Open-Parse streamlines the process of preparing complex documents for analysis by LLMs. Our goal is to expose state-of-the-art deep learning models with a few lines of code while also providing flexible heuristic options for faster, basic parsing.
@@ -13,6 +13,11 @@ Open-Parse streamlines the process of preparing complex documents for analysis b
 - **🛠️ Extensible:** Easily implement your own post-processing steps.
 - **💡Intuitive:** Great editor support. Completion everywhere. Less time debugging.
 - **🎯 Easy:** Designed to be easy to use and learn. Less time reading docs.
+
+<br/>
+<p align="center">
+    <img src="https://sergey-filimonov.nyc3.digitaloceanspaces.com/open-parse/marked-up-doc-2.webp" width="250" />
+</p>
 
 ## Example
 
