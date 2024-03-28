@@ -29,7 +29,7 @@ parser = openparse.DocumentParser()
 parsed_basic_doc = parser.parse(basic_doc_path)
 
 for node in parsed_basic_doc.nodes:
-    display(node)
+    print(node)
 ```
 
 **📓 Try the sample notebook** <a href="https://colab.research.google.com/drive/1Z5B5gsnmhFKEFL-5yYIcoox7-jQao8Ep?usp=sharing" class="external-link" target="_blank">here</a>
