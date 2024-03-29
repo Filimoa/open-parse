@@ -21,7 +21,7 @@ from ..schemas import (
 )
 from ..utils import display_cells_on_img, crop_img_with_padding
 from .geometry import (
-    _calc_bbox_intersection,
+    calc_bbox_intersection,
     convert_croppped_cords_to_full_img_cords,
     convert_img_cords_to_pdf_cords,
 )
@@ -240,7 +240,7 @@ def _preprocess_header_cells(
     for header in header_rows:
         header_row_cells = []
         for col in cols:
-            cell_bbox = _calc_bbox_intersection(header.bbox, col.bbox, safety_margin=5)
+            cell_bbox = calc_bbox_intersection(header.bbox, col.bbox, safety_margin=5)
             if cell_bbox:
                 cell_bbox = convert_img_cords_to_pdf_cords(
                     cell_bbox, page_size, image_size
@@ -268,7 +268,7 @@ def _process_row_cells(
     for row in rows:
         row_cells = []
         for col in cols:
-            cell_bbox = _calc_bbox_intersection(row.bbox, col.bbox, safety_margin=5)
+            cell_bbox = calc_bbox_intersection(row.bbox, col.bbox, safety_margin=5)
 
             if cell_bbox:
                 cell_bbox_pdf = convert_img_cords_to_pdf_cords(
@@ -305,7 +305,7 @@ def _is_overlapping_with_headers(
 
     for header in headers:
         for hcell in header.cells:
-            intersection = _calc_bbox_intersection(cell_bbox, hcell.bbox)
+            intersection = calc_bbox_intersection(cell_bbox, hcell.bbox)
             if intersection:
                 intersection_area = calculate_area(intersection)
                 overlap_percentage = intersection_area / cell_area

@@ -62,9 +62,13 @@ class RemoveTextInsideTables(ProcessingStep):
 
 class RemoveFullPageStubs(ProcessingStep):
     def __init__(self, max_area_pct: float):
+        assert 0 <= max_area_pct <= 1, "max_area_pct must be between 0 and 1."
         self.max_area_pct = max_area_pct
 
     def process(self, nodes: List[Node]) -> List[Node]:
+        """
+        Retains multi-page nodes, nodes that occupy less than max_area_pct of the page.
+        """
         res = []
         for node in nodes:
             node_bbox = node.bbox[0]

@@ -1,6 +1,6 @@
 import pytest
 from openparse.tables.table_transformers.geometry import (
-    _calc_bbox_intersection,
+    calc_bbox_intersection,
 )
 
 
@@ -18,7 +18,7 @@ from openparse.tables.table_transformers.geometry import (
     ],
 )
 def test_calc_bbox_intersection(bbox1, bbox2, safety_margin, expected):
-    assert _calc_bbox_intersection(bbox1, bbox2, safety_margin) == expected
+    assert calc_bbox_intersection(bbox1, bbox2, safety_margin) == expected
 
 
 @pytest.mark.parametrize(

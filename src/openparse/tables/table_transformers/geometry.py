@@ -3,7 +3,7 @@ from __future__ import annotations
 from .schemas import BBox, Size
 
 
-def _calc_bbox_intersection(bbox1, bbox2, safety_margin=5.0):
+def calc_bbox_intersection(bbox1, bbox2, safety_margin=5.0):
     if safety_margin < 0:
         raise ValueError("Safety margin cannot be negative.")
 
