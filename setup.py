@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="openparse",
-    version="0.2",
+    version="0.3.0",
     install_requires=[
         "PyMuPDF >= 1.23",
         "pillow >= 8.3",
