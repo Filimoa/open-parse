@@ -1,7 +1,8 @@
 import random
 import tempfile
 from pathlib import Path
-from typing import Iterator, List, Literal, Optional, Union
+from typing import Iterator, List, Literal, Optional, Union, Tuple
+from pydantic import BaseModel
 
 from pdfminer.high_level import extract_pages
 from pdfminer.layout import LTPage
@@ -9,6 +10,37 @@ from pypdf import PdfReader, PdfWriter
 
 from openparse.schemas import Bbox, Node
 from openparse import consts
+
+
+class _BboxWithColor(BaseModel):
+    color: Tuple[float, float, float]
+    bbox: Bbox
+
+
+def _random_color() -> Tuple[float, float, float]:
+    return (
+        random.randint(0, 255) / 256,
+        random.randint(0, 255) / 256,
+        random.randint(0, 255) / 256,
+    )
+
+
+def _prepare_bboxes_for_drawing(
+    bboxes: Union[List[Bbox], List[List[Bbox]]]
+) -> List[_BboxWithColor]:
+    res = []
+    for element in bboxes:
+        color = _random_color()
+        if isinstance(element, Bbox):
+            res.append(_BboxWithColor(color=color, bbox=element))
+        elif isinstance(element, list):
+            # Each Bbox in the sublist gets the same color
+            res.extend(
+                _BboxWithColor(color=color, bbox=bbox)
+                for bbox in element
+                if isinstance(bbox, Bbox)
+            )
+    return res
 
 
 class Pdf:
@@ -72,14 +104,11 @@ class Pdf:
 
     def _draw_bboxes(
         self,
-        bboxes: List[Bbox],
-        coordinates: Literal[
-            "top-left",
-            "bottom-left",
-        ],
+        bboxes_with_color: List[_BboxWithColor],
+        coordinates: Literal["top-left", "bottom-left"],
     ):
         try:
-            import fitz  # type: ignore
+            import fitz
         except ImportError:
             raise ImportError(
                 "PyMuPDF (fitz) is not installed. This method requires PyMuPDF."
@@ -90,23 +119,16 @@ class Pdf:
         for page in pdf:
             page.wrap_contents()
 
-            for bbox in bboxes:
+            for bbox_with_color in bboxes_with_color:
+                bbox = bbox_with_color.bbox
                 if bbox.page != page.number:
                     continue
                 if coordinates == "bottom-left":
                     bbox = self._flip_coordinates(bbox)
-                r = fitz.Rect(
-                    x0=bbox.x0,
-                    y0=bbox.y0,
-                    x1=bbox.x1,
-                    y1=bbox.y1,
-                )
-                color = (
-                    random.randint(0, 255) / 256,
-                    random.randint(0, 255) / 256,
-                    random.randint(0, 255) / 256,
-                )
-                page.draw_rect(r, color)
+                rect = fitz.Rect(x0=bbox.x0, y0=bbox.y0, x1=bbox.x1, y1=bbox.y1)
+                page.draw_rect(
+                    rect, bbox_with_color.color
+                )  # Use the color associated with this bbox
         return pdf
 
     def display_with_bboxes(
@@ -126,7 +148,7 @@ class Pdf:
         assert nodes, "At least one node is required."
 
         bboxes = [node.bbox for node in nodes]
-        flattened_bboxes = self._flatten_bboxes(bboxes)
+        flattened_bboxes = _prepare_bboxes_for_drawing(bboxes)
         marked_up_doc = self._draw_bboxes(flattened_bboxes, nodes[0]._coordinates)
         if not page_nums:
             page_nums = list(range(marked_up_doc.page_count))
@@ -143,7 +165,7 @@ class Pdf:
         assert nodes, "At least one node is required."
 
         bboxes = [node.bbox for node in nodes]
-        flattened_bboxes = self._flatten_bboxes(bboxes)
+        flattened_bboxes = _prepare_bboxes_for_drawing(bboxes)
         marked_up_doc = self._draw_bboxes(flattened_bboxes, nodes[0]._coordinates)
         marked_up_doc.save(str(output_pdf))
 
@@ -159,14 +181,3 @@ class Pdf:
             x1=bbox.x1,
             y1=fy1,
         )
-
-    def _flatten_bboxes(
-        self, bboxes: Union[List[Bbox], List[List[Bbox]]]
-    ) -> List[Bbox]:
-        res = []
-        for element in bboxes:
-            if isinstance(element, Bbox):
-                res.append(element)
-            elif isinstance(element, list):
-                res.extend(bbox for bbox in element if isinstance(bbox, Bbox))
-        return res

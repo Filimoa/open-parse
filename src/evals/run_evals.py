@@ -1,21 +1,27 @@
-import sys
 from pathlib import Path
 
+import openparse
+
+
 project_root = Path(__file__).resolve().parent.parent
-sys.path.append(str(project_root))
-
-
 SAMPLE_PDF_DIR = project_root / "evals/data"
 EXPORT_DIR = project_root / "evals/parsed-data"
 
-files = []
+parser = openparse.DocumentParser()
+
 for file_path in SAMPLE_PDF_DIR.rglob("*.pdf"):
-    files.append(file_path)
+    pdf = openparse.Pdf(file_path)
+    parsed = parser.parse(file_path)
 
-for file in files:
-    pass
-# run parsing on all them
+    relative_path = file_path.relative_to(SAMPLE_PDF_DIR)
+    export_path = EXPORT_DIR / relative_path
 
-# visualize the results
+    export_path.parent.mkdir(parents=True, exist_ok=True)
 
-# write to a directory that's identical to the input directory
+    if not parsed.nodes:
+        continue
+
+    pdf.export_with_bboxes(parsed.nodes, export_path)
+    print(f"Exported {file_path} to {export_path}")
+
+print("Done! 🌟")

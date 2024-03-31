@@ -15,6 +15,10 @@ class ProcessingStep(ABC):
 
 
 class RemoveTextInsideTables(ProcessingStep):
+    """
+    If we're using the table extraction pipeline, we need to remove text that is inside tables to avoid duplication.
+    """
+
     def process(self, nodes: List[Node]) -> List[Node]:
         # Group all table bounding boxes by page
         tables_by_page = defaultdict(list)
@@ -61,6 +65,10 @@ class RemoveTextInsideTables(ProcessingStep):
 
 
 class RemoveFullPageStubs(ProcessingStep):
+    """
+    Sometimes elements take up entire pages and are not useful for downstream processing.
+    """
+
     def __init__(self, max_area_pct: float):
         assert 0 <= max_area_pct <= 1, "max_area_pct must be between 0 and 1."
         self.max_area_pct = max_area_pct
@@ -87,6 +95,10 @@ class RemoveFullPageStubs(ProcessingStep):
 
 
 class RemoveMetadataElements(ProcessingStep):
+    """
+    Looking to remove `page`, `attachment` etc. from the extracted text.  Typically we find this data to be quite challenging to incorporate into the querying stage ("tell me what's on page 6") without adding a lot of complexity to your app.
+    """
+
     def __init__(self, min_y0_pct: float = 0.1, max_y0_pct: float = 0.90):
         self.min_y0_pct = min_y0_pct
         self.max_y0_pct = max_y0_pct
@@ -114,6 +126,13 @@ class RemoveMetadataElements(ProcessingStep):
 
 
 class RemoveRepeatedElements(ProcessingStep):
+    """
+    Designed to remove repeated elements, such as headers and footers.
+    This should be one of the last steps in the pipeline since we want to do everything possible to try to combine this with something else. Only if we can't combine it with anything else should we remove it.
+
+    Note duplicates get droppped entirely, not just one of them. This is because typically the data is just metadata and not useful.
+    """
+
     def __init__(self, threshold: int = 2):
         self.threshold = threshold
 
@@ -133,11 +152,25 @@ class RemoveRepeatedElements(ProcessingStep):
 
 
 class RemoveStubs(ProcessingStep):
+    """
+    This should be the last step in the pipeline. Stubs are typically small elements that are not useful for downstream processing.
+    """
+
     def process(self, nodes: List[Node]) -> List[Node]:
         return [node for node in nodes if not node.is_stub]
 
 
 class CombineNodesSpatially(ProcessingStep):
+    """
+    Combines nodes that are close to each other spatially. We assume that elements that are close together on the page are related to each other and therefore should be combined.
+
+    This simple heuristic achieves results comparable to deep learning methods we've experimented with. It's also much faster and easier to understand.
+
+    Criteria:
+    - both_small: Both nodes must be small elements. This is useful for combining small text elements that are close together. Common example is a bulleted list.
+    - either_stub: Either node can be a stub. This is useful for combining small text elements like a heading with a larger text element below it.
+    """
+
     def __init__(
         self,
         x_error_margin: float = 0,
@@ -180,26 +213,79 @@ class CombineNodesSpatially(ProcessingStep):
 
 
 class CombineBullets(ProcessingStep):
+    """
+    Needs to follow CombineNodesSpatially in the pipeline. Bullets are often far enough from the text they belong to that they are in distinct nodes.
+    """
+
     def process(self, nodes: List[Node]) -> List[Node]:
-        raise NotImplementedError()
+        combined_nodes = []
+        i = 0
+        while i < len(nodes):
+            current_combination = nodes[i]
+            while (
+                i + 1 < len(nodes)
+                and current_combination.ends_with_bullet
+                and nodes[i + 1].starts_with_bullet
+            ):
+                current_combination += nodes[i + 1]
+                i += 1
+            combined_nodes.append(current_combination)
+            i += 1
+        return combined_nodes
 
 
 class CombineHeadingsWithClosestText(ProcessingStep):
     def process(self, nodes: List[Node]) -> List[Node]:
-        raise NotImplementedError()
+        res = []
+        i = 0
+
+        while i < len(nodes) - 1:
+            current_node = nodes[i]
+
+            if current_node.is_heading:
+                next_node = nodes[i + 1]
+
+                if not next_node.is_heading:
+                    combined_node = current_node + next_node
+                    res.append(combined_node)
+
+                    # Skip the next node since it's been combined
+                    i += 2
+                    continue
+
+            res.append(current_node)
+            i += 1
+
+        if i == len(nodes) - 1:
+            res.append(nodes[i])
+
+        return res
+
+
+class AppendShortNodesToPrevNodeWithHeading(ProcessingStep):
+    """
+    Appends short nodes to the previous node if the previous node started with a heading.
+    """
+
+    def process(self, nodes: List[Node]) -> List[Node]:
+        raise NotImplementedError("Not yet implemented.")
 
 
 # optimzed for pdfminer
 default_pipeline = [
     RemoveTextInsideTables(),
-    RemoveFullPageStubs(max_area_pct=0.5),
+    RemoveFullPageStubs(max_area_pct=0.35),
+    # mostly aimed at combining bullets and weird formatting
     CombineNodesSpatially(x_error_margin=10, y_error_margin=4, criteria="both_small"),
+    CombineHeadingsWithClosestText(),
+    CombineBullets(),
     CombineNodesSpatially(x_error_margin=0, y_error_margin=10, criteria="both_small"),
-    # CombineBullets(),
     RemoveMetadataElements(),
     CombineNodesSpatially(criteria="either_stub"),
-    # SplitLargeElements(),  # Implement
     RemoveRepeatedElements(threshold=2),
+    # # tried everything to combine, remove stubs that are still left
     RemoveStubs(),
-    # CombineHeadingsWithClosestText(),  # Implement
+    # # combines bullets split across pages
+    # # (previously page metdata would have prevented this)
+    CombineBullets(),
 ]

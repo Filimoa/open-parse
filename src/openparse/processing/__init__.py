@@ -6,6 +6,8 @@ from .steps import (
     RemoveMetadataElements,
     RemoveRepeatedElements,
     RemoveStubs,
+    CombineBullets,
+    CombineHeadingsWithClosestText,
     CombineNodesSpatially,
 )
 
@@ -18,5 +20,7 @@ __all__ = [
     "RemoveMetadataElements",
     "RemoveRepeatedElements",
     "RemoveStubs",
+    "CombineHeadingsWithClosestText",
+    "CombineBullets",
     "CombineNodesSpatially",
 ]

@@ -1,5 +1,13 @@
 import pytest
-from openparse.schemas import Bbox, LineElement, Node, TextElement, TextSpan
+from openparse.schemas import (
+    Bbox,
+    LineElement,
+    Node,
+    TextElement,
+    TextSpan,
+    bullet_regex,
+)
+from openparse import consts
 
 BOLD_FLAG = 2**4
 ITALIC_FLAG = 2**1
@@ -441,3 +449,131 @@ def test_node_overlaps(
         )
         == expected
     )
+
+
+##### BULLETS
+
+
+@pytest.mark.parametrize(
+    "case",
+    [
+        "- This is a dash bullet point",
+        "• This is a bullet point",
+        "* This is an asterisk bullet point",
+        "1. This is a numbered bullet point",
+        "(1) This is a parenthesized number bullet point",
+        "(a) This is a parenthesized letter bullet point",
+        "A. This is a lettered bullet point",
+    ],
+)
+def test_bullet_point_detection_match(case):
+    assert bullet_regex.match(case) is not None, f"Should match: {case}"
+
+
+# Test cases that should NOT match the pattern
+@pytest.mark.parametrize(
+    "case",
+    [
+        "This is a regular line",
+        ".1 This is not a numbered bullet point",
+        "( 1) This format is not covered",
+        "A- This is not a bullet point",
+        "**RULE 10 - CLASSIFICATION**",
+    ],
+)
+def test_bullet_point_detection_no_match(case):
+    assert bullet_regex.match(case) is None, f"Should not match: {case}"
+
+
+def test_text_element_with_bullets():
+    # This test is to ensure that the text element with bullets is correctly processed
+    # The text element has a single line with multiple bullet points
+    # The bullet points are expected to be separated into individual lines
+    # The bullet points are expected to be separated by a newline
+    # first
+    text_elem_without_bullets = TextElement(
+        text=(
+            "regulatory complexities. For example, several of our products are not generally available in China. "
+            "We also outsource certain operational functions to third parties globally. If we fail to deploy, manage, "
+            "or oversee our international operations successfully, our business may suffer. In addition, we are subject "
+            "to a variety of risks inherent in doing business internationally, including:"
+        ),
+        lines=(),
+        bbox=Bbox(
+            page=0,
+            page_height=792.0,
+            page_width=612.0,
+            x0=18.22,
+            y0=659.1,
+            x1=594.0,
+            y1=711.3,
+        ),
+    )
+    node = Node(elements=[text_elem_without_bullets])
+    assert node.starts_with_bullet == False
+    assert node.ends_with_bullet == False
+
+    # second
+    text_elem_starts_with_bullet = TextElement(
+        text=(
+            f"- This is the first bullet point. {consts.ELEMENT_DELIMETER}"
+            "Additional information follows the bullet point without a new bullet."
+        ),
+        lines=(),
+        bbox=Bbox(
+            page=0,
+            page_height=792.0,
+            page_width=612.0,
+            x0=18.22,
+            y0=659.1,
+            x1=594.0,
+            y1=711.3,
+        ),
+    )
+    node = Node(elements=[text_elem_starts_with_bullet])
+    assert node.starts_with_bullet == True
+    assert node.ends_with_bullet == False
+
+    # third
+    text_elem_ends_with_bullet = TextElement(
+        text=(
+            f"This is some introductory text. {consts.ELEMENT_DELIMETER}"
+            "- And this is a bullet point that concludes the text element."
+        ),
+        lines=(),
+        bbox=Bbox(
+            page=0,
+            page_height=792.0,
+            page_width=612.0,
+            x0=18.22,
+            y0=659.1,
+            x1=594.0,
+            y1=711.3,
+        ),
+    )
+    node = Node(elements=[text_elem_ends_with_bullet])
+    assert node.starts_with_bullet == False
+    assert node.ends_with_bullet == True
+
+    # fourth
+    text_elem_contains_bullets = TextElement(
+        text=(
+            f"- First bullet point starts the element. {consts.ELEMENT_DELIMETER}"
+            f"- Second bullet point follows.  {consts.ELEMENT_DELIMETER}"
+            f"Some intermediate text that doesn't start with a bullet. {consts.ELEMENT_DELIMETER}"
+            "- Third bullet point ends the element."
+        ),
+        lines=(),
+        bbox=Bbox(
+            page=0,
+            page_height=792.0,
+            page_width=612.0,
+            x0=18.22,
+            y0=659.1,
+            x1=594.0,
+            y1=711.3,
+        ),
+    )
+    node = Node(elements=[text_elem_contains_bullets])
+    assert node.starts_with_bullet == True
+    assert node.ends_with_bullet == True

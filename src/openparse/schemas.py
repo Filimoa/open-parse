@@ -16,6 +16,10 @@ from pydantic import BaseModel, ConfigDict, computed_field, model_validator, Fie
 from openparse import consts
 from openparse.utils import num_tokens
 
+bullet_regex = re.compile(
+    r"^(\s*[\-•](?!\*)|\s*\*(?!\*)|\s*\d+\.\s|\s*\([a-zA-Z0-9]+\)\s|\s*[a-zA-Z]\.\s)"
+)
+
 AggregatePosition = namedtuple("AggregatePosition", ["min_page", "min_y0", "min_x0"])
 
 
@@ -228,18 +232,28 @@ class TextElement(BaseModel):
     text: str
     lines: Tuple[LineElement, ...]
     bbox: Bbox
+    _embed_text: Optional[str] = None
     variant: Literal[NodeVariant.TEXT] = NodeVariant.TEXT
 
-    def is_at_similar_height(
-        self, other: Union["TableElement", "TextElement"], error_margin: float = 1
-    ) -> bool:
-        y_distance = abs(self.bbox.y1 - other.bbox.y1)
+    @computed_field  # type: ignore
+    @cached_property
+    def embed_text(self) -> str:
+        if self._embed_text:
+            return self._embed_text
 
-        return y_distance <= error_margin
+        return self.text
 
     @cached_property
     def tokens(self) -> int:
         return num_tokens(self.text)
+
+    @cached_property
+    def is_heading(self) -> bool:
+        return all(line.is_heading for line in self.lines)
+
+    @cached_property
+    def is_bold(self) -> bool:
+        return all(line.is_bold for line in self.lines)
 
     @cached_property
     def page(self) -> int:
@@ -248,6 +262,13 @@ class TextElement(BaseModel):
     @cached_property
     def area(self) -> float:
         return (self.bbox.x1 - self.bbox.x0) * (self.bbox.y1 - self.bbox.y0)
+
+    def is_at_similar_height(
+        self, other: Union["TableElement", "TextElement"], error_margin: float = 1
+    ) -> bool:
+        y_distance = abs(self.bbox.y1 - other.bbox.y1)
+
+        return y_distance <= error_margin
 
     def overlaps(
         self,
@@ -279,7 +300,16 @@ class TextElement(BaseModel):
 class TableElement(BaseModel):
     text: str
     bbox: Bbox
+    _embed_text: Optional[str] = None
     variant: Literal[NodeVariant.TABLE] = NodeVariant.TABLE
+
+    @computed_field  # type: ignore
+    @cached_property
+    def embed_text(self) -> str:
+        if self._embed_text:
+            return self._embed_text
+
+        return self.text
 
     @cached_property
     def area(self) -> float:
@@ -304,6 +334,30 @@ class TableElement(BaseModel):
 #############
 ### NODES ###
 #############
+
+
+def _determine_relationship(
+    elem1: Union["TextElement", "TableElement"],
+    elem2: Union["TextElement", "TableElement"],
+    line_threshold: float = 1,
+    paragraph_threshold: float = 12,
+) -> Literal["same-line", "same-paragraph", None]:
+    """
+    Determines the relationship between two elements (either TextElement or TableElement).
+    Returns 'same-line', 'same-paragraph', or None.
+    Tables are considered to have no direct relationship with other elements (None).
+    """
+    if isinstance(elem1, TableElement) or isinstance(elem2, TableElement):
+        return None
+
+    vertical_distance = abs(elem1.bbox.y0 - elem2.bbox.y0)
+
+    if vertical_distance <= line_threshold:
+        return "same-line"
+    elif vertical_distance <= paragraph_threshold:
+        return "same-paragraph"
+    else:
+        return None
 
 
 class Node(BaseModel):
@@ -363,7 +417,7 @@ class Node(BaseModel):
         return bboxes
 
     @computed_field  # type: ignore
-    @property
+    @cached_property
     def text(self) -> str:
         sorted_elements = sorted(
             self.elements, key=lambda e: (e.page, -e.bbox.y1, e.bbox.x0)
@@ -371,41 +425,78 @@ class Node(BaseModel):
 
         texts = []
         for i in range(len(sorted_elements)):
-            if i > 0 and sorted_elements[i].is_at_similar_height(
-                sorted_elements[i - 1]
-            ):
-                texts.append(" " + sorted_elements[i].text)
-            else:
-                if i > 0:
-                    texts.append("<br><br>")
-                texts.append(sorted_elements[i].text)
+            current = sorted_elements[i]
+            if i > 0:
+                previous = sorted_elements[i - 1]
+                relationship = _determine_relationship(previous, current)
+
+                if relationship == "same-line":
+                    join_str = " "
+                elif relationship == "same-paragraph":
+                    join_str = "\n"
+                else:
+                    join_str = consts.ELEMENT_DELIMETER
+
+                texts.append(join_str)
+
+            texts.append(current.embed_text)
+
         return "".join(texts)
 
-    @property
+    @cached_property
+    def is_heading(self) -> bool:
+        if self.variant != "text":
+            return False
+        if not self.is_stub:
+            return False
+
+        return all(element.is_heading or element.is_bold for element in self.elements)  # type: ignore
+
+    @cached_property
+    def starts_with_heading(self) -> bool:
+        if not self.variant == "text":
+            return False
+        return self.elements[0].is_heading  # type: ignore
+
+    @cached_property
+    def starts_with_bullet(self) -> bool:
+        first_line = self.text.split(consts.ELEMENT_DELIMETER)[0].strip()
+        if not first_line:
+            return False
+        return bool(bullet_regex.match(first_line))
+
+    @cached_property
+    def ends_with_bullet(self) -> bool:
+        last_line = self.text.split(consts.ELEMENT_DELIMETER)[-1].strip()
+        if not last_line:
+            return False
+        return bool(bullet_regex.match(last_line))
+
+    @cached_property
     def is_stub(self) -> bool:
         return self.tokens < 50
 
-    @property
+    @cached_property
     def is_small(self) -> bool:
         return self.tokens < self._tokenization_lower_limit
 
-    @property
+    @cached_property
     def is_large(self) -> bool:
         return self.tokens > self._tokenization_upper_limit
 
-    @property
+    @cached_property
     def num_pages(self) -> int:
         return len(set(element.bbox.page for element in self.elements))
 
-    @property
+    @cached_property
     def start_page(self) -> int:
         return min(element.bbox.page for element in self.elements)
 
-    @property
+    @cached_property
     def end_page(self) -> int:
         return max(element.bbox.page for element in self.elements)
 
-    @property
+    @cached_property
     def aggregate_position(self) -> AggregatePosition:
         """
         Calculate an aggregate position for the node based on its elements.
