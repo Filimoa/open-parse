@@ -2,9 +2,9 @@ from setuptools import setup
 
 setup(
     name="openparse",
-    version="0.3.0",
+    version="0.3.1",
     install_requires=[
-        "PyMuPDF >= 1.23",
+        "PyMuPDF >= 1.23.2",
         "pillow >= 8.3",
         "pydantic >= 2.0",
         "pypdf >= 4.0.0",

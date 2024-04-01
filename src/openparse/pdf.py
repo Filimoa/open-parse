@@ -125,7 +125,7 @@ class Pdf:
                     continue
                 if coordinates == "bottom-left":
                     bbox = self._flip_coordinates(bbox)
-                rect = fitz.Rect(x0=bbox.x0, y0=bbox.y0, x1=bbox.x1, y1=bbox.y1)
+                rect = fitz.Rect(bbox.x0, bbox.y0, bbox.x1, bbox.y1)
                 page.draw_rect(
                     rect, bbox_with_color.color
                 )  # Use the color associated with this bbox
