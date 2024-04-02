@@ -1,0 +1,22 @@
+site_name: Open Parse
+theme:
+  name: material
+  features:
+    - content.code.copy
+
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+nav:
+  - Home: index.md
+  # - Parsing Text:
+  #     - Overview: parsing-text/overview.md
+  - Parsing Tables:
+      - Overview: parsing-tables/overview.md
+  - Visualization: visualization.md
