@@ -85,7 +85,7 @@ So for a working OCR functionality, make sure to complete this checklist:
 This repository provides an optional feature to parse content from tables using the state-of-the-art Table Transformer (DETR) model. The Table Transformer model, introduced in the paper "PubTables-1M: Towards Comprehensive Table Extraction From Unstructured Documents" by Smock et al., achieves best-in-class results for table extraction.
 
 ```console
-pip install "open-parse[ml]"
+pip install "openparse[ml]"
 ```
 
 ## Documentation
