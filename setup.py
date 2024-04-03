@@ -16,6 +16,7 @@ setup(
             "torch",
             "torchvision",
             "transformers",
+            "tokenizers",
         ],
     },
     author="Sergey Filimonov",
