@@ -29,6 +29,9 @@ def download_unitable_weights():
         "https://huggingface.co/poloclub/UniTable/resolve/main/unitable_large_structure.pt",
         "https://huggingface.co/poloclub/UniTable/resolve/main/unitable_large_bbox.pt",
         "https://huggingface.co/poloclub/UniTable/resolve/main/unitable_large_content.pt",
+        "https://sergey-filimonov.nyc3.digitaloceanspaces.com/open-parse/weights/vocab_bbox.json",  # need to move somewhere else
+        "https://sergey-filimonov.nyc3.digitaloceanspaces.com/open-parse/weights/vocab_cell_6k.json",  # need to move somewhere else
+        "https://sergey-filimonov.nyc3.digitaloceanspaces.com/open-parse/weights/vocab_html.json",  # need to move somewhere else
     ]
 
     for url in urls:
