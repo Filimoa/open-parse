@@ -32,4 +32,7 @@ build/
 trash.py
 .ruff_cache
 test-output.pdf
+notebooks/
+sample-docs/
+weights/
 

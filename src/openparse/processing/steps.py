@@ -23,13 +23,13 @@ class RemoveTextInsideTables(ProcessingStep):
         # Group all table bounding boxes by page
         tables_by_page = defaultdict(list)
         for node in nodes:
-            if node.variant == "table":
+            if node.variant == {"table"}:
                 for table_element in node.elements:
                     tables_by_page[table_element.page].append(table_element.bbox)
 
         updated_nodes = []
         for node in nodes:
-            if node.variant == "table":
+            if node.variant == {"table"}:
                 updated_nodes.append(node)
                 continue
 

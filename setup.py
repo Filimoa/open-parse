@@ -2,7 +2,12 @@ from setuptools import setup
 
 setup(
     name="openparse",
-    version="0.3.1",
+    version="0.4.0",
+    entry_points={
+        "console_scripts": [
+            "openparse-download= openparse.cli:download_unitable_weights",
+        ],
+    },
     install_requires=[
         "PyMuPDF >= 1.23.2",
         "pillow >= 8.3",

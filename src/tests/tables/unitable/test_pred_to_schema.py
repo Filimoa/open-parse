@@ -1,8 +1,6 @@
 from bs4 import BeautifulSoup
 from .sample_pred_outputs import sample_preds
 
-from openparse.tables.unitable.schemas import HTMLTable
-
 
 def get_table_structure(html_string):
     # Function to parse HTML and return a list of row cell counts
