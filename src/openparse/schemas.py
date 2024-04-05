@@ -2,14 +2,7 @@ import re
 from collections import defaultdict, namedtuple
 from enum import Enum
 from functools import cached_property
-from typing import (
-    Any,
-    List,
-    Literal,
-    Optional,
-    Tuple,
-    Union,
-)
+from typing import Any, List, Literal, Optional, Tuple, Union, Set
 
 from pydantic import BaseModel, ConfigDict, computed_field, model_validator, Field
 
@@ -370,16 +363,8 @@ class Node(BaseModel):
 
     @computed_field  # type: ignore
     @cached_property
-    def variant(self) -> Literal["text", "table", "mixed"]:
-        unique_variants = set(e.variant for e in self.elements)
-        if len(unique_variants) > 1:
-            return "mixed"
-        elif NodeVariant.TEXT in unique_variants:
-            return "text"
-        elif NodeVariant.TABLE in unique_variants:
-            return "table"
-        else:
-            raise ValueError("Unknown variant")
+    def variant(self) -> Set[Literal["text", "table"]]:
+        return set(e.variant.value for e in self.elements)
 
     @computed_field  # type: ignore
     @cached_property
@@ -445,7 +430,7 @@ class Node(BaseModel):
 
     @cached_property
     def is_heading(self) -> bool:
-        if self.variant != "text":
+        if self.variant != {"text"}:
             return False
         if not self.is_stub:
             return False
@@ -454,7 +439,7 @@ class Node(BaseModel):
 
     @cached_property
     def starts_with_heading(self) -> bool:
-        if not self.variant == "text":
+        if not self.variant == {"text"}:
             return False
         return self.elements[0].is_heading  # type: ignore
 

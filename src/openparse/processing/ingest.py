@@ -6,14 +6,12 @@ from openparse.schemas import Node
 
 def run_pipeline(
     nodes: List[Node],
-    pipeline: Optional[List[ProcessingStep]] = None,
+    pipeline: List[ProcessingStep],
     verbose: bool = False,
 ) -> List[Node]:
-    if not pipeline:
-        pipeline = default_pipeline
-
     for transform_func in pipeline:
         if verbose:
             print("Processing with", transform_func.__class__.__name__)
         nodes = transform_func.process(nodes)
+        nodes = sorted(nodes, key=lambda x: x.aggregate_position, reverse=True)
     return nodes

@@ -19,4 +19,7 @@ nav:
   #     - Overview: parsing-text/overview.md
   - Parsing Tables:
       - Overview: parsing-tables/overview.md
+      - Unitable: parsing-tables/unitable.md
+      - Pymupdf: parsing-tables/pymupdf.md
+      - Table Transformer: parsing-tables/table-transformers.md
   - Visualization: visualization.md
