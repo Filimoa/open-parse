@@ -50,7 +50,7 @@ Python 3.8+
 
 - <a href="https://github.com/pymupdf/PyMuPDF" class="external-link" target="_blank">PyMuPDF</a> has some table detection functionality. Please see their <a href="https://mupdf.com/licensing/index.html#commercial" class="external-link" target="_blank">license</a>.
 - <a href="https://huggingface.co/microsoft/table-transformer-detection" class="external-link" target="_blank">Table Transformer</a> is a deep learning approach.
-- <a href="https://github.com/poloclub/unitable" class="external-link" target="_blank">unitable</a> is a more recent deep learning approach that seems promising _(coming soon)_
+- <a href="https://github.com/poloclub/unitable" class="external-link" target="_blank">unitable</a> is another transformers based approach with **state-of-the-art** performance.
 
 ## Installation
 
@@ -90,6 +90,12 @@ This repository provides an optional feature to parse content from tables using 
 
 ```console
 pip install "openparse[ml]"
+```
+
+Then download the model weights with
+
+```console
+openparse-download
 ```
 
 ## Documentation
