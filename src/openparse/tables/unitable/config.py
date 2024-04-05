@@ -37,22 +37,27 @@ class UniTableConfig(BaseModel):
     bbox: BboxModelConfig = BboxModelConfig()
     content: ContentModelConfig = ContentModelConfig()
 
+    def validate_weight_files_exist(self):
+        weight_paths = [
+            self.structure.weights_path,
+            self.bbox.weights_path,
+            self.content.weights_path,
+            self.structure.vocab_path,
+            self.bbox.vocab_path,
+            self.content.vocab_path,
+        ]
 
-def validate_weight_files_exist(config: UniTableConfig):
-    weight_paths = [
-        config.structure.weights_path,
-        config.bbox.weights_path,
-        config.content.weights_path,
-    ]
+        missing_files = [path for path in weight_paths if not path.exists()]
 
-    missing_files = [path for path in weight_paths if not path.exists()]
+        if missing_files:
+            print("Error: The following weight files are missing:", file=sys.stderr)
+            for missing in missing_files:
+                print(f"- {missing}", file=sys.stderr)
 
-    if missing_files:
-        print("Error: The following weight files are missing:", file=sys.stderr)
-        for missing in missing_files:
-            print(f"- {missing}", file=sys.stderr)
-        sys.exit(1)
+            raise RuntimeError(
+                "Missing weights files. Have you ran `openparse-download` to download the weights?"
+            )
 
 
 config = UniTableConfig()
-validate_weight_files_exist(config)
+config.validate_weight_files_exist()

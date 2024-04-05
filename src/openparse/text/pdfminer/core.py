@@ -1,4 +1,4 @@
-from typing import Any, Iterable, List, Union
+from typing import Any, Iterable, List, Union, Tuple
 
 from pdfminer.layout import LTChar, LTTextContainer, LTTextLine
 from pydantic import BaseModel, model_validator
@@ -87,7 +87,7 @@ def _create_line_element(text_line: LTTextLine) -> LineElement:
     return LineElement(bbox=bbox, spans=tuple(spans))
 
 
-def _get_bbox(lines: List[LineElement]) -> tuple[float, float, float, float]:
+def _get_bbox(lines: List[LineElement]) -> Tuple[float, float, float, float]:
     """Get the bounding box of a list of LineElements."""
     x0 = min(line.bbox[0] for line in lines)
     y0 = min(line.bbox[1] for line in lines)

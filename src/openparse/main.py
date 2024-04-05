@@ -69,7 +69,7 @@ class DocumentParser:
 
     def parse(
         self,
-        file: str | Path,
+        file: Union[str, Path],
     ) -> ParsedDocument:
         doc = Pdf(file)
 

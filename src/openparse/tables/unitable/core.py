@@ -76,8 +76,8 @@ def _autoregressive_decode(
     prefix: Sequence[int],
     max_decode_len: int,
     eos_id: int,
-    token_whitelist: Optional[list[int]] = None,
-    token_blacklist: Optional[list[int]] = None,
+    token_whitelist: Optional[List[int]] = None,
+    token_blacklist: Optional[List[int]] = None,
 ) -> Tensor:
     model.eval()
     with torch.no_grad():
@@ -109,7 +109,7 @@ def _autoregressive_decode(
     return context
 
 
-def predict_html(image_tensor: Tensor) -> list[str]:
+def predict_html(image_tensor: Tensor) -> List[str]:
     """
     Predict HTML structure from the input image
 
@@ -132,7 +132,7 @@ def predict_html(image_tensor: Tensor) -> list[str]:
     return token_list
 
 
-def predict_bboxes(image_tensor: Tensor, image_size: Size) -> list[BBox]:
+def predict_bboxes(image_tensor: Tensor, image_size: Size) -> List[BBox]:
     pred_tensor = _autoregressive_decode(
         model=bbox_model,
         image=image_tensor,
@@ -153,7 +153,7 @@ def predict_bboxes(image_tensor: Tensor, image_size: Size) -> list[BBox]:
 
 
 def predict_cells(
-    image_tensor: Tensor, pred_bboxes: list[Tuple[int, int, int, int]], image: Image
+    image_tensor: Tensor, pred_bboxes: List[Tuple[int, int, int, int]], image: Image
 ):
     # Cell image cropping and transformation
     image_tensor_lst = [
