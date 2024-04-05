@@ -8,24 +8,30 @@ from torchvision import transforms  # type: ignore
 from transformers import (
     AutoModelForObjectDetection,  # type: ignore
     TableTransformerForObjectDetection,  # type: ignore
-)
+)  # type: ignore
 
 from ..schemas import (
     BBox,
     Size,
+)
+from ..utils import (
+    display_cells_on_img,
+    crop_img_with_padding,
+    convert_croppped_cords_to_full_img_cords,
+    convert_img_cords_to_pdf_cords,
+)
+from .geometry import (
+    calc_bbox_intersection,
+)
+from .schemas import (
+    _TableCellModelOutput,
+    _TableModelOutput,
     _Table,
     _TableDataCell,
     _TableHeader,
     _TableHeaderCell,
     _TableRow,
 )
-from ..utils import display_cells_on_img, crop_img_with_padding
-from .geometry import (
-    calc_bbox_intersection,
-    convert_croppped_cords_to_full_img_cords,
-    convert_img_cords_to_pdf_cords,
-)
-from .schemas import _TableCellModelOutput, _TableModelOutput
 
 t0 = time.time()
 
@@ -316,13 +322,13 @@ def _is_overlapping_with_headers(
 
 def get_table_content(
     page_dims: Size,
-    img: Image.Image,
+    page_img: Image.Image,
     table_bbox: BBox,
     min_cell_confidence: float,
     verbose: bool = False,
 ) -> _Table:
     OFFSET = 0.05
-    table_img = crop_img_with_padding(img, table_bbox, padding_pct=OFFSET)
+    table_img = crop_img_with_padding(page_img, table_bbox, padding_pct=OFFSET)
     structure_id2label = {
         **structure_model.config.id2label,
         len(structure_model.config.id2label): "no object",
@@ -338,13 +344,15 @@ def get_table_content(
         cell.bbox = convert_croppped_cords_to_full_img_cords(
             padding_pct=OFFSET,
             cropped_image_size=table_img.size,
-            detection_bbox=cell.bbox,
+            table_bbox=cell.bbox,
             bbox=table_bbox,
         )
 
     if verbose:
-        display_cells_on_img(img, cells, "all", min_cell_confidence=min_cell_confidence)
+        display_cells_on_img(
+            page_img, cells, "all", min_cell_confidence=min_cell_confidence
+        )
 
     return table_from_model_outputs(
-        img, page_dims, table_bbox, cells, min_cell_confidence
+        page_img, page_dims, table_bbox, cells, min_cell_confidence
     )

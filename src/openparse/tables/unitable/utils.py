@@ -1,11 +1,10 @@
 from typing import List, Optional, Tuple
 import tokenizers as tk  # type: ignore
 import torch
-from torch import Tensor, nn
+from torch import Tensor
 import torch.nn.functional as F
 
 from .tokens import TASK_TOKENS
-
 
 html_table_template = (
     lambda table: f"""<html>
@@ -96,6 +95,9 @@ def html_str_to_token_list(
 
 
 def cell_str_to_token_list(seq: str) -> List[str]:
+    """
+    Used for cell content detection
+    """
     seq = seq.split("<eos>")[0]
 
     token_black_list = ["<eos>", "<pad>", *TASK_TOKENS]
@@ -110,19 +112,19 @@ def cell_str_to_token_list(seq: str) -> List[str]:
 def build_table_from_html_and_cell(
     structure: List[str], content: Optional[List[str]] = None
 ) -> List[str]:
-    """Build table from html and cell token list"""
     assert structure is not None
     html_code = list()
 
-    # deal with empty table
     if content is None:
-        content = ["placeholder"] * len(structure)
+        content_copy = ["placeholder"] * len(structure)
+    else:
+        content_copy = content.copy()
 
     for tag in structure:
         if tag in ("<td>[]</td>", ">[]</td>"):
-            if len(content) == 0:
+            if len(content_copy) == 0:
                 continue
-            cell = content.pop(0)
+            cell = content_copy.pop(0)
             html_code.append(tag.replace("[]", cell))
         else:
             html_code.append(tag)

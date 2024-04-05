@@ -1,3 +1,3 @@
-from .parse import PyMuPDFArgs, TableTransformersArgs, ingest
+from .parse import PyMuPDFArgs, TableTransformersArgs, UnitableArgs, ingest
 
-__all__ = ["ingest", "TableTransformersArgs", "PyMuPDFArgs"]
+__all__ = ["ingest", "TableTransformersArgs", "PyMuPDFArgs", "UnitableArgs"]

@@ -1,8 +1,8 @@
 from typing import Tuple, List, Sequence, Optional, Union
 import re
-import torch  # type: ignore
-from PIL import Image  # type: ignore
 
+from PIL import Image  # type: ignore
+import torch  # type: ignore
 from torchvision import transforms  # type: ignore
 from torch import nn, Tensor  # type: ignore
 
@@ -12,11 +12,11 @@ from .utils import (
     subsequent_mask,
     pred_token_within_range,
     greedy_sampling,
-    cell_str_to_token_list,
     html_str_to_token_list,
-    build_table_from_html_and_cell,
-    html_table_template,
     bbox_str_to_token_list,
+    cell_str_to_token_list,  # cell-content-detection
+    build_table_from_html_and_cell,  # cell-content-detection
+    html_table_template,  # cell-content-detection
 )
 from .unitable_model import (
     structure_vocab,
@@ -27,7 +27,6 @@ from .unitable_model import (
     cell_model,
     EncoderDecoder,
 )
-
 
 Size = Tuple[int, int]
 BBox = Tuple[int, int, int, int]
@@ -148,23 +147,24 @@ def predict_bboxes(image_tensor: Tensor, image_size: Size) -> list[BBox]:
     pred_tensor = pred_tensor.detach().cpu().numpy()[0]
     token_str = bbox_vocab.decode(pred_tensor, skip_special_tokens=False)
 
-    # Visualize detected bbox
     bbox_list = bbox_str_to_token_list(token_str)
     pred_bbox = _rescale_bbox(bbox_list, src=(448, 448), tgt=image_size)
     return pred_bbox
 
 
-def predict_cells(image_tensor: Tensor, pred_bbox: list[str], image: Image):
+def predict_cells(
+    image_tensor: Tensor, pred_bboxes: list[Tuple[int, int, int, int]], image: Image
+):
     # Cell image cropping and transformation
-    image_tensor = [
-        _image_to_tensor(image.crop(bbox), size=(112, 448)) for bbox in pred_bbox
+    image_tensor_lst = [
+        _image_to_tensor(image.crop(bbox), size=(112, 448)) for bbox in pred_bboxes
     ]
-    image_tensor = torch.cat(image_tensor, dim=0)
+    image_tensor_batch = torch.cat(image_tensor_lst, dim=0)
 
     # Inference
     pred_cell = _autoregressive_decode(
         model=cell_model,
-        image=image_tensor,
+        image=image_tensor_batch,
         prefix=[cell_vocab.token_to_id("[cell]")],
         max_decode_len=200,
         eos_id=cell_vocab.token_to_id("<eos>"),
@@ -175,18 +175,24 @@ def predict_cells(image_tensor: Tensor, pred_bbox: list[str], image: Image):
     # Convert token id to token text
     pred_cell = pred_cell.detach().cpu().numpy()
     pred_cell = cell_vocab.decode_batch(pred_cell, skip_special_tokens=False)
-    pred_cell = [cell_str_to_token_list(i) for i in pred_cell]
-    pred_cell = [re.sub(r"(\d).\s+(\d)", r"\1.\2", i) for i in pred_cell]
-    return pred_cell
+    token_list = [cell_str_to_token_list(i) for i in pred_cell]
+    clean_token_list = [re.sub(r"(\d).\s+(\d)", r"\1.\2", i) for i in token_list]
+    return clean_token_list
 
 
-def img_to_html(image: Image) -> str:
-    image_tensor = _image_to_tensor(image, size=(448, 448))
+def table_img_to_html(table_image: Image) -> str:
+    """
+    Note this expects the image to already be cropped to the table
+    """
+    table_image = table_image.convert("RGB")
+    image_tensor = _image_to_tensor(table_image, size=(448, 448))
+
     pred_html = predict_html(image_tensor)
-    pred_bbox = predict_bboxes(image_tensor)
-    pred_cell = predict_cells(image_tensor, pred_bbox)
+    pred_bbox = predict_bboxes(image_tensor, image_size=table_image.size)
+    pred_cell_lst = predict_cells(image_tensor, pred_bbox, table_image)
 
-    pred_code = build_table_from_html_and_cell(pred_html, pred_cell)
-    pred_code = "".join(pred_code)
-    pred_code = html_table_template(pred_code)
-    return pred_code
+    table_str_lst = build_table_from_html_and_cell(pred_html, pred_cell_lst)
+    table_str = "".join(table_str_lst)
+    table_str = html_table_template(table_str)
+
+    return table_str

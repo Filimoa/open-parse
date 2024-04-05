@@ -38,29 +38,28 @@ class RemoveTextInsideTables(ProcessingStep):
                 for element in node.elements
                 if not (
                     isinstance(element, TextElement)
-                    and self.is_inside_any_table(
+                    and self.intersects_any_table(
                         element.bbox, tables_by_page[element.page]
                     )
                 )
             ]
-
             if new_elements:
                 updated_nodes.append(Node(elements=tuple(new_elements)))
 
         return updated_nodes
 
-    def is_inside_any_table(self, text_bbox: Bbox, table_bboxes: List[Bbox]) -> bool:
+    def intersects_any_table(self, text_bbox: Bbox, table_bboxes: List[Bbox]) -> bool:
         return any(
-            self.is_contained(text_bbox, table_bbox) for table_bbox in table_bboxes
+            self.intersects(text_bbox, table_bbox) for table_bbox in table_bboxes
         )
 
     @staticmethod
-    def is_contained(text_bbox: Bbox, table_bbox: Bbox) -> bool:
+    def intersects(text_bbox: Bbox, table_bbox: Bbox) -> bool:
         return (
-            text_bbox.x0 >= table_bbox.x0
-            and text_bbox.x1 <= table_bbox.x1
-            and text_bbox.y0 >= table_bbox.y0
-            and text_bbox.y1 <= table_bbox.y1
+            text_bbox.x1 > table_bbox.x0
+            and text_bbox.x0 < table_bbox.x1
+            and text_bbox.y1 > table_bbox.y0
+            and text_bbox.y0 < table_bbox.y1
         )
 
 

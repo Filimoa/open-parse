@@ -3,20 +3,27 @@ from typing import List, Literal, Optional, TypedDict, Union
 
 from openparse import tables, text, consts
 from openparse.pdf import Pdf
+from openparse.types import NOT_GIVEN, NotGiven
 from openparse.processing import ProcessingStep, default_pipeline, run_pipeline
 from openparse.schemas import Node, TableElement, TextElement, ParsedDocument
+
+
+class UnitableArgsDict(TypedDict, total=False):
+    parsing_algorithm: Literal["unitable"]
+    min_table_confidence: float
+    table_output_format: Literal["html"]
 
 
 class TableTransformersArgsDict(TypedDict, total=False):
     parsing_algorithm: Literal["table-transformers"]
     min_table_confidence: float
     min_cell_confidence: float
-    table_output_format: Literal["str", "markdown", "html"]
+    table_output_format: Literal["markdown", "html"]
 
 
 class PyMuPDFArgsDict(TypedDict, total=False):
     parsing_algorithm: Literal["pymupdf"]
-    table_output_format: Literal["str", "markdown", "html"]
+    table_output_format: Literal["markdown", "html"]
 
 
 def _table_args_dict_to_model(
@@ -26,6 +33,8 @@ def _table_args_dict_to_model(
         return tables.TableTransformersArgs(**args_dict)
     elif args_dict["parsing_algorithm"] == "pymupdf":
         return tables.PyMuPDFArgs(**args_dict)
+    elif args_dict["parsing_algorithm"] == "unitable":
+        return tables.UnitableArgs(**args_dict)
     else:
         raise ValueError(
             f"Unsupported parsing_algorithm: {args_dict['parsing_algorithm']}"
@@ -46,10 +55,15 @@ class DocumentParser:
     def __init__(
         self,
         *,
-        processing_pipeline: Optional[List[ProcessingStep]] = None,
-        table_args: Union[TableTransformersArgsDict, PyMuPDFArgsDict, None] = None,
+        processing_pipeline: Union[List[ProcessingStep], NotGiven] = NOT_GIVEN,
+        table_args: Union[
+            TableTransformersArgsDict, PyMuPDFArgsDict, NotGiven
+        ] = NOT_GIVEN,
     ):
-        self.processing_pipeline = processing_pipeline or default_pipeline
+        if processing_pipeline is NOT_GIVEN:
+            self.processing_pipeline = default_pipeline
+        else:
+            self.processing_pipeline = processing_pipeline or []
 
         self.table_args = table_args
 

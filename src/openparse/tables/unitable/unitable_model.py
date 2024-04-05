@@ -5,7 +5,6 @@ import tokenizers as tk  # type: ignore
 import warnings
 
 from torch import nn
-from torch import Tensor
 from functools import partial
 
 from .config import device, config
@@ -15,7 +14,6 @@ from .tabular_transformer import (
     Encoder,
     Decoder,
 )
-
 
 warnings.filterwarnings("ignore")
 
@@ -81,6 +79,5 @@ cell_vocab, cell_model = load_vocab_and_model(
     max_seq_len=config.content.max_seq_len,
     model_weights=config.content.weights_path,
 )
-
 
 print("Finished loading models. Ready for inference.")
