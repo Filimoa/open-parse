@@ -41,7 +41,6 @@ https://sergey-filimonov.nyc3.digitaloceanspaces.com/open-parse/unitable-parsing
 - **📊 High-Precision Table Support:** Extract tables into clean Markdown formats with accuracy that surpasses traditional tools.
     <details>
   <summary><i>Examples</i></summary>
-        <br/>
   The following examples were parsed with unitable.
     <br/>
     <p align="center">
