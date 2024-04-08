@@ -32,11 +32,25 @@ Open Parse is designed to fill this gap by providing a flexible, easy-to-use lib
 
 </details>
 
+https://sergey-filimonov.nyc3.digitaloceanspaces.com/open-parse/unitable-parsing-sample.webp
+
 ## Highlights
 
 - **🔍 Visually-Driven:** Open-Parse visually analyzes documents for superior LLM input, going beyond naive text splitting.
 - **✍️ Markdown Support:** Basic markdown support for parsing headings, bold and italics.
 - **📊 High-Precision Table Support:** Extract tables into clean Markdown formats with accuracy that surpasses traditional tools.
+    <details>
+  <summary><i>Examples</i></summary>
+        <br/>
+  The following examples were parsed with unitable.
+    <br/>
+    <p align="center">
+        <br/>
+        <img src="https://sergey-filimonov.nyc3.digitaloceanspaces.com/open-parse/unitable-parsing-sample.webp" width="650"/>
+    </p>
+         <br/>
+    </details>
+
 - **🛠️ Extensible:** Easily implement your own post-processing steps.
 - **💡Intuitive:** Great editor support. Completion everywhere. Less time debugging.
 - **🎯 Easy:** Designed to be easy to use and learn. Less time reading docs.
