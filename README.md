@@ -9,7 +9,30 @@ Chunking documents is a challenging task that underpins any RAG system.  High qu
 
 Open Parse is designed to fill this gap by providing a flexible, easy-to-use library capable of visually discerning document layouts and chunking them effectively.
 
-### Highlights
+<details>
+  <summary><b>How is this different from other layout parsers?</b></summary>
+
+  #### ✂️ Text Splitting
+  Text splitting converts a file to raw text and [slices it up](https://docs.llamaindex.ai/en/stable/api_reference/node_parsers/token_text_splitter/).
+  
+  - You lose the ability to easily overlay the chunk on the original pdf
+  - You ignore the underlying semantic structure of the file - headings, sections, bullets represent valuable information.
+  - No support for tables, images or markdown.
+  
+  #### 🤖 ML Layout Parsers
+  There's some of fantastic libraries like [layout-parser](https://github.com/Layout-Parser/layout-parser). 
+  - While they can identify various elements like text blocks, images, and tables, but they are not built to group related content effectively.
+  - They strictly focus on layout parsing - you will need to add another model to extract markdown from the images, parse tables, group nodes, etc.
+  - We've found performance to be sub-optimal on many documents while also being computationally heavy.
+
+  #### 💼 Commercial Solutions
+
+  - Typically priced at ≈ $10 / 1k pages. See [here](https://cloud.google.com/document-ai), [here](https://aws.amazon.com/textract/) and [here](https://www.reducto.ai/).
+  - Requires sharing your data with a vendor
+
+</details>
+
+## Highlights
 
 - **🔍 Visually-Driven:** Open-Parse visually analyzes documents for superior LLM input, going beyond naive text splitting.
 - **✍️ Markdown Support:** Basic markdown support for parsing headings, bold and italics.
