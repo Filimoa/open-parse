@@ -95,6 +95,12 @@ parsed_content = parser.parse(basic_doc_path)
 
 **📓 Sample notebook** <a href="https://github.com/Filimoa/open-parse/blob/main/src/cookbooks/semantic_processing.ipynb" class="external-link" target="_blank">here</a>
 
+#### Serializing Results
+Uses pydantic under the hood so you can serialize results with 
+
+```python
+parsed_content.model_dump()
+```
 
 ## Requirements
 
