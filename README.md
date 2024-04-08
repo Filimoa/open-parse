@@ -159,6 +159,10 @@ Then download the model weights with
 openparse-download
 ```
 
+## Cookbooks
+
+https://github.com/Filimoa/open-parse/tree/main/src/cookbooks
+
 ## Documentation
 
 https://filimoa.github.io/open-parse/
