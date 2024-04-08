@@ -24,5 +24,7 @@ nav:
       - Table Transformer: parsing-tables/table-transformers.md
   - Processing:
       - Overview: processing/overview.md
-      - Customization (Advanced): processing/customization.md
+      - Advanced:
+          - Customization: processing/customization.md
+  - Serializing Results: serialization.md
   - Visualization: visualization.md
