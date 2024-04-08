@@ -1,4 +1,4 @@
-Unitable is a deep learning approach to table detection and extraction.  **It achieves state-of-the-art (SOTA) performance on four of the largest TR datasets.** If table accuracy is your primary concern, this is the method to use.
+Unitable is a deep learning approach to table detection and extraction.  It achieves **state-of-the-art (SOTA) performance on four of the largest TR datasets.** If table accuracy is your primary concern, this is the method to use.
 
 Full credit goes to [ShengYun (Anthony) Peng](https://github.com/ShengYun-Peng) and his team for open sourcing their research in a reproducible manner. You can find the original repository with full training code [here](https://github.com/poloclub/unitable). We choose to directly use a small subset of their package along with their pre-trained weights.
 

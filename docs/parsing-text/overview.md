@@ -1,8 +1,6 @@
-Text processing is how we extract textual elements from within a doc and convert it to Markdown. The output are Nodes that represent distinct parts of the layout - like a heading or paragraph. There's two options for text processing: `pymupdf` and `table-transformers`.
+Text processing is how we extract textual elements from within a doc and convert it to Markdown. The output are Nodes that represent distinct parts of the layout - like a heading or paragraph. 
 
-Choosing between `PdfMiner` and `PyMuPDF` depends on the specific needs of your project:
-
-### 1. PdfMiner (default)
+### 1. Default Text Processing with PdfMiner
 Use PdfMiner if your documents are text-heavy, well-structured, and do not contain non-text elements that require OCR.
 
 ```python
@@ -10,18 +8,15 @@ parser = openparse.DocumentParser()
 parsed_doc = parser.parse(doc_path)
 ```
 
-### 2. PyMuPDF
-Opt for PyMuPDF if you are working with mixed content documents, especially if they include scanned images or require text extraction from visual elements.
+### 2. Optionally OCR with PyMuPDF
+If your documents are scanned images or contain non-text elements, you may need to use OCR to extract text. PyMuPDF handles this, see their license [here](https://mupdf.com/licensing/index.html#commercial).
 
-**Note:** PyMuPDF is more computationally expensive than PdfMiner and may require additional setup for OCR support.  It also has a more restrictive [license](https://mupdf.com/licensing/index.html#commercial).
+!!! warning "Use with caution"
+    This method is not recommended as a default due to the additional computational cost and inherent inaccuracies of OCR.
 
 
 ```python hl_lines="2-4"
-parser = openparse.DocumentParser(
-    text_args={
-        "parsing_algorithm": "pymupdf"
-    }
-)
-parsed_doc = parser.parse(doc_path)
+parser = openparse.DocumentParser()
+parsed_doc = parser.parse(doc_path, ocr=True)
 ```
 

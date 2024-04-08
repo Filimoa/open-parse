@@ -4,10 +4,10 @@ from openparse.processing import (
     RemoveTextInsideTables,
     RemoveRepeatedElements,
     RemoveFullPageStubs,
-    RemoveStubs,
     CombineNodesSpatially,
     CombineBullets,
     CombineHeadingsWithClosestText,
+    RemoveNodesBelowNTokens,
 )
 from openparse import consts
 from openparse.schemas import (
@@ -207,10 +207,10 @@ def test_remove_repeated_elements():
     ), "Nodes with repeated text above the threshold were not correctly removed."
 
 
-### RemoveStubs tests ###
+### RemoveNodesBelowNTokens tests ###
 
 
-def test_remove_stubs():
+def test_RemoveNodesBelowNTokens():
     sample_bbox = {"x0": 0, "y0": 0, "x1": 10, "y1": 10}
 
     nodes = [
@@ -221,7 +221,7 @@ def test_remove_stubs():
         create_text_node(text="Another unique text" * 100, **sample_bbox),
     ]
 
-    processor = RemoveStubs()
+    processor = RemoveNodesBelowNTokens(min_tokens=50)
     processed_nodes = processor.process(nodes)
 
     expected_texts = {

@@ -1,9 +1,8 @@
-from openparse.main import (
-    DocumentParser,
-    ProcessingStep,
-    default_pipeline,
-)
 from openparse.pdf import Pdf
+from openparse.doc_parser import (
+    DocumentParser,
+)
+from openparse import processing
 from openparse.schemas import (
     Bbox,
     LineElement,
@@ -15,13 +14,12 @@ from openparse.schemas import (
 
 __all__ = [
     "DocumentParser",
-    "ProcessingStep",
     "Pdf",
-    "Node",
-    "TextElement",
-    "TableElement",
     "Bbox",
-    "TextSpan",
     "LineElement",
-    "default_pipeline",
+    "Node",
+    "TableElement",
+    "TextElement",
+    "TextSpan",
+    "processing",
 ]

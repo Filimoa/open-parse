@@ -1,11 +1,18 @@
 from pathlib import Path
-from typing import List, Literal, Optional, TypedDict, Union
+from typing import List, Literal, Optional, TypedDict, Union, TypeVar
 
 from openparse import tables, text, consts
 from openparse.pdf import Pdf
 from openparse.types import NOT_GIVEN, NotGiven
-from openparse.processing import ProcessingStep, default_pipeline, run_pipeline
+from openparse.processing import (
+    IngestionPipeline,
+    BasicIngestionPipeline,
+    NoOpIngestionPipeline,
+)
 from openparse.schemas import Node, TableElement, TextElement, ParsedDocument
+
+
+IngestionPipelineType = TypeVar("IngestionPipelineType", bound=IngestionPipeline)
 
 
 class UnitableArgsDict(TypedDict, total=False):
@@ -46,7 +53,7 @@ class DocumentParser:
     A parser for extracting elements from PDF documents, including text and tables.
 
     Attributes:
-        processing_pipeline (Optional[List[ProcessingStep]]): A list of steps to process the extracted elements.
+        processing_pipeline (Optional[IngestionPipelineType]): A subclass of IngestionPipeline to process extracted elements.
         table_args (Optional[Union[TableTransformersArgsDict, PyMuPDFArgsDict]]): Arguments to customize table parsing.
     """
 
@@ -55,25 +62,41 @@ class DocumentParser:
     def __init__(
         self,
         *,
-        processing_pipeline: Union[List[ProcessingStep], NotGiven] = NOT_GIVEN,
+        processing_pipeline: Union[IngestionPipeline, NotGiven, None] = NOT_GIVEN,
         table_args: Union[
             TableTransformersArgsDict, PyMuPDFArgsDict, NotGiven
         ] = NOT_GIVEN,
     ):
+        self.processing_pipeline: IngestionPipeline
         if processing_pipeline is NOT_GIVEN:
-            self.processing_pipeline = default_pipeline
+            self.processing_pipeline = BasicIngestionPipeline()
+        elif processing_pipeline is None:
+            self.processing_pipeline = NoOpIngestionPipeline()
         else:
-            self.processing_pipeline = processing_pipeline or []
+            self.processing_pipeline = processing_pipeline  # type: ignore
+
+        self.processing_pipeline.verbose = self._verbose
 
         self.table_args = table_args
 
     def parse(
         self,
         file: Union[str, Path],
+        ocr: bool = False,
     ) -> ParsedDocument:
+        """
+        Parse a given document.
+
+        Args:
+            file (Union[str, Path]): The path to the PDF file.
+            ocr (bool): Whether to use OCR for text extraction. Not recommended unless necessary - inherently slower and less accurate. Note uses PyMuPDF for OCR.
+        """
         doc = Pdf(file)
 
-        text_elems = text.ingest(doc)
+        text_engine: Literal["pdfminer", "pymupdf"] = (
+            "pdfminer" if not ocr else "pymupdf"
+        )
+        text_elems = text.ingest(doc, parsing_method=text_engine)
         text_nodes = self._elems_to_nodes(text_elems)
 
         table_nodes = []
@@ -84,12 +107,10 @@ class DocumentParser:
             table_nodes = self._elems_to_nodes(table_elems)
 
         nodes = text_nodes + table_nodes
-        processed_nodes = run_pipeline(
-            nodes, self.processing_pipeline, verbose=self._verbose
-        )
+        nodes = self.processing_pipeline.run(nodes)
 
         parsed_doc = ParsedDocument(
-            nodes=processed_nodes,
+            nodes=nodes,
             filename=Path(file).name,
             num_pages=doc.num_pages,
             coordinate_system=consts.COORDINATE_SYSTEM,

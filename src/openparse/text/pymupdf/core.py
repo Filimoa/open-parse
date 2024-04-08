@@ -80,13 +80,17 @@ def ingest(
 
             lines = _lines_from_ocr_output(node["lines"])
 
+            # Flip y-coordinates to match the top-left origin system
+            fy0 = page.rect.height - node["bbox"][3]
+            fy1 = page.rect.height - node["bbox"][1]
+
             elements.append(
                 TextElement(
                     bbox=Bbox(
                         x0=node["bbox"][0],
-                        y0=node["bbox"][1],
+                        y0=fy0,
                         x1=node["bbox"][2],
-                        y1=node["bbox"][3],
+                        y1=fy1,
                         page=page_num,
                         page_width=page.rect.width,
                         page_height=page.rect.height,

@@ -15,6 +15,8 @@ setup(
         "pypdf >= 4.0.0",
         "pdfminer.six >= 20200401",
         "tiktoken >= 0.3",
+        "openai >= 1.0.0",
+        "numpy",
     ],
     extras_require={
         "ml": [

@@ -15,11 +15,14 @@ markdown_extensions:
   - pymdownx.superfences
 nav:
   - Home: index.md
-  # - Parsing Text:
-  #     - Overview: parsing-text/overview.md
+  - Parsing Text:
+      - Overview: parsing-text/overview.md
   - Parsing Tables:
       - Overview: parsing-tables/overview.md
       - Unitable: parsing-tables/unitable.md
       - Pymupdf: parsing-tables/pymupdf.md
       - Table Transformer: parsing-tables/table-transformers.md
+  - Processing:
+      - Overview: processing/overview.md
+      - Customization (Advanced): processing/customization.md
   - Visualization: visualization.md

@@ -1,7 +1,7 @@
 import random
 import tempfile
 from pathlib import Path
-from typing import Iterator, List, Literal, Optional, Union, Tuple
+from typing import Iterator, List, Literal, Optional, Union, Tuple, Any
 from pydantic import BaseModel
 
 from pdfminer.high_level import extract_pages
@@ -15,6 +15,7 @@ from openparse import consts
 class _BboxWithColor(BaseModel):
     color: Tuple[float, float, float]
     bbox: Bbox
+    annotation_text: Optional[Any] = None
 
 
 def _random_color() -> Tuple[float, float, float]:
@@ -26,20 +27,36 @@ def _random_color() -> Tuple[float, float, float]:
 
 
 def _prepare_bboxes_for_drawing(
-    bboxes: Union[List[Bbox], List[List[Bbox]]]
+    bboxes: Union[List[Bbox], List[List[Bbox]]], annotations: Optional[List[str]] = None
 ) -> List[_BboxWithColor]:
     res = []
+    assert (
+        len(bboxes) == len(annotations) if annotations else True
+    ), "Number of annotations must match the number of bboxes."
+
     for element in bboxes:
         color = _random_color()
+        text = annotations.pop(0) if annotations else None
         if isinstance(element, Bbox):
-            res.append(_BboxWithColor(color=color, bbox=element))
-        elif isinstance(element, list):
-            # Each Bbox in the sublist gets the same color
-            res.extend(
-                _BboxWithColor(color=color, bbox=bbox)
-                for bbox in element
-                if isinstance(bbox, Bbox)
+            res.append(
+                _BboxWithColor(
+                    color=color,
+                    bbox=element,
+                    annotation_text=text,
+                )
             )
+        elif isinstance(element, list):
+            sorted_bboxes = sorted(element, key=lambda x: x.page)
+            for bbox in sorted_bboxes:
+                res.append(
+                    _BboxWithColor(
+                        color=color,
+                        bbox=bbox,
+                        annotation_text=text,
+                    )
+                )
+
+                text = f"continued ..."
     return res
 
 
@@ -129,15 +146,24 @@ class Pdf:
                 page.draw_rect(
                     rect, bbox_with_color.color
                 )  # Use the color associated with this bbox
+
+                if bbox_with_color.annotation_text:
+                    page.insert_text(
+                        rect.top_left,
+                        str(bbox_with_color.annotation_text),
+                        fontsize=12,
+                    )
         return pdf
 
     def display_with_bboxes(
         self,
         nodes: List[Node],
         page_nums: Optional[List[int]] = None,
+        annotations: Optional[List[str]] = None,
     ):
         """
         Display a single page of a PDF file using IPython.
+        Optionally, display a piece of text on top of the bounding box.
         """
         try:
             from IPython.display import Image, display  # type: ignore
@@ -148,7 +174,7 @@ class Pdf:
         assert nodes, "At least one node is required."
 
         bboxes = [node.bbox for node in nodes]
-        flattened_bboxes = _prepare_bboxes_for_drawing(bboxes)
+        flattened_bboxes = _prepare_bboxes_for_drawing(bboxes, annotations)
         marked_up_doc = self._draw_bboxes(flattened_bboxes, nodes[0]._coordinates)
         if not page_nums:
             page_nums = list(range(marked_up_doc.page_count))
@@ -161,11 +187,12 @@ class Pdf:
         self,
         nodes: List[Node],
         output_pdf: Union[str, Path],
+        annotations: Optional[List[str]] = None,
     ) -> None:
         assert nodes, "At least one node is required."
 
         bboxes = [node.bbox for node in nodes]
-        flattened_bboxes = _prepare_bboxes_for_drawing(bboxes)
+        flattened_bboxes = _prepare_bboxes_for_drawing(bboxes, annotations)
         marked_up_doc = self._draw_bboxes(flattened_bboxes, nodes[0]._coordinates)
         marked_up_doc.save(str(output_pdf))
 

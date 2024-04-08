@@ -150,13 +150,16 @@ class RemoveRepeatedElements(ProcessingStep):
         ]
 
 
-class RemoveStubs(ProcessingStep):
+class RemoveNodesBelowNTokens(ProcessingStep):
     """
     This should be the last step in the pipeline. Stubs are typically small elements that are not useful for downstream processing.
     """
 
+    def __init__(self, min_tokens: int):
+        self.min_tokens = min_tokens
+
     def process(self, nodes: List[Node]) -> List[Node]:
-        return [node for node in nodes if not node.is_stub]
+        return [node for node in nodes if node.tokens >= self.min_tokens]
 
 
 class CombineNodesSpatially(ProcessingStep):
@@ -259,32 +262,3 @@ class CombineHeadingsWithClosestText(ProcessingStep):
             res.append(nodes[i])
 
         return res
-
-
-class AppendShortNodesToPrevNodeWithHeading(ProcessingStep):
-    """
-    Appends short nodes to the previous node if the previous node started with a heading.
-    """
-
-    def process(self, nodes: List[Node]) -> List[Node]:
-        raise NotImplementedError("Not yet implemented.")
-
-
-# optimzed for pdfminer
-default_pipeline = [
-    RemoveTextInsideTables(),
-    RemoveFullPageStubs(max_area_pct=0.35),
-    # mostly aimed at combining bullets and weird formatting
-    CombineNodesSpatially(x_error_margin=10, y_error_margin=4, criteria="both_small"),
-    CombineHeadingsWithClosestText(),
-    CombineBullets(),
-    CombineNodesSpatially(x_error_margin=0, y_error_margin=10, criteria="both_small"),
-    RemoveMetadataElements(),
-    CombineNodesSpatially(criteria="either_stub"),
-    RemoveRepeatedElements(threshold=2),
-    # # tried everything to combine, remove stubs that are still left
-    RemoveStubs(),
-    # # combines bullets split across pages
-    # # (previously page metdata would have prevented this)
-    CombineBullets(),
-]

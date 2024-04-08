@@ -13,7 +13,8 @@ bullet_regex = re.compile(
     r"^(\s*[\-•](?!\*)|\s*\*(?!\*)|\s*\d+\.\s|\s*\([a-zA-Z0-9]+\)\s|\s*[a-zA-Z]\.\s)"
 )
 
-AggregatePosition = namedtuple("AggregatePosition", ["min_page", "min_y0", "min_x0"])
+
+ReadingOrder = namedtuple("ReadingOrder", "min_page y_position min_x0")
 
 
 class NodeVariant(Enum):
@@ -482,15 +483,25 @@ class Node(BaseModel):
         return max(element.bbox.page for element in self.elements)
 
     @cached_property
-    def aggregate_position(self) -> AggregatePosition:
+    def reading_order(self) -> ReadingOrder:
         """
-        Calculate an aggregate position for the node based on its elements.
-        Returns a tuple of (min_page, min_y0, min_x0) to use as sort keys.
+        To sort nodes based on their reading order, we need to calculate an aggregate position for the node. This allows us to:
+
+        nodes = sorted(nodes, key=lambda x: x.reading_order)
+
+        Returns a tuple of (min_page, y_position, min_x0) to use as sort keys, where y_position is adjusted based on the coordinate system.
         """
         min_page = min(element.bbox.page for element in self.elements)
-        min_y0 = min(element.bbox.y0 for element in self.elements)
         min_x0 = min(element.bbox.x0 for element in self.elements)
-        return AggregatePosition(min_page, min_y0, min_x0)
+
+        if self._coordinates == "bottom-left":
+            y_position = -min(element.bbox.y0 for element in self.elements)
+        else:
+            raise NotImplementedError(
+                "Only 'bottom-left' coordinate system is supported."
+            )
+
+        return ReadingOrder(min_page=min_page, y_position=y_position, min_x0=min_x0)
 
     def overlaps(
         self, other: "Node", x_error_margin: float = 0.0, y_error_margin: float = 0.0
@@ -515,6 +526,14 @@ class Node(BaseModel):
                     return True
 
         return False
+
+    def __lt__(self, other: "Node") -> bool:
+        if not isinstance(other, Node):
+            return NotImplemented
+
+        assert self._coordinates == other._coordinates, "Coordinate systems must match."
+
+        return self.reading_order < other.reading_order
 
     def _repr_markdown_(self):
         """
