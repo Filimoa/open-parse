@@ -62,6 +62,8 @@ https://sergey-filimonov.nyc3.digitaloceanspaces.com/open-parse/unitable-parsing
 
 ## Example
 
+#### Basic Example
+
 ```python
 import openparse
 
@@ -74,6 +76,28 @@ for node in parsed_basic_doc.nodes:
 ```
 
 **📓 Try the sample notebook** <a href="https://colab.research.google.com/drive/1Z5B5gsnmhFKEFL-5yYIcoox7-jQao8Ep?usp=sharing" class="external-link" target="_blank">here</a>
+
+#### Semantic Processing Example
+
+Chunking documents is fundamentally about grouping similar semantic nodes together. By embedding the text of each node, we can then cluster them together based on their similarity.
+
+```python
+from openparse import processing, DocumentParser
+
+semantic_pipeline = processing.SemanticIngestionPipeline(
+    openai_api_key=OPEN_AI_KEY,
+    model="text-embedding-3-large",
+    min_tokens=64,
+    max_tokens=1024,
+)
+parser = DocumentParser(
+    processing_pipeline=semantic_pipeline,
+)
+parsed_content = parser.parse(basic_doc_path)
+```
+
+**📓 Sample notebook** <a href="https://github.com/Filimoa/open-parse/blob/main/src/cookbooks/semantic_processing.ipynb" class="external-link" target="_blank">here</a>
+
 
 ## Requirements
 
