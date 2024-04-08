@@ -27,6 +27,7 @@ archive.zip
 .DS_Store
 build/
 .venv/
+.venv-dev/
 
 # misc
 trash.py

@@ -1,0 +1,12 @@
+PyMuPDF>=1.23.2
+pillow>=8.3
+pydantic>=2.0
+pypdf>=4.0.0
+pdfminer.six>=20200401
+tiktoken>=0.3
+openai>=1.0.0
+numpy
+torch
+transformers
+torchvision
+torchtext

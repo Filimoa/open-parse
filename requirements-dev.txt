@@ -1,0 +1,12 @@
+-r requirements.txt
+pytest
+ruff
+mypy 
+mypy-extensions
+python-dotenv
+beautifulsoup4
+twine
+packaging
+wheel
+mkdocs-material
+mkdocs-material-extensions
