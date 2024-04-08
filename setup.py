@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="openparse",
-    version="0.4.1",
+    version="0.5.0",
     entry_points={
         "console_scripts": [
             "openparse-download= openparse.cli:download_unitable_weights",
