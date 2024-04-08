@@ -1,4 +1,4 @@
-from typing import List, Literal, Dict
+from typing import List, Literal, Dict, Union
 
 import numpy as np
 
@@ -11,7 +11,7 @@ EmbeddingModel = Literal[
 
 
 def cosine_similarity(
-    a: np.ndarray | list[float], b: np.ndarray | list[float]
+    a: Union[np.ndarray, List[float]], b: Union[np.ndarray, List[float]]
 ) -> float:
     return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
@@ -36,7 +36,7 @@ class OpenAIEmbeddings:
         self.batch_size = batch_size
         self.client = self._create_client()
 
-    def embed_many(self, texts: list[str]) -> List[List[float]]:
+    def embed_many(self, texts: List[str]) -> List[List[float]]:
         """
         Generate embeddings for a list of texts in batches.
 
@@ -111,7 +111,7 @@ class CombineNodesSemantically(ProcessingStep):
 
         return nodes
 
-    def _get_node_similarities(self, nodes: list[Node]) -> list[float]:
+    def _get_node_similarities(self, nodes: List[Node]) -> List[float]:
         """
         Get the similarity of each node with the node that precedes it
         """
