@@ -99,7 +99,9 @@ parsed_content = parser.parse(basic_doc_path)
 Uses pydantic under the hood so you can serialize results with 
 
 ```python
-parsed_content.model_dump()
+parsed_content.dict()
+# or
+parsed_content.json()
 ```
 
 ## Requirements
