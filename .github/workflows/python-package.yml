@@ -20,6 +20,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+      with:
+        lfs: true  # Automatically downloads LFS files
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
       with:
@@ -32,7 +34,3 @@ jobs:
     - name: Test with pytest
       run: |
         pytest
-    - name: Publish package
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        password: ${{ secrets.PYPI_API_TOKEN }}
