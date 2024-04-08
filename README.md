@@ -150,7 +150,7 @@ So for a working OCR functionality, make sure to complete this checklist:
 
 #### 2. ML Table Detection (Optional)
 
-This repository provides an optional feature to parse content from tables using the state-of-the-art Table Transformer (DETR) model. The Table Transformer model, introduced in the paper "PubTables-1M: Towards Comprehensive Table Extraction From Unstructured Documents" by Smock et al., achieves best-in-class results for table extraction.
+This repository provides an optional feature to parse content from tables using a variety of deep learning models.
 
 ```console
 pip install "openparse[ml]"
@@ -161,6 +161,20 @@ Then download the model weights with
 ```console
 openparse-download
 ```
+
+You can run the parsing with the following. 
+
+```python
+parser = openparse.DocumentParser(
+        table_args={
+            "parsing_algorithm": "unitable",
+            "min_table_confidence": 0.8,
+        },
+)
+parsed_nodes = parser.parse(pdf_path)
+```
+
+Note we currently use [table-transformers](https://github.com/microsoft/table-transformer) for all table detection and we find its performance to be subpar. This negatively affects the downstream results of unitable. If you're aware of a better model please open an Issue - the unitable team mentioned they might add this soon too.
 
 ## Cookbooks
 
