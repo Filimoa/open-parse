@@ -2,12 +2,18 @@ Beyond accessing model attributes directly via their field names (e.g. parsed_co
 
 ## Converting Models to Dictionaries
 This is the primary way of converting a model to a dictionary.
+
 ```python 
-parsed_content.model_dump()
+parsed_content.dict()
 ```
 
 ## Converting Models to JSON
-The `.model_dump_json()` method serializes a model directly to a JSON-encoded string that is equivalent to the result produced by .model_dump().
+You can run the following to convert the results to a python dict that can be serialized to JSON.
+```python
+parsed_content.json()
+```
+
+Optionally you can also run `.model_dump_json()` which serializes the results directly to a JSON-encoded string.
 
 ```python 
 parsed_content.model_dump_json()
