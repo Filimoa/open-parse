@@ -32,8 +32,6 @@ Open Parse is designed to fill this gap by providing a flexible, easy-to-use lib
 
 </details>
 
-https://sergey-filimonov.nyc3.digitaloceanspaces.com/open-parse/unitable-parsing-sample.webp
-
 ## Highlights
 
 - **🔍 Visually-Driven:** Open-Parse visually analyzes documents for superior LLM input, going beyond naive text splitting.
