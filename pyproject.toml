@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "openparse"
+description = "Streamlines the process of preparing documents for LLM's."
+readme = "README.md"
+requires-python = ">=3.8"
+version = "0.5.1"
+authors = [{name = "Sergey Filimonov", email = "hello@sergey.fyi"}]
+dependencies = [
+    "PyMuPDF >= 1.23.2",
+    "pillow >= 8.3",
+    "pydantic >= 2.0",
+    "pypdf >= 4.0.0",
+    "pdfminer.six >= 20200401",
+    "tiktoken >= 0.3",
+    "openai >= 1.0.0",
+    "numpy",
+]
+
+[project.urls]
+homepage = "https://github.com/Filimoa/open-parse"
+repository = "https://github.com/Filimoa/open-parse"
+documentation = "https://filimoa.github.io/open-parse"
+
+[project.optional-dependencies]
+ml = [
+    "torch",
+    "torchvision",
+    "transformers",
+    "tokenizers",
+]
+
+[project.scripts]
+openparse-download = "openparse.cli:download_unitable_weights"
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501",  # line too long, handled by black
+    "B008",  # do not perform function calls in argument defaults
+    "C901",  # too complex
+    "W191",  # indentation contains tabs
+]
