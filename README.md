@@ -100,7 +100,8 @@ Uses pydantic under the hood so you can serialize results with
 
 ```python
 parsed_content.dict()
-# or
+
+# or to convert to a valid json dict
 parsed_content.json()
 ```
 
