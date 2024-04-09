@@ -185,3 +185,13 @@ https://github.com/Filimoa/open-parse/tree/main/src/cookbooks
 ## Documentation
 
 https://filimoa.github.io/open-parse/
+
+## Sponsors
+
+<!-- sponsors -->
+
+<a href="https://www.data.threesigma.ai/filings-ai" target="_blank" title="Three Sigma: AI for insurance filings."><img src="https://sergey-filimonov.nyc3.digitaloceanspaces.com/open-parse/marketing/three-sigma-wide.png" width="250"></a>
+
+<!-- /sponsors -->
+
+Does your use case need something special? Reach [out](https://www.linkedin.com/in/sergey-osu/).
