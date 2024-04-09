@@ -7,7 +7,6 @@ on:
 permissions:
   contents: write
 jobs:
-
   deploy:
     runs-on: ubuntu-latest
     steps:
@@ -26,5 +25,5 @@ jobs:
           path: .cache
           restore-keys: |
             mkdocs-material-
-      - run: pip install mkdocs-material
+      - run: pip install -r requirements-docs.txt
       - run: mkdocs gh-deploy --force

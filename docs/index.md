@@ -20,6 +20,8 @@ Open Parse is designed to fill this gap by providing a flexible, easy-to-use lib
 
 ## Quick Start
 
+## Basic Example
+
 ```python
 import openparse
 
@@ -31,8 +33,45 @@ for node in parsed_basic_doc.nodes:
     print(node)
 ```
 
-<br>
-
 **📓 Try the sample notebook** <a href="https://colab.research.google.com/drive/1Z5B5gsnmhFKEFL-5yYIcoox7-jQao8Ep?usp=sharing" class="external-link" target="_blank">here</a>
 
-<br><br>
+
+## Semantic Processing Example
+
+Chunking documents is fundamentally about grouping similar semantic nodes together. By embedding the text of each node, we can then cluster them together based on their similarity.
+
+```python
+from openparse import processing, DocumentParser
+
+semantic_pipeline = processing.SemanticIngestionPipeline(
+    openai_api_key=OPEN_AI_KEY,
+    model="text-embedding-3-large",
+    min_tokens=64,
+    max_tokens=1024,
+)
+parser = DocumentParser(
+    processing_pipeline=semantic_pipeline,
+)
+parsed_content = parser.parse(basic_doc_path)
+```
+
+**📓 Sample notebook** <a href="https://github.com/Filimoa/open-parse/blob/main/src/cookbooks/semantic_processing.ipynb" class="external-link" target="_blank">here</a>
+
+<br>
+
+
+
+## Cookbooks
+
+https://github.com/Filimoa/open-parse/tree/main/src/cookbooks
+
+
+## Sponsors
+
+<!-- sponsors -->
+
+<a href="https://www.data.threesigma.ai/filings-ai" target="_blank" title="Three Sigma: AI for insurance filings."><img src="https://sergey-filimonov.nyc3.digitaloceanspaces.com/open-parse/marketing/three-sigma-wide.png" width="250"></a>
+
+<!-- /sponsors -->
+
+Does your use case need something special? Reach [out](https://www.linkedin.com/in/sergey-osu/).

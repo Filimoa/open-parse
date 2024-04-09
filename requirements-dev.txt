@@ -1,4 +1,5 @@
 -r requirements.txt
+-r requirements-docs.txt
 pytest
 ruff
 mypy 
@@ -8,5 +9,3 @@ beautifulsoup4
 twine
 packaging
 wheel
-mkdocs-material
-mkdocs-material-extensions
