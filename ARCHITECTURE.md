@@ -4,7 +4,7 @@
 
 #### /PDF
 
-This is really just a wrapper class around a pdfminer, pymupdf and pypdf. We implement some basic visualization / export methods. Would like to migrate away from pymupdf for converting pdfs to images due to its licensing.
+This is really just a wrapper class around a `pdfminer`, `pymupdf` and `pypdf`. We implement some basic visualization / export methods. Would like to migrate away from `pymupdf` for converting pdfs to images due to its licensing.
 
 #### /Schemas
 
@@ -18,7 +18,7 @@ This module implements basic text parsing along with basic markdown support.
 
 We parse text into markdown by looking at the font size and style charachter by charachter. This gets combined into a span which represents a string of charachters with the same styling. 
 
-Spans get combined into lines and lines get combined into elements. Elements are the basic building blocks of the document. They can be headings, paragraphs, bullets, etc.
+Spans get combined into lines and lines get combined into elements. Elements are the basic building blocks of the document. They can be headings, paragraphs, lists of bullets, etc.
 
 Optionally we can use PyMuPDF to OCR the document. This is not recommended as a default due to the additional computational cost and inherent inaccuracies of OCR. We're looking at integrating [doctr](https://github.com/mindee/doctr).
 
@@ -35,6 +35,8 @@ PyMuPDF is also can be used to table detection and content extraction.
 Lastly unitable is our recommended approach for table extraction. It is a transformers based approach with **state-of-the-art** performance. Unfortunately, its performance is hindered by the fact that we still need to use the table-transformers model to detect table bounding boxes. Table Transformers's performance leaves a lot to be desired and may miss some tables or crop them incorrectly. **If you're aware of a stronger perfoming model, please let us know.**
 
 We're also looking at speeding unitable up. This can either be done by quantizing the model or by using the smaller, 70M parameter model they released. Unfortunately, the smaller model was not fine tuned so this is holding us back from implementing it. You can see the published paper [here](https://arxiv.org/abs/2403.04822).
+
+A ton of credit goes to the unitable team - they've done an amazing job making their research reproducible. You can find the original repository with full training code [here](https://github.com/poloclub/unitable).
 
 ## Processing Pipeline
 
