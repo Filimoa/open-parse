@@ -1,0 +1,21 @@
+name: 🚀 Open-Parse Feature request
+description: "Suggest a new feature for open-parse"
+labels: [feature request]
+
+body:
+  - type: markdown
+    attributes:
+      value: Thank you for contributing to open-parse! ✊
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: |
+        Please give as much detail as possible about the feature you would like to suggest. 🙏
+
+        You might like to add:
+        * Your use case(s) for the feature
+        * Why the feature should be added to openparse (as opposed to another library or just implemented in your code)
+    validations:
+      required: true
