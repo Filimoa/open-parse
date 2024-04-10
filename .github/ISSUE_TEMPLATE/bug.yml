@@ -41,12 +41,3 @@ body:
 
         ...
       render: Python
-
-  - type: textarea
-    id: version
-    attributes:
-      label: Python, OpenParse & OS Version
-
-    render: Text
-    validations:
-      required: true
