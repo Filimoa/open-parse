@@ -1,5 +1,3 @@
-Text processing is how we extract textual elements from within a doc and convert it to Markdown. The output are Nodes that represent distinct parts of the layout - like a heading or paragraph. 
-
 ### 1. Default Text Processing with PdfMiner
 Use PdfMiner if your documents are text-heavy, well-structured, and do not contain non-text elements that require OCR.
 

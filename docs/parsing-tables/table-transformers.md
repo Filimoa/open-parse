@@ -5,22 +5,15 @@ Table Transformers is a deep learning approach to table detection and extraction
 
 We find it works well on tables with more complex structures and significant whitespace.
 
-```python
-# Arguments follow the following schema
-class TableTransformersArgsDict(TypedDict, total=False):
-    parsing_algorithm: Literal["table-transformers"]
-    min_table_confidence: float
-    min_cell_confidence: float
-    table_output_format: Literal["markdown", "html"]
+## Parameters
 
-```
+| Name                 | Type                                 | Description                                                                                                  | Default |
+|----------------------|--------------------------------------|--------------------------------------------------------------------------------------------------------------|---------|
+| `parsing_algorithm`  | `Literal["table-transformers"]`      | The library used for parsing, in this case, table-transformers.                                              | None    |
+| `min_table_confidence` | `float`                             | The minimum confidence score for a table to be extracted.                                                    | None    |
+| `min_cell_confidence` | `float`                             | The minimum confidence score for a cell to be extracted.                                                     | None    |
+| `table_output_format` | `Literal["markdown", "html"]`       | The format of the extracted tables. Supports both markdown and html.                                         | None    |
 
-The following arguments are supported:
-
-- `parsing_algorithm` specifies the library used for parsing, in this case, `table-transformers`.
-- `min_table_confidence` specifies the minimum confidence score for a table to be extracted.
-- `min_cell_confidence` specifies the minimum confidence score for a cell to be extracted.
-- `table_output_format` specifies the format of the extracted tables.
 
 ### Example
 

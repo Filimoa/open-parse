@@ -12,7 +12,10 @@ parsed_basic_doc = parser.parse(basic_doc_path)
 for node in parsed_basic_doc.nodes:
     display(node)
 ```
-
+<br/>
+<p align="center">
+    <img src="https://sergey-filimonov.nyc3.digitaloceanspaces.com/open-parse/marketing/pretty-markdown-nodes.webp" width="650" />
+</p>
 You can also display the results directly overlayed on the original pdf.
 
 ```python

@@ -16,22 +16,14 @@ $ openparse-download
 Which will download the weights. They're about 1.5GB in size.
 
 
-## Usage
+## Parameters
 
-```python
-# Arguments follow the following schema
-class UnitableArgsDict(TypedDict, total=False):
-    parsing_algorithm: Literal["unitable"]
-    min_table_confidence: float
-    table_output_format: Literal["html"]
+| Name                 | Type                    | Description                                                                 | Default |
+|----------------------|-------------------------|-----------------------------------------------------------------------------|---------|
+| `parsing_algorithm`  | `Literal["unitable"]`   | The library used for parsing, in this case, unitable.                       | None    |
+| `min_table_confidence` | `float`              | The minimum confidence score for a table to be extracted.                   | 0.75    |
+| `table_output_format` | `Literal["html"]`      | The format of the extracted tables. Currently only support html.            | None    |
 
-```
-
-The following arguments are supported:
-
-- `parsing_algorithm` specifies the library used for parsing, in this case, `unitable`.
-- `min_table_confidence` specifies the minimum confidence score for a table to be extracted. Default to 0.75.
-- `table_output_format` specifies the format of the extracted tables. Currently only suport html.
 
 
 ### Example
