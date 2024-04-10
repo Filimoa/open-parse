@@ -3,6 +3,7 @@ site_author: Sergey Filimonov
 repo_url: "https://github.com/Filimoa/open-parse/"
 repo_name: "open-parse"
 site_url: "https://github.com/Filimoa/open-parse/"
+dev_addr: "localhost:8001"
 theme:
   name: material
   features:
@@ -66,15 +67,14 @@ markdown_extensions:
 
 nav:
   - Home: index.md
-  - Parsing Text:
-      - Overview: parsing-text/overview.md
-  - Parsing Tables:
-      - Overview: parsing-tables/overview.md
-      - Unitable: parsing-tables/unitable.md
-      - Pymupdf: parsing-tables/pymupdf.md
-      - Table Transformer: parsing-tables/table-transformers.md
   - Processing:
       - Overview: processing/overview.md
+      - Enabling OCR: processing/ocr.md
+      - Parsing Tables:
+          - Overview: parsing-tables/overview.md
+          - Unitable: parsing-tables/unitable.md
+          - Pymupdf: parsing-tables/pymupdf.md
+          - Table Transformer: parsing-tables/table-transformers.md
       - Advanced:
           - Customization: processing/customization.md
   - Serializing Results: serialization.md
