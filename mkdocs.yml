@@ -71,10 +71,10 @@ nav:
       - Overview: processing/overview.md
       - Enabling OCR: processing/ocr.md
       - Parsing Tables:
-          - Overview: parsing-tables/overview.md
-          - Unitable: parsing-tables/unitable.md
-          - Pymupdf: parsing-tables/pymupdf.md
-          - Table Transformer: parsing-tables/table-transformers.md
+          - Overview: processing/parsing-tables/overview.md
+          - Unitable: processing/parsing-tables/unitable.md
+          - Pymupdf: processing/parsing-tables/pymupdf.md
+          - Table Transformer: processing/parsing-tables/table-transformers.md
       - Advanced:
           - Customization: processing/customization.md
   - Serializing Results: serialization.md

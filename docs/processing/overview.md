@@ -4,6 +4,15 @@ Processing is how we group related elements together to form a coherent structur
 
 <img src="https://sergey-filimonov.nyc3.digitaloceanspaces.com/open-parse/marketing/open-parse-architecture.png">
 
+
+### `DocumentParser` Arguments
+
+| Argument              | Type                                                      | Description                                                                                          |
+|-----------------------|-----------------------------------------------------------|------------------------------------------------------------------------------------------------------|
+| `processing_pipeline`   | `Union[IngestionPipeline, NotGiven, None]`                  | A subclass of IngestionPipeline to process extracted elements. Defaults to `BasicIngestionPipeline`.|
+| `table_args`           | `Union[TableTransformersArgsDict, PyMuPDFArgsDict, UnitableArgsDict, NotGiven]`| Arguments to customize table parsing.                                                               |
+
+# <b>Processing Pipeline</b>
 ## 1. Default Processing 
 
 By default, we use a simple heuristic to group elements together. This works well for many documents.
@@ -45,3 +54,7 @@ We have a bias towards chunking that results in larger nodes - models have incre
 
 A more thorough discussion can be found [here](https://www.llamaindex.ai/blog/evaluating-the-ideal-chunk-size-for-a-rag-system-using-llamaindex-6207e5d3fec5).
 
+
+# <b>Tables</b>
+
+See the [Table Parsing](./parsing-tables/overview.md) section for more details on how to customize table parsing.
