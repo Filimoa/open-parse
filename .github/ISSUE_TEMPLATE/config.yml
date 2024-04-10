@@ -2,4 +2,4 @@ blank_issues_enabled: true
 contact_links:
   - name: 🤔 Ask a Question
     url: "https://github.com/Filimoa/open-parse/discussions/new?category=question"
-    about: Ask a question about how to use openparse using github discussions
+    about: Ask a question about how to use open-parse using github discussions

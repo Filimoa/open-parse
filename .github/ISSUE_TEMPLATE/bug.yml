@@ -1,5 +1,5 @@
-name: 🐛 Openparse Bug
-description: Report a bug or unexpected behavior in Openparse
+name: 🐛 Bug
+description: Report a bug or unexpected behavior in open-parse
 labels: [bug, pending]
 
 body:
@@ -46,15 +46,15 @@ body:
     id: version
     attributes:
       label: Python, OpenParse & OS Version
-      description: |
-        Which version of Python & openparse are you using, and which Operating System?
+    description: |
+      Which version of Python & open-parse are you using, and which Operating System?
 
-        Please run the following command and copy the output below:
+      Please run the following command and copy the output below:
 
-        ```bash
-        python -c "import openparse.version; print(openparse.version.version_info())"
-        ```
+      # ```bash
+      # python -c "import openparse.version; print(openparse.version.version_info())"
+      # ```
 
-      render: Text
+    render: Text
     validations:
       required: true
