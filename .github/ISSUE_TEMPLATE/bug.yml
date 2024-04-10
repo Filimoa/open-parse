@@ -46,14 +46,6 @@ body:
     id: version
     attributes:
       label: Python, OpenParse & OS Version
-    description: |
-      Which version of Python & open-parse are you using, and which Operating System?
-
-      Please run the following command and copy the output below:
-
-      # ```bash
-      # python -c "import openparse.version; print(openparse.version.version_info())"
-      # ```
 
     render: Text
     validations:
