@@ -79,6 +79,7 @@ nav:
           - Customization: processing/customization.md
   - Serializing Results: serialization.md
   - Visualization: visualization.md
+  - Config: config.md
 
 plugins:
   - search:

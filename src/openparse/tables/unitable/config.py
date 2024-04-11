@@ -1,10 +1,8 @@
-import torch
 from pydantic import BaseModel
 from pathlib import Path
 import sys
 from openparse import consts
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 root = Path(consts.__file__).parent
 
 
