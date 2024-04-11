@@ -7,14 +7,16 @@ import warnings
 from torch import nn
 from functools import partial
 
-from .config import device, config
+from .config import config
 from .tabular_transformer import (
     EncoderDecoder,
     ImgLinearBackbone,
     Encoder,
     Decoder,
 )
+from openparse.config import config as global_config
 
+device = global_config.get_device()
 warnings.filterwarnings("ignore")
 
 

@@ -10,6 +10,7 @@ from transformers import (
     TableTransformerForObjectDetection,  # type: ignore
 )  # type: ignore
 
+from openparse.config import config
 from ..schemas import (
     BBox,
     Size,
@@ -34,12 +35,7 @@ from .schemas import (
 )
 
 t0 = time.time()
-
-cuda_available = torch.cuda.is_available()
-user_preferred_device = "cuda"
-device = torch.device(
-    "cuda" if cuda_available and user_preferred_device != "cpu" else "cpu"
-)
+device = config.get_device()
 
 
 class MaxResize:

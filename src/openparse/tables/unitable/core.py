@@ -6,7 +6,6 @@ import torch  # type: ignore
 from torchvision import transforms  # type: ignore
 from torch import nn, Tensor  # type: ignore
 
-from .config import device
 from .tokens import VALID_HTML_TOKEN, VALID_BBOX_TOKEN, INVALID_CELL_TOKEN
 from .utils import (
     subsequent_mask,
@@ -27,9 +26,12 @@ from .unitable_model import (
     cell_model,
     EncoderDecoder,
 )
+from openparse.config import config
 
 Size = Tuple[int, int]
 BBox = Tuple[int, int, int, int]
+
+device = config.get_device()
 
 
 def _image_to_tensor(image: Image, size: Size) -> Tensor:
