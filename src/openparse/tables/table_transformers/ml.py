@@ -186,7 +186,7 @@ def _table_outputs_to_objs(
 def find_table_bboxes(
     image: Image.Image, min_table_confidence: float
 ) -> List[_TableModelOutput]:
-    pixel_values = detection_transform(image).unsqueeze(0).to("cpu")
+    pixel_values = detection_transform(image).unsqueeze(0).to(device)
     with torch.no_grad():
         outputs = detection_model(pixel_values)
 
@@ -334,7 +334,7 @@ def get_table_content(
         len(structure_model.config.id2label): "no object",
     }
 
-    pixel_values_st = structure_transform(table_img).unsqueeze(0).to("cpu")
+    pixel_values_st = structure_transform(table_img).unsqueeze(0).to(device)
     with torch.no_grad():
         outputs_st = structure_model(pixel_values_st)
 
