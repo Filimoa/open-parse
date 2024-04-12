@@ -38,4 +38,4 @@ jobs:
           if [ -f requirements-dev.txt ]; then uv pip install -r requirements-dev.txt; fi
       - name: Test with pytest
         run: |
-          uv pytest
+          pytest
