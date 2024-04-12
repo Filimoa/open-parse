@@ -2,6 +2,7 @@ from .ingest import (
     IngestionPipeline,
     BasicIngestionPipeline,
     SemanticIngestionPipeline,
+    LocalSemanticIngestionPipeline,
     NoOpIngestionPipeline,
 )
 from .basic_transforms import (
@@ -15,7 +16,7 @@ from .basic_transforms import (
     CombineNodesSpatially,
     RemoveNodesBelowNTokens,
 )
-from .semantic_transforms import CombineNodesSemantically, OpenAIEmbeddings
+from .semantic_transforms import CombineNodesSemantically, OpenAIEmbeddings, OllamaEmbeddings
 
 __all__ = [
     "ProcessingStep",
@@ -29,8 +30,10 @@ __all__ = [
     "BasicIngestionPipeline",
     "IngestionPipeline",
     "SemanticIngestionPipeline",
+    "LocalSemanticIngestionPipeline",
     "NoOpIngestionPipeline",
     "RemoveNodesBelowNTokens",
     "CombineNodesSemantically",
     "OpenAIEmbeddings",
+    "OllamaEmbeddings",
 ]

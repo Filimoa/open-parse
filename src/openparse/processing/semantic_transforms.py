@@ -1,4 +1,8 @@
+import json
+
 from typing import List, Literal, Dict, Union
+from urllib.parse import urlparse
+from http.client import HTTPConnection, HTTPSConnection
 
 import numpy as np
 
@@ -66,6 +70,68 @@ class OpenAIEmbeddings:
                 "You need to install the openai package to use this feature."
             )
         return OpenAI(api_key=self.api_key)
+
+
+class OllamaEmbeddings:
+    """
+    Use local models via ollama for calculating embeddings. Uses the REST API
+    https://github.com/ollama/ollama/blob/main/docs/api.md.
+
+    * nomic-embed-text
+    * mxbai-embed-large
+    """
+
+    def __init__(
+        self,
+        url: str = "http://localhost:11434/",
+        model: str = "mxbai-embed-large",
+        batch_size: int = 256,
+    ):
+        """
+        Used to generate embeddings for Nodes.
+        """
+        self.url = url
+        self.model = model
+        self.batch_size = batch_size
+
+    def embed_many(self, texts: List[str]) -> List[List[float]]:
+        """
+        Generate embeddings for a list of texts. Support for batches coming
+        soon, cf. https://ollama.com/blog/embedding-models
+
+        Args:
+            texts (list[str]): The list of texts to embed.
+            batch_size (int): The number of texts to process in each batch.
+
+        Returns:
+            List[List[float]]: A list of embeddings.
+        """
+        conn = self._create_conn()
+        res = []
+        for i in range(0, len(texts), self.batch_size):
+            batch_texts = texts[i : i + self.batch_size]
+            for text in batch_texts:
+                params = json.dumps({"model": self.model, "prompt": text})
+                headers = {"Content-Type": "application/x-www-form-urlencoded", "Accept": "application/json"}
+                conn.request("POST", "/api/embeddings", params, headers)
+                response = conn.getresponse()
+                if response.status != 200:
+                    raise RuntimeError(
+                        "embeddings request failed: {} {}".format(
+                            response.status, response.reason
+                        )
+                    )
+                doc = json.loads(response.read())
+                res.extend(doc["embedding"])
+        conn.close()
+        return res
+
+    def _create_conn(self):
+        parsed = urlparse(self.url)
+        if parsed.scheme == "https":
+            return HTTPSConnection(parsed.hostname, parsed.port)
+        else:
+            return HTTPConnection(parsed.hostname, parsed.port)
 
 
 class CombineNodesSemantically(ProcessingStep):

@@ -17,6 +17,7 @@ from openparse.processing.basic_transforms import (
 from openparse.processing.semantic_transforms import (
     CombineNodesSemantically,
     OpenAIEmbeddings,
+    OllamaEmbeddings,
     EmbeddingModel,
 )
 
@@ -103,6 +104,48 @@ class SemanticIngestionPipeline(IngestionPipeline):
         max_tokens: int = consts.TOKENIZATION_UPPER_LIMIT,
     ) -> None:
         embedding_client = OpenAIEmbeddings(api_key=openai_api_key, model=model)
+
+        self.transformations = [
+            RemoveTextInsideTables(),
+            RemoveFullPageStubs(max_area_pct=0.35),
+            # mostly aimed at combining bullets and weird formatting
+            CombineNodesSpatially(
+                x_error_margin=10,
+                y_error_margin=2,
+                criteria="both_small",
+            ),
+            CombineHeadingsWithClosestText(),
+            CombineBullets(),
+            RemoveMetadataElements(),
+            RemoveRepeatedElements(threshold=2),
+            RemoveNodesBelowNTokens(min_tokens=10),
+            CombineBullets(),
+            CombineNodesSemantically(
+                embedding_client=embedding_client,
+                min_similarity=0.6,
+                max_tokens=max_tokens // 2,
+            ),
+            CombineNodesSemantically(
+                embedding_client=embedding_client,
+                min_similarity=0.55,
+                max_tokens=max_tokens,
+            ),
+            RemoveNodesBelowNTokens(min_tokens=min_tokens),
+        ]
+
+class LocalSemanticIngestionPipeline(IngestionPipeline):
+    """
+    A semantic pipeline for ingesting and processing Nodes using ollama for embeddings.
+    """
+
+    def __init__(
+        self,
+        url: str = "http://localhost:11434",
+        model: str = "mxbai-embed-large",
+        min_tokens: int = consts.TOKENIZATION_LOWER_LIMIT,
+        max_tokens: int = consts.TOKENIZATION_UPPER_LIMIT,
+    ) -> None:
+        embedding_client = OllamaEmbeddings(url=url, model=model)
 
         self.transformations = [
             RemoveTextInsideTables(),
