@@ -32,6 +32,24 @@ ml = [
     "transformers",
     "tokenizers",
 ]
+embeddings-openai = [
+    "llama-index-embeddings-openai",
+]
+embeddings-azure-openai = [
+    "llama-index-embeddings-azure-openai",
+]
+embeddings-cohere = [
+    "llama-index-embeddings-cohere",
+]
+embeddings-huggingface = [
+    "llama-index-embeddings-huggingface",
+]
+embeddings-huggingface-optimum = [
+    "llama-index-embeddings-huggingface-optimum",
+]
+embeddings-text-embeddings-inference = [
+    "llama-index-embeddings-text-embeddings-inference",
+]
 
 [project.scripts]
 openparse-download = "openparse.cli:download_unitable_weights"
