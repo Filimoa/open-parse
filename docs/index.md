@@ -63,7 +63,7 @@ parsed_content = parser.parse(basic_doc_path)
 
 ## Cookbooks
 
-https://github.com/Filimoa/open-parse/tree/main/src/cookbooks
+[Other Cookbooks](https://github.com/Filimoa/open-parse/tree/main/src/cookbooks)
 
 
 ## Sponsors
