@@ -4,8 +4,14 @@ This is meant to provide a simple wrapper around llama_index's embeddings classe
 
 from typing import Dict, Type
 
+from llama_index.core.embeddings import BaseEmbedding
+
 
 class ImportErrorProxy:
+    """
+    Used to raise an ImportError when an attribute or method is accessed on a class that failed to import.
+    """
+
     def __init__(self, class_name, install_command):
         self.class_name = class_name
         self.install_command = install_command
@@ -23,14 +29,11 @@ class ImportErrorProxy:
         raise ImportError(self.error_message)
 
 
-RECOGNIZED_EMBEDDINGS: Dict[str, Type[int]] = {}
-
 try:
     from llama_index.embeddings.openai import (
         OpenAIEmbedding,
-    )  # pants: no-infer-dep
+    )
 
-    RECOGNIZED_EMBEDDINGS[OpenAIEmbedding.class_name()] = OpenAIEmbedding
 except ImportError:
     OpenAIEmbedding = ImportErrorProxy(
         "OpenAIEmbedding",
@@ -40,9 +43,8 @@ except ImportError:
 try:
     from llama_index.embeddings.azure_openai import (
         AzureOpenAIEmbedding,
-    )  # pants: no-infer-dep
+    )
 
-    RECOGNIZED_EMBEDDINGS[AzureOpenAIEmbedding.class_name()] = AzureOpenAIEmbedding
 except ImportError:
     AzureOpenAIEmbedding = ImportErrorProxy(
         "AzureOpenAIEmbedding",
@@ -52,11 +54,8 @@ except ImportError:
 try:
     from llama_index.embeddings.huggingface import (
         HuggingFaceInferenceAPIEmbedding,
-    )  # pants: no-infer-dep
-
-    RECOGNIZED_EMBEDDINGS[HuggingFaceInferenceAPIEmbedding.class_name()] = (
-        HuggingFaceInferenceAPIEmbedding
     )
+
 except ImportError:
     HuggingFaceInferenceAPIEmbedding = ImportErrorProxy(
         "HuggingFaceInferenceAPIEmbedding",
@@ -67,9 +66,8 @@ except ImportError:
 try:
     from llama_index.embeddings.huggingface_optimum import (
         OptimumEmbedding,
-    )  # pants: no-infer-dep
+    )
 
-    RECOGNIZED_EMBEDDINGS[OptimumEmbedding.class_name()] = OptimumEmbedding
 except ImportError:
     OptimumEmbedding = ImportErrorProxy(
         "OptimumEmbedding",
@@ -77,9 +75,8 @@ except ImportError:
     )
 
 try:
-    from llama_index.embeddings.cohere import CohereEmbedding  # pants: no-infer-dep
+    from llama_index.embeddings.cohere import CohereEmbedding
 
-    RECOGNIZED_EMBEDDINGS[CohereEmbedding.class_name()] = CohereEmbedding
 except ImportError:
     CohereEmbedding = ImportErrorProxy(
         "CohereEmbedding",
@@ -90,11 +87,8 @@ except ImportError:
 try:
     from llama_index.embeddings.text_embeddings_inference import (
         TextEmbeddingsInference,
-    )  # pants: no-infer-dep
-
-    RECOGNIZED_EMBEDDINGS[TextEmbeddingsInference.class_name()] = (
-        TextEmbeddingsInference
     )
+
 except ImportError:
     TextEmbeddingsInference = ImportErrorProxy(
         "TextEmbeddingsInference",

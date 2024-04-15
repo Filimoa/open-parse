@@ -16,8 +16,8 @@ dependencies = [
     "pypdf >= 4.0.0",
     "pdfminer.six >= 20200401",
     "tiktoken >= 0.3",
-    "openai >= 1.0.0",
     "numpy",
+    "llama-index-embeddings-openai",
 ]
 
 [project.urls]
@@ -31,9 +31,6 @@ ml = [
     "torchvision",
     "transformers",
     "tokenizers",
-]
-embeddings-openai = [
-    "llama-index-embeddings-openai",
 ]
 embeddings-azure-openai = [
     "llama-index-embeddings-azure-openai",

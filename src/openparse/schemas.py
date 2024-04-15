@@ -1,6 +1,7 @@
 import re
 from collections import defaultdict, namedtuple
 from enum import Enum
+import datetime as dt
 from functools import cached_property
 from typing import Any, List, Literal, Optional, Tuple, Union, Set
 
@@ -566,3 +567,7 @@ class ParsedDocument(BaseModel):
     num_pages: int
     coordinate_system: Literal["top-left", "bottom-left"] = "bottom-left"
     table_parsing_kwargs: Optional[dict] = None
+    last_modified_date: Optional[dt.date] = None
+    last_accessed_date: Optional[dt.date] = None
+    creation_date: Optional[dt.date] = None
+    file_size: Optional[int] = None

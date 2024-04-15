@@ -1,7 +1,10 @@
+import os
+import mimetypes
+import datetime as dt
 import random
 import tempfile
 from pathlib import Path
-from typing import Iterator, List, Literal, Optional, Union, Tuple, Any
+from typing import Iterator, List, Literal, Optional, Union, Tuple, Any, Dict
 from pydantic import BaseModel
 
 from pdfminer.high_level import extract_pages
@@ -9,7 +12,6 @@ from pdfminer.layout import LTPage
 from pypdf import PdfReader, PdfWriter
 
 from openparse.schemas import Bbox, Node
-from openparse import consts
 
 
 class _BboxWithColor(BaseModel):
@@ -60,13 +62,41 @@ def _prepare_bboxes_for_drawing(
     return res
 
 
+def file_metadata(file_path: Union[str, Path]) -> Dict:
+    """Get some handy metadate from filesystem.
+
+    Args:
+        file_path: str: file path in str
+    """
+    return {
+        "file_path": file_path,
+        "file_name": os.path.basename(file_path),
+        "file_type": mimetypes.guess_type(file_path)[0],
+        "file_size": os.path.getsize(file_path),
+        "creation_date": dt.datetime.fromtimestamp(
+            Path(file_path).stat().st_ctime
+        ).strftime("%Y-%m-%d"),
+        "last_modified_date": dt.datetime.fromtimestamp(
+            Path(file_path).stat().st_mtime
+        ).strftime("%Y-%m-%d"),
+        "last_accessed_date": dt.datetime.fromtimestamp(
+            Path(file_path).stat().st_atime
+        ).strftime("%Y-%m-%d"),
+    }
+
+
 class Pdf:
     """
     Simple utility class for working with PDF files. This class wraps the PdfReader and PdfWriter classes from pypdf.
     """
 
     def __init__(self, file: Union[str, Path, PdfReader]):
-        self.file_path = str(file) if isinstance(file, (str, Path)) else None
+        self.file_path = None
+        self.file_metadata = dict()
+        if isinstance(file, (str, Path)):
+            self.file_path = str(file)
+            self.file_metadata = file_metadata(file)
+
         self.reader = PdfReader(file) if isinstance(file, (str, Path)) else file
         self.writer = PdfWriter()
         for page in self.reader.pages:

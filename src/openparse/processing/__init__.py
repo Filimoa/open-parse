@@ -15,7 +15,7 @@ from .basic_transforms import (
     CombineNodesSpatially,
     RemoveNodesBelowNTokens,
 )
-from .semantic_transforms import CombineNodesSemantically, OpenAIEmbeddings
+from .semantic_transforms import CombineNodesSemantically
 
 __all__ = [
     "ProcessingStep",
@@ -32,5 +32,4 @@ __all__ = [
     "NoOpIngestionPipeline",
     "RemoveNodesBelowNTokens",
     "CombineNodesSemantically",
-    "OpenAIEmbeddings",
 ]
