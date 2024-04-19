@@ -26,7 +26,7 @@ def output_to_markdown(headers: List[str], rows: List[List[str]]) -> str:
     markdown_output += "|---" * len(headers) + "|\n"
 
     for row in rows:
-        processed_row = [" " if cell in [None, ""] else cell for cell in row]
+        processed_row = [" " if cell in [None, ""] else cell.replace("\n", "") for cell in row]
         markdown_output += "| " + " | ".join(processed_row) + " |\n"
 
     return markdown_output
