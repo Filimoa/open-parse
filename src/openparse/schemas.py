@@ -1,6 +1,8 @@
 import re
 from collections import defaultdict, namedtuple
 from enum import Enum
+import datetime as dt
+import uuid
 from functools import cached_property
 from typing import Any, List, Literal, Optional, Tuple, Union, Set
 
@@ -355,12 +357,25 @@ def _determine_relationship(
 
 
 class Node(BaseModel):
-    elements: Tuple[Union[TextElement, TableElement], ...] = Field(exclude=True)
-    _tokenization_lower_limit: int = consts.TOKENIZATION_LOWER_LIMIT
-    _tokenization_upper_limit: int = consts.TOKENIZATION_UPPER_LIMIT
-    _coordinates: Literal["top-left", "bottom-left"] = (
-        consts.COORDINATE_SYSTEM
+    elements: Tuple[Union[TextElement, TableElement], ...] = Field(
+        exclude=True, frozen=True
+    )
+    tokenization_lower_limit: int = Field(
+        default=consts.TOKENIZATION_LOWER_LIMIT, frozen=True, exclude=True
+    )
+    tokenization_upper_limit: int = Field(
+        default=consts.TOKENIZATION_UPPER_LIMIT, frozen=True, exclude=True
+    )
+    coordinates: Literal["top-left", "bottom-left"] = Field(
+        default=consts.COORDINATE_SYSTEM, frozen=True, exclude=True
     )  # controlled globally for now, should be moved into elements
+    embedding: Optional[List[float]] = Field(
+        default=None, description="Embedding of the node."
+    )
+
+    id_: str = Field(
+        default_factory=lambda: str(uuid.uuid4()), description="Unique ID of the node."
+    )
 
     @computed_field  # type: ignore
     @cached_property
@@ -464,11 +479,11 @@ class Node(BaseModel):
 
     @cached_property
     def is_small(self) -> bool:
-        return self.tokens < self._tokenization_lower_limit
+        return self.tokens < self.tokenization_lower_limit
 
     @cached_property
     def is_large(self) -> bool:
-        return self.tokens > self._tokenization_upper_limit
+        return self.tokens > self.tokenization_upper_limit
 
     @cached_property
     def num_pages(self) -> int:
@@ -494,7 +509,7 @@ class Node(BaseModel):
         min_page = min(element.bbox.page for element in self.elements)
         min_x0 = min(element.bbox.x0 for element in self.elements)
 
-        if self._coordinates == "bottom-left":
+        if self.coordinates == "bottom-left":
             y_position = -min(element.bbox.y0 for element in self.elements)
         else:
             raise NotImplementedError(
@@ -531,7 +546,7 @@ class Node(BaseModel):
         if not isinstance(other, Node):
             return NotImplemented
 
-        assert self._coordinates == other._coordinates, "Coordinate systems must match."
+        assert self.coordinates == other.coordinates, "Coordinate systems must match."
 
         return self.reading_order < other.reading_order
 
@@ -552,8 +567,6 @@ class Node(BaseModel):
         new_elems = self.elements + other.elements
         return Node(elements=new_elems)
 
-    model_config = ConfigDict(frozen=True)
-
 
 #######################
 ### PARSED DOCUMENT ###
@@ -561,8 +574,19 @@ class Node(BaseModel):
 
 
 class ParsedDocument(BaseModel):
+    id_: str = Field(
+        default_factory=lambda: str(uuid.uuid4()),
+        description="Unique ID of the node.",
+    )
     nodes: List[Node]
     filename: str
     num_pages: int
     coordinate_system: Literal["top-left", "bottom-left"] = "bottom-left"
     table_parsing_kwargs: Optional[dict] = None
+    last_modified_date: Optional[dt.date] = None
+    last_accessed_date: Optional[dt.date] = None
+    creation_date: Optional[dt.date] = None
+    file_size: Optional[int] = None
+
+    def to_llama_index(self):
+        raise NotImplementedError("Not implemented yet.")

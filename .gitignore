@@ -36,4 +36,5 @@ test-output.pdf
 notebooks/
 sample-docs/
 weights/
+.env
 

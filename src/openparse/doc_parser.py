@@ -117,6 +117,10 @@ class DocumentParser:
             table_parsing_kwargs=(
                 table_args_obj.model_dump() if table_args_obj else None
             ),
+            creation_date=doc.file_metadata.get("creation_date"),
+            last_modified_date=doc.file_metadata.get("last_modified_date"),
+            last_accessed_date=doc.file_metadata.get("last_accessed_date"),
+            file_size=doc.file_metadata.get("file_size"),
         )
         return parsed_doc
 
