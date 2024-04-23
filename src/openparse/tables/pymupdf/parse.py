@@ -22,7 +22,10 @@ def output_to_html(headers: List[str], rows: List[List[str]]) -> str:
 
 
 def output_to_markdown(headers: List[str], rows: List[List[str]]) -> str:
-    markdown_output = "| " + " | ".join(headers) + " |\n"
+    markdown_output = ""
+    for header in headers:
+         markdown_output += "|" + (header or "")
+    markdown_output += " |\n"
     markdown_output += "|---" * len(headers) + "|\n"
 
     for row in rows:
