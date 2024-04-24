@@ -23,13 +23,18 @@ def output_to_html(headers: List[str], rows: List[List[str]]) -> str:
 
 def output_to_markdown(headers: List[str], rows: List[List[str]]) -> str:
     markdown_output = ""
-    for header in headers:
-         markdown_output += "|" + (header or "")
-    markdown_output += " |\n"
+    if headers is not None:
+        for header in headers:
+            safe_header = "" if header is None else header
+            markdown_output += "| " + safe_header + " "
+
+    markdown_output += "|\n"
     markdown_output += "|---" * len(headers) + "|\n"
 
     for row in rows:
-        processed_row = [" " if cell in [None, ""] else cell.replace("\n", " ") for cell in row]
+        processed_row = [
+            " " if cell in [None, ""] else cell.replace("\n", " ") for cell in row
+        ]
         markdown_output += "| " + " | ".join(processed_row) + " |\n"
 
     return markdown_output
