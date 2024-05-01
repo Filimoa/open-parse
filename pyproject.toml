@@ -7,7 +7,8 @@ name = "openparse"
 description = "Streamlines the process of preparing documents for LLM's."
 readme = "README.md"
 requires-python = ">=3.8"
-version = "0.5.2"
+license = "MIT"
+version = "0.5.5"
 authors = [{name = "Sergey Filimonov", email = "hello@sergey.fyi"}]
 dependencies = [
     "PyMuPDF >= 1.23.2",
@@ -16,8 +17,8 @@ dependencies = [
     "pypdf >= 4.0.0",
     "pdfminer.six >= 20200401",
     "tiktoken >= 0.3",
+    "openai >= 1.0.0",
     "numpy",
-    "llama-index-embeddings-openai",
 ]
 
 [project.urls]
@@ -31,21 +32,6 @@ ml = [
     "torchvision",
     "transformers",
     "tokenizers",
-]
-embeddings-azure-openai = [
-    "llama-index-embeddings-azure-openai",
-]
-embeddings-cohere = [
-    "llama-index-embeddings-cohere",
-]
-embeddings-huggingface = [
-    "llama-index-embeddings-huggingface",
-]
-embeddings-huggingface-optimum = [
-    "llama-index-embeddings-huggingface-optimum",
-]
-embeddings-text-embeddings-inference = [
-    "llama-index-embeddings-text-embeddings-inference",
 ]
 
 [project.scripts]
