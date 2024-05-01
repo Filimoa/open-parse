@@ -137,10 +137,10 @@ class Pdf:
         """
         try:
             import fitz  # type: ignore
-        except ImportError:
+        except ImportError as err:
             raise ImportError(
                 "PyMuPDF (fitz) is not installed. This method requires PyMuPDF."
-            )
+            ) from err
 
         if not self.writer.pages:
             return fitz.open(self.file_path)
@@ -156,10 +156,10 @@ class Pdf:
     ):
         try:
             import fitz
-        except ImportError:
+        except ImportError as err:
             raise ImportError(
                 "PyMuPDF (fitz) is not installed. This method requires PyMuPDF."
-            )
+            ) from err
 
         pdf = self.to_pymupdf_doc()
 
@@ -197,15 +197,15 @@ class Pdf:
         """
         try:
             from IPython.display import Image, display  # type: ignore
-        except ImportError:
+        except ImportError as err:
             raise ImportError(
                 "IPython is required to display PDFs. Please install it with `pip install ipython`."
-            )
+            ) from err
         assert nodes, "At least one node is required."
 
         bboxes = [node.bbox for node in nodes]
         flattened_bboxes = _prepare_bboxes_for_drawing(bboxes, annotations)
-        marked_up_doc = self._draw_bboxes(flattened_bboxes, nodes[0].coordinates)
+        marked_up_doc = self._draw_bboxes(flattened_bboxes, nodes[0].coordinate_system)
         if not page_nums:
             page_nums = list(range(marked_up_doc.page_count))
         for page_num in page_nums:
@@ -223,7 +223,7 @@ class Pdf:
 
         bboxes = [node.bbox for node in nodes]
         flattened_bboxes = _prepare_bboxes_for_drawing(bboxes, annotations)
-        marked_up_doc = self._draw_bboxes(flattened_bboxes, nodes[0].coordinates)
+        marked_up_doc = self._draw_bboxes(flattened_bboxes, nodes[0].coordinate_system)
         marked_up_doc.save(str(output_pdf))
 
     def _flip_coordinates(self, bbox: Bbox) -> Bbox:

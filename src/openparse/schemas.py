@@ -366,7 +366,7 @@ class Node(BaseModel):
     tokenization_upper_limit: int = Field(
         default=consts.TOKENIZATION_UPPER_LIMIT, frozen=True, exclude=True
     )
-    coordinates: Literal["top-left", "bottom-left"] = Field(
+    coordinate_system: Literal["top-left", "bottom-left"] = Field(
         default=consts.COORDINATE_SYSTEM, frozen=True, exclude=True
     )  # controlled globally for now, should be moved into elements
     embedding: Optional[List[float]] = Field(
@@ -374,8 +374,15 @@ class Node(BaseModel):
     )
 
     id_: str = Field(
-        default_factory=lambda: str(uuid.uuid4()), description="Unique ID of the node."
+        default_factory=lambda: str(uuid.uuid4()),
+        description="Unique ID of the node.",
+        exclude=True,
     )
+
+    @computed_field  # type: ignore
+    @cached_property
+    def node_id(self) -> str:
+        return self.id_
 
     @computed_field  # type: ignore
     @cached_property
@@ -509,7 +516,7 @@ class Node(BaseModel):
         min_page = min(element.bbox.page for element in self.elements)
         min_x0 = min(element.bbox.x0 for element in self.elements)
 
-        if self.coordinates == "bottom-left":
+        if self.coordinate_system == "bottom-left":
             y_position = -min(element.bbox.y0 for element in self.elements)
         else:
             raise NotImplementedError(
@@ -542,11 +549,29 @@ class Node(BaseModel):
 
         return False
 
+    def to_llama_index(self):
+        try:
+            from llama_index.core.schema import TextNode as LlamaIndexTextNode
+        except ImportError as err:
+            raise ImportError(
+                "llama_index is not installed. Please install it with `pip install llama_index`."
+            ) from err
+        return LlamaIndexTextNode(
+            id_=self.id_,
+            text=self.text,
+            embedding=self.embedding,
+            metadata={"bbox": [b.model_dump(mode="json") for b in self.bbox]},
+            excluded_embed_metadata_keys=["bbox"],
+            excluded_llm_metadata_keys=["bbox"],
+        )
+
     def __lt__(self, other: "Node") -> bool:
         if not isinstance(other, Node):
             return NotImplemented
 
-        assert self.coordinates == other.coordinates, "Coordinate systems must match."
+        assert (
+            self.coordinate_system == other.coordinate_system
+        ), "Coordinate systems must match."
 
         return self.reading_order < other.reading_order
 
@@ -577,6 +602,7 @@ class ParsedDocument(BaseModel):
     id_: str = Field(
         default_factory=lambda: str(uuid.uuid4()),
         description="Unique ID of the node.",
+        exclude=True,
     )
     nodes: List[Node]
     filename: str
@@ -588,5 +614,64 @@ class ParsedDocument(BaseModel):
     creation_date: Optional[dt.date] = None
     file_size: Optional[int] = None
 
-    def to_llama_index(self):
-        raise NotImplementedError("Not implemented yet.")
+    @cached_property
+    @computed_field
+    def doc_id(self) -> str:
+        return self.id_
+
+    def to_llama_index_nodes(self):
+        try:
+            from llama_index.core.schema import Document as LlamaIndexDocument
+        except ImportError as err:
+            raise ImportError(
+                "llama_index is not installed. Please install it with `pip install llama_index`."
+            ) from err
+
+        li_doc = LlamaIndexDocument(
+            id_=self.id_,
+            metadata={
+                "file_name": self.filename,
+                "file_size": self.file_size,
+                "creation_date": self.creation_date.isoformat(),
+                "last_modified_date": self.last_modified_date.isoformat(),
+            },
+            excluded_embed_metadata_keys=[
+                "file_size",
+                "creation_date",
+                "last_modified_date",
+            ],
+            excluded_llm_metadata_keys=[
+                "file_name",
+                "file_size",
+                "creation_date",
+                "last_modified_date",
+            ],
+        )
+        li_nodes = self._nodes_to_llama_index(li_doc)
+
+        return li_nodes
+
+    def _nodes_to_llama_index(self, llama_index_doc):
+        try:
+            from llama_index.core.schema import NodeRelationship
+        except ImportError as err:
+            raise ImportError(
+                "llama_index is not installed. Please install it with `pip install llama_index`."
+            ) from err
+
+        li_nodes = [node.to_llama_index() for node in sorted(self.nodes)]
+        for i in range(len(li_nodes) - 1):
+            li_nodes[i].relationships[NodeRelationship.NEXT] = li_nodes[
+                i + 1
+            ].as_related_node_info()
+
+            li_nodes[i + 1].relationships[NodeRelationship.PREVIOUS] = li_nodes[
+                i
+            ].as_related_node_info()
+
+        for li_node in li_nodes:
+            li_node.relationships[NodeRelationship.PARENT] = (
+                llama_index_doc.as_related_node_info()
+            )
+
+        return li_nodes
