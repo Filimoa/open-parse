@@ -2,11 +2,10 @@ import os
 import mimetypes
 import datetime as dt
 import random
-import tempfile
+import io
 from pathlib import Path
 from typing import Iterator, List, Literal, Optional, Union, Tuple, Any, Dict
 from pydantic import BaseModel
-
 from pdfminer.high_level import extract_pages
 from pdfminer.layout import LTPage
 from pypdf import PdfReader, PdfWriter
@@ -145,9 +144,9 @@ class Pdf:
         if not self.writer.pages:
             return fitz.open(self.file_path)
 
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmpfile:
-            self.writer.write(tmpfile.name)
-            return fitz.open(tmpfile.name)
+        byte_stream = io.BytesIO()
+        self.writer.write(byte_stream)
+        return fitz.open(None, byte_stream)
 
     def _draw_bboxes(
         self,
