@@ -357,6 +357,11 @@ def _determine_relationship(
 
 
 class Node(BaseModel):
+    id_: str = Field(
+        default_factory=lambda: str(uuid.uuid4()),
+        description="Unique ID of the node.",
+        exclude=True,
+    )
     elements: Tuple[Union[TextElement, TableElement], ...] = Field(
         exclude=True, frozen=True
     )
@@ -371,12 +376,6 @@ class Node(BaseModel):
     )  # controlled globally for now, should be moved into elements
     embedding: Optional[List[float]] = Field(
         default=None, description="Embedding of the node."
-    )
-
-    id_: str = Field(
-        default_factory=lambda: str(uuid.uuid4()),
-        description="Unique ID of the node.",
-        exclude=True,
     )
 
     @computed_field  # type: ignore
@@ -554,7 +553,7 @@ class Node(BaseModel):
             from llama_index.core.schema import TextNode as LlamaIndexTextNode
         except ImportError as err:
             raise ImportError(
-                "llama_index is not installed. Please install it with `pip install llama_index`."
+                "llama_index is not installed. Please install it with `pip install llama-index`."
             ) from err
         return LlamaIndexTextNode(
             id_=self.id_,
@@ -624,7 +623,7 @@ class ParsedDocument(BaseModel):
             from llama_index.core.schema import Document as LlamaIndexDocument
         except ImportError as err:
             raise ImportError(
-                "llama_index is not installed. Please install it with `pip install llama_index`."
+                "llama_index is not installed. Please install it with `pip install llama-index`."
             ) from err
 
         li_doc = LlamaIndexDocument(
@@ -656,7 +655,7 @@ class ParsedDocument(BaseModel):
             from llama_index.core.schema import NodeRelationship
         except ImportError as err:
             raise ImportError(
-                "llama_index is not installed. Please install it with `pip install llama_index`."
+                "llama_index is not installed. Please install it with `pip install llama-index`."
             ) from err
 
         li_nodes = [node.to_llama_index() for node in sorted(self.nodes)]
