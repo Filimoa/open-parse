@@ -3,7 +3,6 @@ import re
 
 
 def test_parse_doc():
-
     basic_doc_path = "src/evals/data/full-pdfs/mock-1-page-lease.pdf"
     parser = openparse.DocumentParser()
     parsed_basic_doc = parser.parse(basic_doc_path)
@@ -49,3 +48,12 @@ def test_parse_tables_with_pymupdf():
     parsed_doc2 = parser.parse(doc_with_tables_path)
     assert len(parsed_doc2.nodes) >= 1
     assert parsed_doc2.nodes[-1].text.startswith("<table")
+
+
+def test_to_llama_index_nodes():
+    basic_doc_path = "src/evals/data/full-pdfs/mock-1-page-lease.pdf"
+    parser = openparse.DocumentParser()
+    parsed_basic_doc = parser.parse(basic_doc_path)
+
+    nodes = parsed_basic_doc.to_llama_index_nodes()
+    assert len(nodes) >= 1

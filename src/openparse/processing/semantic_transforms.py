@@ -61,10 +61,10 @@ class OpenAIEmbeddings:
     def _create_client(self):
         try:
             from openai import OpenAI
-        except ImportError:
+        except ImportError as err:
             raise ImportError(
                 "You need to install the openai package to use this feature."
-            )
+            ) from err
         return OpenAI(api_key=self.api_key)
 
 
