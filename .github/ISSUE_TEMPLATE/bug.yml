@@ -15,11 +15,6 @@ body:
       options:
         - label: I confirm that I'm on the latest version
           required: true
-      label: File is attached 
-      description: Attach any docs that might failing
-      options:
-        - label: If it's an issue with a specific PDF, I've attached the document 
-          required: false
   - type: textarea
     id: description
     attributes:
