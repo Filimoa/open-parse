@@ -8,7 +8,7 @@ body:
       value: Thank you for contributing to open-parse! ✊
 
   - type: checkboxes
-    id: checks
+    id: version-checks
     attributes:
       label: Initial Checks
       description: Just making sure you're using the latest version
@@ -16,6 +16,14 @@ body:
         - label: I confirm that I'm on the latest version
           required: true
 
+  - type: checkboxes
+    id: pdf-checks
+    attributes:
+      label: PDF Attached Checks
+      description: Attached any docs that might failing
+      options:
+        - label: If it's an issue with a specific PDF, I've attached the document 
+          required: false
   - type: textarea
     id: description
     attributes:
