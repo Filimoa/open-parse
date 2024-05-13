@@ -15,12 +15,8 @@ body:
       options:
         - label: I confirm that I'm on the latest version
           required: true
-
-  - type: checkboxes
-    id: pdf-checks
-    attributes:
-      label: PDF Attached Checks
-      description: Attached any docs that might failing
+      label: File is attached 
+      description: Attach any docs that might failing
       options:
         - label: If it's an issue with a specific PDF, I've attached the document 
           required: false
