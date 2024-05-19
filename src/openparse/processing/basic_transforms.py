@@ -33,18 +33,21 @@ class RemoveTextInsideTables(ProcessingStep):
                 updated_nodes.append(node)
                 continue
 
-            new_elements = [
-                element
-                for element in node.elements
-                if not (
+            new_elements = []
+            for element in node.elements:
+                should_include = not (
                     isinstance(element, TextElement)
                     and self.intersects_any_table(
                         element.bbox, tables_by_page[element.page]
                     )
                 )
-            ]
-            if new_elements:
+                if should_include:
+                    new_elements.append(element)
+
+            if new_elements and len(new_elements) != len(node.elements):
                 updated_nodes.append(Node(elements=tuple(new_elements)))
+            elif len(new_elements) == len(node.elements):
+                updated_nodes.append(node)
 
         return updated_nodes
 

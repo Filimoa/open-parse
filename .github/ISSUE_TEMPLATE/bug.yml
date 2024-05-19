@@ -8,14 +8,13 @@ body:
       value: Thank you for contributing to open-parse! ✊
 
   - type: checkboxes
-    id: checks
+    id: version-checks
     attributes:
       label: Initial Checks
       description: Just making sure you're using the latest version
       options:
         - label: I confirm that I'm on the latest version
           required: true
-
   - type: textarea
     id: description
     attributes:
@@ -41,3 +40,20 @@ body:
 
         ...
       render: Python
+
+  - type: textarea
+    id: version
+    attributes:
+      label: Python, open-parse & OS Version
+      description: |
+        Which version of Python & open-parse are you using, and which Operating System?
+
+        Please run the following command and copy the output below:
+
+        ```bash
+        python -c "import openparse.version; print(openparse.version.version_info())"
+        ```
+
+      render: Text
+    validations:
+      required: true
