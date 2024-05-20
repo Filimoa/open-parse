@@ -674,3 +674,7 @@ class ParsedDocument(BaseModel):
             )
 
         return li_nodes
+    last_modified_date: Optional[dt.date] = None
+    last_accessed_date: Optional[dt.date] = None
+    creation_date: Optional[dt.date] = None
+    file_size: Optional[int] = None

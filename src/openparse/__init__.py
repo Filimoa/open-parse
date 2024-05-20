@@ -2,7 +2,7 @@ from openparse.pdf import Pdf
 from openparse.doc_parser import (
     DocumentParser,
 )
-from openparse import processing, version
+from openparse import processing, version, embeddings
 from openparse.config import config
 from openparse.schemas import (
     Bbox,
@@ -28,4 +28,5 @@ __all__ = [
     "processing",
     "version",
     "config",
+    "embeddings",
 ]
