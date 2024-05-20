@@ -2,6 +2,7 @@ import re
 from collections import defaultdict, namedtuple
 from enum import Enum
 import datetime as dt
+import uuid
 from functools import cached_property
 from typing import Any, List, Literal, Optional, Tuple, Union, Set
 
@@ -356,12 +357,31 @@ def _determine_relationship(
 
 
 class Node(BaseModel):
-    elements: Tuple[Union[TextElement, TableElement], ...] = Field(exclude=True)
-    _tokenization_lower_limit: int = consts.TOKENIZATION_LOWER_LIMIT
-    _tokenization_upper_limit: int = consts.TOKENIZATION_UPPER_LIMIT
-    _coordinates: Literal["top-left", "bottom-left"] = (
-        consts.COORDINATE_SYSTEM
+    id_: str = Field(
+        default_factory=lambda: str(uuid.uuid4()),
+        description="Unique ID of the node.",
+        exclude=True,
+    )
+    elements: Tuple[Union[TextElement, TableElement], ...] = Field(
+        exclude=True, frozen=True
+    )
+    tokenization_lower_limit: int = Field(
+        default=consts.TOKENIZATION_LOWER_LIMIT, frozen=True, exclude=True
+    )
+    tokenization_upper_limit: int = Field(
+        default=consts.TOKENIZATION_UPPER_LIMIT, frozen=True, exclude=True
+    )
+    coordinate_system: Literal["top-left", "bottom-left"] = Field(
+        default=consts.COORDINATE_SYSTEM, frozen=True, exclude=True
     )  # controlled globally for now, should be moved into elements
+    embedding: Optional[List[float]] = Field(
+        default=None, description="Embedding of the node."
+    )
+
+    @computed_field  # type: ignore
+    @cached_property
+    def node_id(self) -> str:
+        return self.id_
 
     @computed_field  # type: ignore
     @cached_property
@@ -465,11 +485,11 @@ class Node(BaseModel):
 
     @cached_property
     def is_small(self) -> bool:
-        return self.tokens < self._tokenization_lower_limit
+        return self.tokens < self.tokenization_lower_limit
 
     @cached_property
     def is_large(self) -> bool:
-        return self.tokens > self._tokenization_upper_limit
+        return self.tokens > self.tokenization_upper_limit
 
     @cached_property
     def num_pages(self) -> int:
@@ -495,7 +515,7 @@ class Node(BaseModel):
         min_page = min(element.bbox.page for element in self.elements)
         min_x0 = min(element.bbox.x0 for element in self.elements)
 
-        if self._coordinates == "bottom-left":
+        if self.coordinate_system == "bottom-left":
             y_position = -min(element.bbox.y0 for element in self.elements)
         else:
             raise NotImplementedError(
@@ -528,11 +548,29 @@ class Node(BaseModel):
 
         return False
 
+    def to_llama_index(self):
+        try:
+            from llama_index.core.schema import TextNode as LlamaIndexTextNode
+        except ImportError as err:
+            raise ImportError(
+                "llama_index is not installed. Please install it with `pip install llama-index`."
+            ) from err
+        return LlamaIndexTextNode(
+            id_=self.id_,
+            text=self.text,
+            embedding=self.embedding,
+            metadata={"bbox": [b.model_dump(mode="json") for b in self.bbox]},
+            excluded_embed_metadata_keys=["bbox"],
+            excluded_llm_metadata_keys=["bbox"],
+        )
+
     def __lt__(self, other: "Node") -> bool:
         if not isinstance(other, Node):
             return NotImplemented
 
-        assert self._coordinates == other._coordinates, "Coordinate systems must match."
+        assert (
+            self.coordinate_system == other.coordinate_system
+        ), "Coordinate systems must match."
 
         return self.reading_order < other.reading_order
 
@@ -553,8 +591,6 @@ class Node(BaseModel):
         new_elems = self.elements + other.elements
         return Node(elements=new_elems)
 
-    model_config = ConfigDict(frozen=True)
-
 
 #######################
 ### PARSED DOCUMENT ###
@@ -562,11 +598,82 @@ class Node(BaseModel):
 
 
 class ParsedDocument(BaseModel):
+    id_: str = Field(
+        default_factory=lambda: str(uuid.uuid4()),
+        description="Unique ID of the node.",
+        exclude=True,
+    )
     nodes: List[Node]
     filename: str
     num_pages: int
     coordinate_system: Literal["top-left", "bottom-left"] = "bottom-left"
     table_parsing_kwargs: Optional[dict] = None
+    last_modified_date: Optional[dt.date] = None
+    last_accessed_date: Optional[dt.date] = None
+    creation_date: Optional[dt.date] = None
+    file_size: Optional[int] = None
+
+    @cached_property
+    @computed_field
+    def doc_id(self) -> str:
+        return self.id_
+
+    def to_llama_index_nodes(self):
+        try:
+            from llama_index.core.schema import Document as LlamaIndexDocument
+        except ImportError as err:
+            raise ImportError(
+                "llama_index is not installed. Please install it with `pip install llama-index`."
+            ) from err
+
+        li_doc = LlamaIndexDocument(
+            id_=self.id_,
+            metadata={
+                "file_name": self.filename,
+                "file_size": self.file_size,
+                "creation_date": self.creation_date.isoformat(),
+                "last_modified_date": self.last_modified_date.isoformat(),
+            },
+            excluded_embed_metadata_keys=[
+                "file_size",
+                "creation_date",
+                "last_modified_date",
+            ],
+            excluded_llm_metadata_keys=[
+                "file_name",
+                "file_size",
+                "creation_date",
+                "last_modified_date",
+            ],
+        )
+        li_nodes = self._nodes_to_llama_index(li_doc)
+
+        return li_nodes
+
+    def _nodes_to_llama_index(self, llama_index_doc):
+        try:
+            from llama_index.core.schema import NodeRelationship
+        except ImportError as err:
+            raise ImportError(
+                "llama_index is not installed. Please install it with `pip install llama-index`."
+            ) from err
+
+        li_nodes = [node.to_llama_index() for node in sorted(self.nodes)]
+        for i in range(len(li_nodes) - 1):
+            li_nodes[i].relationships[NodeRelationship.NEXT] = li_nodes[
+                i + 1
+            ].as_related_node_info()
+
+            li_nodes[i + 1].relationships[NodeRelationship.PREVIOUS] = li_nodes[
+                i
+            ].as_related_node_info()
+
+        for li_node in li_nodes:
+            li_node.relationships[NodeRelationship.PARENT] = (
+                llama_index_doc.as_related_node_info()
+            )
+
+        return li_nodes
     last_modified_date: Optional[dt.date] = None
     last_accessed_date: Optional[dt.date] = None
     creation_date: Optional[dt.date] = None

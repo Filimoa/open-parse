@@ -51,6 +51,11 @@ def _ingest_with_pymupdf(
         tabs = page.find_tables()
         for i, tab in enumerate(tabs.tables):
             headers = tab.header.names
+            for j, header in enumerate(headers):
+                if header is None:
+                    headers[j] = ""
+                else:
+                    headers[j] = header.strip()
             lines = tab.extract()
 
             if parsing_args.table_output_format == "str":
