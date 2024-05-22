@@ -78,6 +78,7 @@ nav:
       - Advanced:
           - Customization: processing/customization.md
   - Serializing Results: serialization.md
+  - Integrations: integrations.md
   - Visualization: visualization.md
   - Config: config.md
 

@@ -3,7 +3,7 @@ from typing import List, Literal, Optional, TypedDict, Union, TypeVar
 
 from openparse import tables, text, consts
 from openparse.pdf import Pdf
-from openparse.types import NOT_GIVEN, NotGiven
+from openparse._types import NOT_GIVEN, NotGiven
 from openparse.processing import (
     IngestionPipeline,
     BasicIngestionPipeline,
@@ -34,7 +34,7 @@ class PyMuPDFArgsDict(TypedDict, total=False):
 
 
 def _table_args_dict_to_model(
-    args_dict: Union[TableTransformersArgsDict, PyMuPDFArgsDict]
+    args_dict: Union[TableTransformersArgsDict, PyMuPDFArgsDict],
 ) -> Union[tables.TableTransformersArgs, tables.PyMuPDFArgs]:
     if args_dict["parsing_algorithm"] == "table-transformers":
         return tables.TableTransformersArgs(**args_dict)
@@ -117,6 +117,10 @@ class DocumentParser:
             table_parsing_kwargs=(
                 table_args_obj.model_dump() if table_args_obj else None
             ),
+            creation_date=doc.file_metadata.get("creation_date"),
+            last_modified_date=doc.file_metadata.get("last_modified_date"),
+            last_accessed_date=doc.file_metadata.get("last_accessed_date"),
+            file_size=doc.file_metadata.get("file_size"),
         )
         return parsed_doc
 

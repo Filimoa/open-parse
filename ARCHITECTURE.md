@@ -20,7 +20,7 @@ We parse text into markdown by looking at the font size and style charachter by 
 
 Spans get combined into lines and lines get combined into elements. Elements are the basic building blocks of the document. They can be headings, paragraphs, lists of bullets, etc.
 
-Optionally we can use PyMuPDF to OCR the document. This is not recommended as a default due to the additional computational cost and inherent inaccuracies of OCR. We're looking at integrating [doctr](https://github.com/mindee/doctr).
+Optionally we can use PyMuPDF to OCR the document. This is not recommended as a default due to the additional computational cost and inherent inaccuracies of OCR. We're looking at integrating [doctr](https://github.com/mindee/doctr).  Early tests make this library seem very heavy and slow.
 
 Here's an article that goes into more details on available [OCR libraries](https://source.opennews.org/articles/our-search-best-ocr-tool-2023/).
 

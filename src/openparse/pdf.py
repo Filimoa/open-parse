@@ -1,15 +1,16 @@
+import os
+import mimetypes
+import datetime as dt
 import random
-import tempfile
+import io
 from pathlib import Path
-from typing import Iterator, List, Literal, Optional, Union, Tuple, Any
+from typing import Iterator, List, Literal, Optional, Union, Tuple, Any, Dict
 from pydantic import BaseModel
-
 from pdfminer.high_level import extract_pages
 from pdfminer.layout import LTPage
 from pypdf import PdfReader, PdfWriter
 
 from openparse.schemas import Bbox, Node
-from openparse import consts
 
 
 class _BboxWithColor(BaseModel):
@@ -60,13 +61,41 @@ def _prepare_bboxes_for_drawing(
     return res
 
 
+def file_metadata(file_path: Union[str, Path]) -> Dict:
+    """Get some handy metadate from filesystem.
+
+    Args:
+        file_path: str: file path in str
+    """
+    return {
+        "file_path": file_path,
+        "file_name": os.path.basename(file_path),
+        "file_type": mimetypes.guess_type(file_path)[0],
+        "file_size": os.path.getsize(file_path),
+        "creation_date": dt.datetime.fromtimestamp(
+            Path(file_path).stat().st_ctime
+        ).strftime("%Y-%m-%d"),
+        "last_modified_date": dt.datetime.fromtimestamp(
+            Path(file_path).stat().st_mtime
+        ).strftime("%Y-%m-%d"),
+        "last_accessed_date": dt.datetime.fromtimestamp(
+            Path(file_path).stat().st_atime
+        ).strftime("%Y-%m-%d"),
+    }
+
+
 class Pdf:
     """
     Simple utility class for working with PDF files. This class wraps the PdfReader and PdfWriter classes from pypdf.
     """
 
     def __init__(self, file: Union[str, Path, PdfReader]):
-        self.file_path = str(file) if isinstance(file, (str, Path)) else None
+        self.file_path = None
+        self.file_metadata = dict()
+        if isinstance(file, (str, Path)):
+            self.file_path = str(file)
+            self.file_metadata = file_metadata(file)
+
         self.reader = PdfReader(file) if isinstance(file, (str, Path)) else file
         self.writer = PdfWriter()
         for page in self.reader.pages:
@@ -107,17 +136,17 @@ class Pdf:
         """
         try:
             import fitz  # type: ignore
-        except ImportError:
+        except ImportError as err:
             raise ImportError(
                 "PyMuPDF (fitz) is not installed. This method requires PyMuPDF."
-            )
+            ) from err
 
         if not self.writer.pages:
             return fitz.open(self.file_path)
 
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmpfile:
-            self.writer.write(tmpfile.name)
-            return fitz.open(tmpfile.name)
+        byte_stream = io.BytesIO()
+        self.writer.write(byte_stream)
+        return fitz.open(None, byte_stream)
 
     def _draw_bboxes(
         self,
@@ -126,10 +155,10 @@ class Pdf:
     ):
         try:
             import fitz
-        except ImportError:
+        except ImportError as err:
             raise ImportError(
                 "PyMuPDF (fitz) is not installed. This method requires PyMuPDF."
-            )
+            ) from err
 
         pdf = self.to_pymupdf_doc()
 
@@ -167,15 +196,15 @@ class Pdf:
         """
         try:
             from IPython.display import Image, display  # type: ignore
-        except ImportError:
+        except ImportError as err:
             raise ImportError(
                 "IPython is required to display PDFs. Please install it with `pip install ipython`."
-            )
+            ) from err
         assert nodes, "At least one node is required."
 
         bboxes = [node.bbox for node in nodes]
         flattened_bboxes = _prepare_bboxes_for_drawing(bboxes, annotations)
-        marked_up_doc = self._draw_bboxes(flattened_bboxes, nodes[0]._coordinates)
+        marked_up_doc = self._draw_bboxes(flattened_bboxes, nodes[0].coordinate_system)
         if not page_nums:
             page_nums = list(range(marked_up_doc.page_count))
         for page_num in page_nums:
@@ -193,7 +222,7 @@ class Pdf:
 
         bboxes = [node.bbox for node in nodes]
         flattened_bboxes = _prepare_bboxes_for_drawing(bboxes, annotations)
-        marked_up_doc = self._draw_bboxes(flattened_bboxes, nodes[0]._coordinates)
+        marked_up_doc = self._draw_bboxes(flattened_bboxes, nodes[0].coordinate_system)
         marked_up_doc.save(str(output_pdf))
 
     def _flip_coordinates(self, bbox: Bbox) -> Bbox:
