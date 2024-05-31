@@ -1,6 +1,6 @@
 from typing import Any, Iterable, List, Union, Tuple
 
-from pdfminer.layout import LTChar, LTTextContainer, LTTextLine
+from pdfminer.layout import LTAnno, LTChar, LTTextContainer, LTTextLine
 from pydantic import BaseModel, model_validator
 
 from openparse.pdf import Pdf
@@ -28,11 +28,20 @@ class CharElement(BaseModel):
 
 
 def _extract_chars(text_line: LTTextLine) -> List[CharElement]:
-    return [
-        CharElement(text=char.get_text(), fontname=char.fontname, size=char.size)
-        for char in text_line
-        if isinstance(char, LTChar)
-    ]
+    chars = []
+    # take the first LTChar's fontname and size for any LTAnno before them
+    last_fontname = next((char.fontname for char in text_line if isinstance(char, LTChar)), "")
+    last_size = next((char.size for char in text_line if isinstance(char, LTChar)), 0.0)
+    
+    for char in text_line:
+        if not isinstance(char, LTChar) and not isinstance(char, LTAnno):
+            continue
+        if isinstance(char, LTChar):
+            last_fontname = char.fontname
+            last_size = char.size
+        chars.append(CharElement(text=char.get_text(), fontname=last_fontname, size=last_size))
+
+    return chars
 
 
 def _group_chars_into_spans(chars: Iterable[CharElement]) -> List[TextSpan]:
