@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from typing import List, Literal, Dict
+from typing import Dict, List, Literal
 
 from openparse.schemas import Bbox, Node, TextElement
 

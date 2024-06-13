@@ -1,8 +1,9 @@
-from typing import List, Literal, Dict, Union
+from typing import List, Literal, Union
 
 import numpy as np
 
 from openparse.schemas import Node
+
 from .basic_transforms import ProcessingStep
 
 EmbeddingModel = Literal[

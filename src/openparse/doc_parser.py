@@ -1,16 +1,15 @@
 from pathlib import Path
-from typing import List, Literal, Optional, TypedDict, Union, TypeVar
+from typing import List, Literal, TypedDict, TypeVar, Union
 
-from openparse import tables, text, consts
-from openparse.pdf import Pdf
+from openparse import consts, tables, text
 from openparse._types import NOT_GIVEN, NotGiven
+from openparse.pdf import Pdf
 from openparse.processing import (
-    IngestionPipeline,
     BasicIngestionPipeline,
+    IngestionPipeline,
     NoOpIngestionPipeline,
 )
-from openparse.schemas import Node, TableElement, TextElement, ParsedDocument
-
+from openparse.schemas import Node, ParsedDocument, TableElement, TextElement
 
 IngestionPipelineType = TypeVar("IngestionPipelineType", bound=IngestionPipeline)
 

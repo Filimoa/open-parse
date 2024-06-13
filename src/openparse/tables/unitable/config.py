@@ -1,6 +1,8 @@
-from pydantic import BaseModel
-from pathlib import Path
 import sys
+from pathlib import Path
+
+from pydantic import BaseModel
+
 from openparse import consts
 
 root = Path(consts.__file__).parent

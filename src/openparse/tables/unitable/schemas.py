@@ -6,12 +6,9 @@ Out of the total time spent on predictions, approximately 50 ish% is used for st
 We could potentially drastically speed up inference if we use tesseract to extract the text from the table instead of unitable.
 """
 
-from typing import List, Tuple, Optional, Union
-from pydantic import BaseModel, Field
-from ..utils import (
-    convert_croppped_cords_to_full_img_cords,
-    convert_img_cords_to_pdf_cords,
-)
+from typing import List, Optional, Tuple, Union
+
+from pydantic import BaseModel
 
 Size = Tuple[int, int]
 

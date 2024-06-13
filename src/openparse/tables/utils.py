@@ -47,7 +47,7 @@ def crop_img_with_padding(
         return padded_image
 
     except Exception as e:
-        raise ValueError(f"Failed to crop the image: {e}")
+        raise ValueError(f"Failed to crop the image: {e}") from e
 
 
 def doc_to_imgs(doc) -> List[Image.Image]:

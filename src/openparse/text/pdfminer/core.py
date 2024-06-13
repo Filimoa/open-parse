@@ -1,4 +1,4 @@
-from typing import Any, Iterable, List, Union, Tuple
+from typing import Any, Iterable, List, Tuple, Union
 
 from pdfminer.layout import LTAnno, LTChar, LTTextContainer, LTTextLine
 from pydantic import BaseModel, model_validator

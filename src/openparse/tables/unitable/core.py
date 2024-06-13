@@ -1,32 +1,33 @@
-from typing import Tuple, List, Sequence, Optional, Union
 import re
+from typing import List, Optional, Sequence, Tuple
 
-from PIL import Image  # type: ignore
 import torch  # type: ignore
+from PIL import Image  # type: ignore
+from torch import Tensor  # type: ignore
 from torchvision import transforms  # type: ignore
-from torch import nn, Tensor  # type: ignore
 
-from .tokens import VALID_HTML_TOKEN, VALID_BBOX_TOKEN, INVALID_CELL_TOKEN
+from openparse.config import config
+
+from .tokens import INVALID_CELL_TOKEN, VALID_BBOX_TOKEN, VALID_HTML_TOKEN
+from .unitable_model import (
+    EncoderDecoder,
+    bbox_model,
+    bbox_vocab,
+    cell_model,
+    cell_vocab,
+    structure_model,
+    structure_vocab,
+)
 from .utils import (
-    subsequent_mask,
-    pred_token_within_range,
+    bbox_str_to_token_list,
+    build_table_from_html_and_cell,  # cell-content-detection
+    cell_str_to_token_list,  # cell-content-detection
     greedy_sampling,
     html_str_to_token_list,
-    bbox_str_to_token_list,
-    cell_str_to_token_list,  # cell-content-detection
-    build_table_from_html_and_cell,  # cell-content-detection
     html_table_template,  # cell-content-detection
+    pred_token_within_range,
+    subsequent_mask,
 )
-from .unitable_model import (
-    structure_vocab,
-    structure_model,
-    bbox_vocab,
-    bbox_model,
-    cell_vocab,
-    cell_model,
-    EncoderDecoder,
-)
-from openparse.config import config
 
 Size = Tuple[int, int]
 BBox = Tuple[int, int, int, int]

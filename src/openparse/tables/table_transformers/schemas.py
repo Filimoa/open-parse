@@ -147,14 +147,14 @@ class _Table(BaseModel):
             " {} ".format(cell.content.ljust(width) if cell.content else " " * width)
             for cell, width in zip(cells, column_widths)
         )
-        return "|{}|".format(row_content)
+        return f"|{row_content}|"
 
     def _generate_horizontal_border_str(self, column_widths: List[int]) -> str:
         """
         Generates the horizontal border string based on the column widths.
         """
         border = "+".join("-" * (width + 2) for width in column_widths)
-        return "+{}+".format(border)
+        return f"+{border}+"
 
     def sort(self) -> None:
         self.headers.sort(

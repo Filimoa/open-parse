@@ -1,24 +1,24 @@
-from typing import List, Optional
 from abc import ABC
+from typing import List, Optional
 
-from openparse.schemas import Node
 from openparse import consts
 from openparse.processing.basic_transforms import (
-    ProcessingStep,
-    RemoveTextInsideTables,
-    RemoveFullPageStubs,
-    CombineNodesSpatially,
-    CombineHeadingsWithClosestText,
     CombineBullets,
+    CombineHeadingsWithClosestText,
+    CombineNodesSpatially,
+    ProcessingStep,
+    RemoveFullPageStubs,
     RemoveMetadataElements,
-    RemoveRepeatedElements,
     RemoveNodesBelowNTokens,
+    RemoveRepeatedElements,
+    RemoveTextInsideTables,
 )
 from openparse.processing.semantic_transforms import (
     CombineNodesSemantically,
-    OpenAIEmbeddings,
     EmbeddingModel,
+    OpenAIEmbeddings,
 )
+from openparse.schemas import Node
 
 
 class IngestionPipeline(ABC):

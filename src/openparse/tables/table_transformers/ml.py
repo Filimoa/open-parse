@@ -8,29 +8,31 @@ from torchvision import transforms  # type: ignore
 from transformers import (
     AutoModelForObjectDetection,  # type: ignore
     TableTransformerForObjectDetection,  # type: ignore
-)  # type: ignore
+)
 
+# type: ignore
 from openparse.config import config
+
 from ..schemas import (
     BBox,
     Size,
 )
 from ..utils import (
-    display_cells_on_img,
-    crop_img_with_padding,
     convert_croppped_cords_to_full_img_cords,
     convert_img_cords_to_pdf_cords,
+    crop_img_with_padding,
+    display_cells_on_img,
 )
 from .geometry import (
     calc_bbox_intersection,
 )
 from .schemas import (
-    _TableCellModelOutput,
-    _TableModelOutput,
     _Table,
+    _TableCellModelOutput,
     _TableDataCell,
     _TableHeader,
     _TableHeaderCell,
+    _TableModelOutput,
     _TableRow,
 )
 

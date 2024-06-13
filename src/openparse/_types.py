@@ -1,6 +1,6 @@
-from typing import Union, Any, TypeVar
-from typing_extensions import Literal, override
+from typing import TypeVar, Union
 
+from typing_extensions import Literal, override
 
 _T = TypeVar("_T")
 
