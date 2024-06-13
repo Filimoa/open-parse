@@ -28,18 +28,28 @@ class CharElement(BaseModel):
 
 
 def _extract_chars(text_line: LTTextLine) -> List[CharElement]:
+    """
+    The last_fontname variable is used to keep track of the most recent fontname seen as the function iterates through text_line.
+
+    This is necessary because LTAnno elements (annotations) do not have their own font and size information; they use the most recently encountered fontname and size from a LTChar element.
+    """
+
     chars = []
     # take the first LTChar's fontname and size for any LTAnno before them
-    last_fontname = next((char.fontname for char in text_line if isinstance(char, LTChar)), "")
+    last_fontname = next(
+        (char.fontname for char in text_line if isinstance(char, LTChar)), ""
+    )
     last_size = next((char.size for char in text_line if isinstance(char, LTChar)), 0.0)
-    
+
     for char in text_line:
         if not isinstance(char, LTChar) and not isinstance(char, LTAnno):
             continue
         if isinstance(char, LTChar):
             last_fontname = char.fontname
             last_size = char.size
-        chars.append(CharElement(text=char.get_text(), fontname=last_fontname, size=last_size))
+        chars.append(
+            CharElement(text=char.get_text(), fontname=last_fontname, size=last_size)
+        )
 
     return chars
 

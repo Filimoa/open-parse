@@ -1,5 +1,15 @@
+from typing import Tuple, List
+from unittest.mock import MagicMock
+
+from pdfminer.layout import LTAnno, LTChar
+
 from openparse.schemas import TextSpan
-from openparse.text.pdfminer.core import CharElement, _group_chars_into_spans
+from openparse.text.pdfminer.core import (
+    CharElement,
+    _group_chars_into_spans,
+    _extract_chars,
+)
+
 
 raw_chars = [
     CharElement(text="1", fontname="bold", size=9.0),
@@ -83,3 +93,108 @@ def test_group_chars_into_spans():
         ), f"Expected size {expected_span.size}, got {result_span.size} in mixed styles"
 
     # Add more tests here for additional scenarios like empty inputs, inputs with only spaces, etc.
+
+
+def _char_data_to_text_line(char_data: List[Tuple[str, str, float]]):
+    text_line = []
+    for text, fontname, size in char_data:
+        # LTAnno does not have fontname and size attributes
+        if fontname is None and size is None:
+            anno = MagicMock(spec=LTAnno)
+            anno.get_text.return_value = text
+            text_line.append(anno)
+        else:
+            char = MagicMock(spec=LTChar)
+            char.get_text.return_value = text
+            char.fontname = fontname
+            char.size = size
+            text_line.append(char)
+    return text_line
+
+
+def test_extract_chars():
+    char_data = [
+        ("A", "Arial-Bold", 12.0),
+        ("b", "Arial-Bold", 12.0),
+        ("o", "Arial-Bold", 12.0),
+        ("u", "Arial-Bold", 12.0),
+        ("t", "Arial-Bold", 12.0),
+        (" ", "Arial-Bold", 12.0),
+        ("w", "Arial-Bold", 12.0),
+        ("h", "Arial-Bold", 12.0),
+        ("o", "Arial-Bold", 12.0),
+    ]
+
+    expected_output = [
+        CharElement(text="A", fontname="Arial-Bold", size=12.0),
+        CharElement(text="b", fontname="Arial-Bold", size=12.0),
+        CharElement(text="o", fontname="Arial-Bold", size=12.0),
+        CharElement(text="u", fontname="Arial-Bold", size=12.0),
+        CharElement(text="t", fontname="Arial-Bold", size=12.0),
+        CharElement(text=" ", fontname="Arial-Bold", size=12.0),
+        CharElement(text="w", fontname="Arial-Bold", size=12.0),
+        CharElement(text="h", fontname="Arial-Bold", size=12.0),
+        CharElement(text="o", fontname="Arial-Bold", size=12.0),
+    ]
+
+    text_line = _char_data_to_text_line(char_data)
+    result = _extract_chars(text_line)
+    assert len(result) == 9
+
+    # Assert the result matches the expected output
+    assert result == expected_output
+
+
+def test_extract_chars_with_ltannos():
+    # Data for LTChar and LTAnno mock instances interleaved
+    char_data = [
+        ("A", "Arial-Bold", 12.0),
+        ("b", "Arial-Bold", 12.0),
+        ("o", "Arial-Bold", 12.0),
+        ("u", "Arial-Bold", 12.0),
+        ("t", "Arial-Bold", 12.0),
+        (" ", None, None),  # LTAnno
+        ("w", "Arial-Bold", 12.0),
+        ("h", "Arial-Bold", 12.0),
+        ("o", "Arial-Bold", 12.0),
+        (" ", None, None),  # LTAnno
+        (" ", None, None),  # LTAnno
+        ("A", "Arial-Bold", 12.0),
+        ("u", "Arial-Bold", 12.0),
+        ("t", "Arial-Bold", 12.0),
+        ("h", "Arial-Bold", 12.0),
+        ("o", "Arial-Bold", 12.0),
+        ("r", "Arial-Bold", 12.0),
+        ("\n", None, None),  # LTAnno
+    ]
+
+    text_line = _char_data_to_text_line(char_data)
+
+    # Expected output
+    expected_output = [
+        CharElement(text="A", fontname="Arial-Bold", size=12.0),
+        CharElement(text="b", fontname="Arial-Bold", size=12.0),
+        CharElement(text="o", fontname="Arial-Bold", size=12.0),
+        CharElement(text="u", fontname="Arial-Bold", size=12.0),
+        CharElement(text="t", fontname="Arial-Bold", size=12.0),
+        CharElement(text=" ", fontname="Arial-Bold", size=12.0),
+        CharElement(text="w", fontname="Arial-Bold", size=12.0),
+        CharElement(text="h", fontname="Arial-Bold", size=12.0),
+        CharElement(text="o", fontname="Arial-Bold", size=12.0),
+        CharElement(text=" ", fontname="Arial-Bold", size=12.0),
+        CharElement(text=" ", fontname="Arial-Bold", size=12.0),
+        CharElement(text="A", fontname="Arial-Bold", size=12.0),
+        CharElement(text="u", fontname="Arial-Bold", size=12.0),
+        CharElement(text="t", fontname="Arial-Bold", size=12.0),
+        CharElement(text="h", fontname="Arial-Bold", size=12.0),
+        CharElement(text="o", fontname="Arial-Bold", size=12.0),
+        CharElement(text="r", fontname="Arial-Bold", size=12.0),
+        CharElement(text="\n", fontname="Arial-Bold", size=12.0),
+    ]
+
+    # Call _extract_chars
+    result = _extract_chars(text_line)
+    assert len(result) == 18
+
+    # Assert the result matches the expected output
+    assert result == expected_output
