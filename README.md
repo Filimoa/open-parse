@@ -143,11 +143,17 @@ So for a working OCR functionality, make sure to complete this checklist:
 
    - Unix systems: `/usr/share/tesseract-ocr/5/tessdata`
 
+   - macOS (installed via Homebrew):
+     - Standard installation: `/opt/homebrew/share/tessdata`
+     - Version-specific installation: `/opt/homebrew/Cellar/tesseract/<version>/share/tessdata/`
+
 3. Set the environment variable TESSDATA_PREFIX
 
    - Windows: `setx TESSDATA_PREFIX "C:/Program Files/Tesseract-OCR/tessdata"`
 
-   - Unix systems: `declare -x TESSDATA_PREFIX= /usr/share/tesseract-ocr/5/tessdata`
+   - Unix systems: `declare -x TESSDATA_PREFIX=/usr/share/tesseract-ocr/5/tessdata`
+
+    - macOS (installed via Homebrew): `export TESSDATA_PREFIX=$(brew --prefix tesseract)/share/tessdata`
 
 **Note:** _On Windows systems, this must happen outside Python – before starting your script. Just manipulating os.environ will not work!_
 
