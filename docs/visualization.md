@@ -38,6 +38,6 @@ You can also export the results marked up over the original pdf to a seperate pd
 pdf = openparse.Pdf(basic_doc_path)
 pdf.export_with_bboxes(
     parsed_basic_doc.nodes,
-    output_path="./sample-docs/mobile-home-manual-marked-up.pdf"
+    output_pdf="./sample-docs/mobile-home-manual-marked-up.pdf"
 )
 ```
