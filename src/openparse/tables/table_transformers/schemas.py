@@ -1,6 +1,11 @@
 from typing import List, Literal, Optional, Sequence, Tuple, Union
 
-import fitz
+try:
+    import fitz
+except ImportError as err:
+    raise ImportError(
+        "PyMuPDF (fitz) is not installed. This method requires PyMuPDF."
+    ) from err
 from pydantic import BaseModel, model_validator
 
 ###############

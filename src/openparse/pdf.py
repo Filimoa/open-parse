@@ -1,5 +1,6 @@
 import datetime as dt
 import io
+import logging
 import mimetypes
 import os
 import random
@@ -8,6 +9,7 @@ from typing import Any, Dict, Iterator, List, Literal, Optional, Tuple, Union
 
 from pdfminer.high_level import extract_pages
 from pdfminer.layout import LTPage
+from PIL import Image  # type: ignore
 from pydantic import BaseModel
 from pypdf import PdfReader, PdfWriter
 
@@ -180,7 +182,9 @@ class Pdf:
                     page.insert_text(
                         rect.top_left,
                         str(bbox_with_color.annotation_text),
-                        fontsize=12,
+                        fontsize=24,
+                        fontname="helv",
+                        color=(1, 0, 0),
                     )
         return pdf
 
@@ -237,3 +241,28 @@ class Pdf:
             x1=bbox.x1,
             y1=fy1,
         )
+
+    def to_imgs(self) -> List[Image.Image]:
+        doc = self.to_pymupdf_doc()
+        images = []
+        try:
+            if not doc.is_pdf:
+                raise ValueError("The document is not in PDF format.")
+            if doc.needs_pass:
+                raise ValueError("The PDF document is password protected.")
+            page_numbers = list(range(doc.page_count))
+
+            for n in page_numbers:
+                page = doc[n]
+                pix = page.get_pixmap()
+                image = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+                images.append(image)
+
+        except ValueError as e:
+            logging.error(f"ValueError: {e}")
+        except IndexError as e:
+            logging.error(f"Page index out of range: {e}")
+        except Exception as e:
+            logging.error(f"An error occurred while reading the PDF: {e}")
+
+        return images
