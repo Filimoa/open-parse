@@ -1,7 +1,7 @@
 from typing import List
 
 from openparse.pdf import Pdf
-from openparse.schemas import Bbox, LineElement, TextElement, TextSpan
+from openparse.schemas import Bbox, LineElement, TextElement, TextSpan, ImageElement
 
 
 def flags_decomposer(flags: int) -> str:
@@ -75,28 +75,47 @@ def ingest(
     for page_num, page in enumerate(pdoc):
         page_ocr = page.get_textpage_ocr(flags=0, full=False)
         for node in page.get_text("dict", textpage=page_ocr, sort=True)["blocks"]:
-            if node["type"] != 0:
-                continue
-
-            lines = _lines_from_ocr_output(node["lines"])
-
             # Flip y-coordinates to match the top-left origin system
             fy0 = page.rect.height - node["bbox"][1]
             fy1 = page.rect.height - node["bbox"][3]
-
-            elements.append(
-                TextElement(
-                    bbox=Bbox(
-                        x0=node["bbox"][0],
-                        y0=fy0,
-                        x1=node["bbox"][2],
-                        y1=fy1,
-                        page=page_num,
-                        page_width=page.rect.width,
-                        page_height=page.rect.height,
-                    ),
-                    text="\n".join(line.text for line in lines),
-                    lines=tuple(lines),
+            if node["type"] == 1:
+                img_info = page.get_images(node["bbox"])
+                if len(img_info) > 0:
+                    name = f'{img_info[0][7]}.{node["ext"]}'
+                else:
+                    name = f'test.{node["ext"]}'
+                elements.append(
+                    ImageElement(
+                        bbox=Bbox(
+                            x0=node["bbox"][0],
+                            y0=fy0,
+                            x1=node["bbox"][2],
+                            y1=fy1,
+                            page=page_num,
+                            page_width=page.rect.width,
+                            page_height=page.rect.height,
+                        ),
+                        image=node["image"],
+                        ext=node["ext"],
+                        text=name,
+                    )
                 )
-            )
+            if node["type"] == 0:
+                lines = _lines_from_ocr_output(node["lines"])
+
+                elements.append(
+                    TextElement(
+                        bbox=Bbox(
+                            x0=node["bbox"][0],
+                            y0=fy0,
+                            x1=node["bbox"][2],
+                            y1=fy1,
+                            page=page_num,
+                            page_width=page.rect.width,
+                            page_height=page.rect.height,
+                        ),
+                        text="\n".join(line.text for line in lines),
+                        lines=tuple(lines),
+                    )
+                )
     return elements

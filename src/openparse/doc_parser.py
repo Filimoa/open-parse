@@ -11,6 +11,8 @@ from openparse.processing import (
 )
 from openparse.schemas import Node, ParsedDocument, TableElement, TextElement
 
+from openparse.schemas import ImageElement
+
 IngestionPipelineType = TypeVar("IngestionPipelineType", bound=IngestionPipeline)
 
 
@@ -125,7 +127,7 @@ class DocumentParser:
 
     @staticmethod
     def _elems_to_nodes(
-        elems: Union[List[TextElement], List[TableElement]],
+        elems: Union[List[TextElement], List[TableElement], List[ImageElement]],
     ) -> List[Node]:
         return [
             Node(

@@ -1,10 +1,12 @@
+import uuid
+from io import BytesIO
 from typing import Any, Iterable, List, Tuple, Union
 
-from pdfminer.layout import LTAnno, LTChar, LTTextContainer, LTTextLine
+from pdfminer.layout import LTAnno, LTChar, LTTextContainer, LTTextLine, LTImage, LTFigure, LTLine, LTRect
 from pydantic import BaseModel, model_validator
 
 from openparse.pdf import Pdf
-from openparse.schemas import Bbox, LineElement, TextElement, TextSpan
+from openparse.schemas import Bbox, LineElement, TextElement, TextSpan, ImageElement
 
 
 class CharElement(BaseModel):
@@ -148,5 +150,31 @@ def ingest(pdf_input: Union[Pdf]) -> List[TextElement]:
                         lines=tuple(lines),
                     )
                 )
-
+            elif isinstance(element, LTFigure):
+                element = element._objs
+                if element is None:
+                    continue
+                for e in element:
+                    if isinstance(e, LTImage):
+                        elements.append(
+                            ImageElement(
+                                bbox=Bbox(
+                                    x0=e.bbox[0],
+                                    y0=e.bbox[1],
+                                    x1=e.bbox[2],
+                                    y1=e.bbox[3],
+                                    page=page_num,
+                                    page_width=e.width,
+                                    page_height=e.height,
+                                ),
+                                image=BytesIO(e.stream.get_data()),
+                                ext="png",
+                                text='',
+                            )
+                        )
+            elif isinstance(element, LTLine):
+                pass
+            elif isinstance(element, LTRect):
+                pass
+                # This is a placeholder, actual method may vary
     return elements
