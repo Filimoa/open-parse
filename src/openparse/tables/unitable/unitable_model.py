@@ -1,20 +1,21 @@
-from typing import Tuple, List, Union, Optional, Sequence
-from pathlib import Path
-import torch  # type: ignore
-import tokenizers as tk  # type: ignore
 import warnings
-
-from torch import nn
 from functools import partial
+from pathlib import Path
+from typing import Tuple, Union
+
+import tokenizers as tk  # type: ignore
+import torch  # type: ignore
+from torch import nn
+
+from openparse.config import config as global_config
 
 from .config import config
 from .tabular_transformer import (
+    Decoder,
+    Encoder,
     EncoderDecoder,
     ImgLinearBackbone,
-    Encoder,
-    Decoder,
 )
-from openparse.config import config as global_config
 
 device = global_config.get_device()
 warnings.filterwarnings("ignore")

@@ -1,8 +1,9 @@
 from typing import List, Optional, Tuple
+
 import tokenizers as tk  # type: ignore
 import torch
-from torch import Tensor
 import torch.nn.functional as F
+from torch import Tensor
 
 from .tokens import TASK_TOKENS
 
@@ -113,7 +114,7 @@ def build_table_from_html_and_cell(
     structure: List[str], content: Optional[List[str]] = None
 ) -> List[str]:
     assert structure is not None
-    html_code = list()
+    html_code = []
 
     if content is None:
         content_copy = ["placeholder"] * len(structure)

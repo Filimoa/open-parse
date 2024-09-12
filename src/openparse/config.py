@@ -1,6 +1,5 @@
 from typing import Literal
 
-
 TorchDevice = Literal["cuda", "cpu", "mps"]
 
 

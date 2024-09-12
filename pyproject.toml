@@ -8,7 +8,7 @@ description = "Streamlines the process of preparing documents for LLM's."
 readme = "README.md"
 requires-python = ">=3.8"
 license = { text = "MIT" }
-version = "0.5.6"
+version = "0.5.7"
 authors = [{name = "Sergey Filimonov", email = "hello@sergey.fyi"}]
 dependencies = [
     "PyMuPDF >= 1.23.2",

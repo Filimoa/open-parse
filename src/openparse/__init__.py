@@ -1,9 +1,9 @@
-from openparse.pdf import Pdf
+from openparse import processing, version
+from openparse.config import config
 from openparse.doc_parser import (
     DocumentParser,
 )
-from openparse import processing, version
-from openparse.config import config
+from openparse.pdf import Pdf
 from openparse.schemas import (
     Bbox,
     LineElement,

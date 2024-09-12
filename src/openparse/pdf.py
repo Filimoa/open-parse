@@ -1,13 +1,14 @@
-import os
-import mimetypes
 import datetime as dt
-import random
 import io
+import mimetypes
+import os
+import random
 from pathlib import Path
-from typing import Iterator, List, Literal, Optional, Union, Tuple, Any, Dict
-from pydantic import BaseModel
+from typing import Any, Dict, Iterator, List, Literal, Optional, Tuple, Union
+
 from pdfminer.high_level import extract_pages
 from pdfminer.layout import LTPage
+from pydantic import BaseModel
 from pypdf import PdfReader, PdfWriter
 
 from openparse.schemas import Bbox, Node
@@ -57,7 +58,7 @@ def _prepare_bboxes_for_drawing(
                     )
                 )
 
-                text = f"continued ..."
+                text = "continued ..."
     return res
 
 
@@ -91,7 +92,7 @@ class Pdf:
 
     def __init__(self, file: Union[str, Path, PdfReader]):
         self.file_path = None
-        self.file_metadata = dict()
+        self.file_metadata = {}
         if isinstance(file, (str, Path)):
             self.file_path = str(file)
             self.file_metadata = file_metadata(file)
@@ -111,8 +112,7 @@ class Pdf:
             self.file_path is not None
         ), "PDF file path is required for this method for now."
 
-        for page_layout in extract_pages(self.file_path):
-            yield page_layout
+        yield from extract_pages(self.file_path)
 
     def save(self, output_pdf: Union[str, Path]) -> None:
         """

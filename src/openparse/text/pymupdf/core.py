@@ -6,22 +6,22 @@ from openparse.schemas import Bbox, LineElement, TextElement, TextSpan
 
 def flags_decomposer(flags: int) -> str:
     """Make font flags human readable."""
-    l = []
+    attrs = []
     if flags & 2**0:
-        l.append("superscript")
+        attrs.append("superscript")
     if flags & 2**1:
-        l.append("italic")
+        attrs.append("italic")
     if flags & 2**2:
-        l.append("serifed")
+        attrs.append("serifed")
     else:
-        l.append("sans")
+        attrs.append("sans")
     if flags & 2**3:
-        l.append("monospaced")
+        attrs.append("monospaced")
     else:
-        l.append("proportional")
+        attrs.append("proportional")
     if flags & 2**4:
-        l.append("bold")
-    return ", ".join(l)
+        attrs.append("bold")
+    return ", ".join(attrs)
 
 
 def is_bold(flags) -> bool:

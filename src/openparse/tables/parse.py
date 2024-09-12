@@ -4,7 +4,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from openparse.pdf import Pdf
 from openparse.schemas import Bbox, TableElement
-from openparse.tables.utils import crop_img_with_padding, adjust_bbox_with_padding
+from openparse.tables.utils import adjust_bbox_with_padding, crop_img_with_padding
 
 from . import pymupdf
 
@@ -102,7 +102,7 @@ def _ingest_with_table_transformers(
         raise ImportError(
             "Table detection and extraction requires the `torch`, `torchvision` and `transformers` libraries to be installed.",
             e,
-        )
+        ) from e
     pdoc = doc.to_pymupdf_doc()  # type: ignore
     pdf_as_imgs = doc_to_imgs(pdoc)
 
@@ -163,6 +163,7 @@ def _ingest_with_unitable(
 ) -> List[TableElement]:
     try:
         from openparse.tables.utils import doc_to_imgs
+
         from .table_transformers.ml import find_table_bboxes
         from .unitable.core import table_img_to_html
 
@@ -170,7 +171,7 @@ def _ingest_with_unitable(
         raise ImportError(
             "Table detection and extraction requires the `torch`, `torchvision` and `transformers` libraries to be installed.",
             e,
-        )
+        ) from e
     pdoc = doc.to_pymupdf_doc()  # type: ignore
     pdf_as_imgs = doc_to_imgs(pdoc)
 

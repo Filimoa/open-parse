@@ -1,6 +1,7 @@
+from functools import partial
+
 import torch
 from torch import Tensor, nn
-from functools import partial
 
 
 class TokenEmbedding(nn.Module):

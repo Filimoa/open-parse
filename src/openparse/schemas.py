@@ -1,12 +1,12 @@
+import datetime as dt
 import re
+import uuid
 from collections import defaultdict, namedtuple
 from enum import Enum
-import datetime as dt
-import uuid
 from functools import cached_property
-from typing import Any, List, Literal, Optional, Tuple, Union, Set
+from typing import Any, List, Literal, Optional, Set, Tuple, Union
 
-from pydantic import BaseModel, ConfigDict, computed_field, model_validator, Field
+from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 
 from openparse import consts
 from openparse.utils import num_tokens
@@ -386,7 +386,7 @@ class Node(BaseModel):
     @computed_field  # type: ignore
     @cached_property
     def variant(self) -> Set[Literal["text", "table"]]:
-        return set(e.variant.value for e in self.elements)
+        return {e.variant.value for e in self.elements}
 
     @computed_field  # type: ignore
     @cached_property
@@ -493,7 +493,7 @@ class Node(BaseModel):
 
     @cached_property
     def num_pages(self) -> int:
-        return len(set(element.bbox.page for element in self.elements))
+        return len({element.bbox.page for element in self.elements})
 
     @cached_property
     def start_page(self) -> int:

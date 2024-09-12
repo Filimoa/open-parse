@@ -1,7 +1,7 @@
+import argparse
 import os
 from pathlib import Path
 from urllib.request import urlretrieve
-import argparse
 
 
 def download_weights(weight_url, destination):
