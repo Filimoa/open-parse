@@ -102,7 +102,6 @@ def ingest(
                 )
             if node["type"] == 0:
                 lines = _lines_from_ocr_output(node["lines"])
-
                 elements.append(
                     TextElement(
                         bbox=Bbox(
