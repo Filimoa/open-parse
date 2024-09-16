@@ -135,19 +135,4 @@ class DocumentParser:
         ]
 
 
-class AiDocumentParser:
-    """
-    A parser for extracting elements from PDF documents, including text and tables.
 
-    Attributes:
-    """
-
-    _verbose: bool = False
-
-    def __init__(
-        self,
-        *,
-        client: bool,
-        processing_pipeline: Union[IngestionPipeline, NotGiven, None] = NOT_GIVEN,
-    ) -> None:
-        self.client = client
