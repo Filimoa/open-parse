@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "openparse"
 description = "Streamlines the process of preparing documents for LLM's."
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 license = { text = "MIT" }
 version = "0.5.7"
 authors = [{name = "Sergey Filimonov", email = "hello@sergey.fyi"}]
@@ -18,7 +18,9 @@ dependencies = [
     "pdfminer.six >= 20200401",
     "tiktoken >= 0.3",
     "openai >= 1.0.0",
-    "numpy",
+    "jupyter>=1.1.1",
+    "google-generativeai>=0.8.1",
+    "aiolimiter>=1.1.0",
 ]
 
 [project.urls]
