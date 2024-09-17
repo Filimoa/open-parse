@@ -4,11 +4,9 @@ import uuid
 from collections import defaultdict, namedtuple
 from enum import Enum
 from functools import cached_property
-from io import BytesIO
 from typing import Any, List, Literal, Optional, Set, Tuple, Union
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
-from pydantic_core import core_schema
 
 from openparse import consts
 from openparse.utils import num_tokens
@@ -86,9 +84,9 @@ class TextSpan(BaseModel):
         return self.size >= MIN_HEADING_SIZE and self.is_bold
 
     def formatted_text(
-            self,
-            previous_span: Optional["TextSpan"] = None,
-            next_span: Optional["TextSpan"] = None,
+        self,
+        previous_span: Optional["TextSpan"] = None,
+        next_span: Optional["TextSpan"] = None,
     ) -> str:
         """Format text considering adjacent spans to avoid redundant markdown symbols."""
         formatted = self.text
@@ -190,19 +188,19 @@ class LineElement(BaseModel):
 
     def overlaps(self, other: "LineElement", error_margin: float = 0.0) -> bool:
         x_overlap = not (
-                self.bbox[0] - error_margin > other.bbox[2] + error_margin
-                or other.bbox[0] - error_margin > self.bbox[2] + error_margin
+            self.bbox[0] - error_margin > other.bbox[2] + error_margin
+            or other.bbox[0] - error_margin > self.bbox[2] + error_margin
         )
 
         y_overlap = not (
-                self.bbox[1] - error_margin > other.bbox[3] + error_margin
-                or other.bbox[1] - error_margin > self.bbox[3] + error_margin
+            self.bbox[1] - error_margin > other.bbox[3] + error_margin
+            or other.bbox[1] - error_margin > self.bbox[3] + error_margin
         )
 
         return x_overlap and y_overlap
 
     def is_at_similar_height(
-            self, other: "LineElement", error_margin: float = 0.0
+        self, other: "LineElement", error_margin: float = 0.0
     ) -> bool:
         y_distance = abs(self.bbox[1] - other.bbox[1])
 
@@ -261,27 +259,29 @@ class TextElement(BaseModel):
         return (self.bbox.x1 - self.bbox.x0) * (self.bbox.y1 - self.bbox.y0)
 
     def is_at_similar_height(
-            self, other: Union["TableElement", "TextElement", "ImageElement"], error_margin: float = 1
+        self,
+        other: Union["TableElement", "TextElement", "ImageElement"],
+        error_margin: float = 1,
     ) -> bool:
         y_distance = abs(self.bbox.y1 - other.bbox.y1)
 
         return y_distance <= error_margin
 
     def overlaps(
-            self,
-            other: "TextElement",
-            x_error_margin: float = 0.0,
-            y_error_margin: float = 0.0,
+        self,
+        other: "TextElement",
+        x_error_margin: float = 0.0,
+        y_error_margin: float = 0.0,
     ) -> bool:
         if self.page != other.page:
             return False
         x_overlap = not (
-                self.bbox.x0 - x_error_margin > other.bbox.x1 + x_error_margin
-                or other.bbox.x0 - x_error_margin > self.bbox.x1 + x_error_margin
+            self.bbox.x0 - x_error_margin > other.bbox.x1 + x_error_margin
+            or other.bbox.x0 - x_error_margin > self.bbox.x1 + x_error_margin
         )
         y_overlap = not (
-                self.bbox.y0 - y_error_margin > other.bbox.y1 + y_error_margin
-                or other.bbox.y0 - y_error_margin > self.bbox.y1 + y_error_margin
+            self.bbox.y0 - y_error_margin > other.bbox.y1 + y_error_margin
+            or other.bbox.y0 - y_error_margin > self.bbox.y1 + y_error_margin
         )
 
         return x_overlap and y_overlap
@@ -321,7 +321,9 @@ class TableElement(BaseModel):
         return num_tokens(self.text)
 
     def is_at_similar_height(
-            self, other: Union["TableElement", "TextElement", "ImageElement"], error_margin: float = 1
+        self,
+        other: Union["TableElement", "TextElement", "ImageElement"],
+        error_margin: float = 1,
     ) -> bool:
         y_distance = abs(self.bbox.y1 - other.bbox.y1)
 
@@ -331,18 +333,29 @@ class TableElement(BaseModel):
 ######################
 ### IMAGE ELEMENTS ###
 ######################
+
+
 class ImageElement(BaseModel):
     text: str
-    ext: str
     bbox: Bbox
-    image: BytesIO # type: ignore
-    block: Optional[dict] = None
+    image: str  # base64 encoded image
+    image_mimetype: Union[
+        Literal[
+            "image/jpeg",
+            "image/png",
+            "image/bmp",
+            "image/jbig2",
+            "image/webp",
+            "unknown",
+        ],
+        str,
+    ]
     ocr_context: Optional[dict] = None
     _embed_text: Optional[str] = None
     variant: Literal[NodeVariant.IMAGE] = NodeVariant.IMAGE
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(frozen=True)
+
     @computed_field  # type: ignore
     @cached_property
     def embed_text(self) -> str:
@@ -350,6 +363,7 @@ class ImageElement(BaseModel):
             return self._embed_text
 
         return self.text
+
     @cached_property
     def area(self) -> float:
         return (self.bbox.x1 - self.bbox.x0) * (self.bbox.y1 - self.bbox.y0)
@@ -363,7 +377,9 @@ class ImageElement(BaseModel):
         return 512  # Placeholder for image tokenization
 
     def is_at_similar_height(
-            self, other: Union["TableElement", "TextElement", "ImageElement"], error_margin: float = 1
+        self,
+        other: Union["TableElement", "TextElement", "ImageElement"],
+        error_margin: float = 1,
     ) -> bool:
         y_distance = abs(self.bbox.y1 - other.bbox.y1)
 
@@ -376,10 +392,10 @@ class ImageElement(BaseModel):
 
 
 def _determine_relationship(
-        elem1: Union["TextElement", "TableElement"],
-        elem2: Union["TextElement", "TableElement"],
-        line_threshold: float = 1,
-        paragraph_threshold: float = 12,
+    elem1: Union["TextElement", "TableElement"],
+    elem2: Union["TextElement", "TableElement"],
+    line_threshold: float = 1,
+    paragraph_threshold: float = 12,
 ) -> Literal["same-line", "same-paragraph", None]:
     """
     Determines the relationship between two elements (either TextElement or TableElement).
@@ -428,13 +444,18 @@ class Node(BaseModel):
 
     @computed_field  # type: ignore
     @cached_property
-    def variant(self) -> Set[Literal["text", "table"]]:
+    def variant(self) -> Set[Literal["text", "table", "image"]]:
         return {e.variant.value for e in self.elements}
 
     @computed_field  # type: ignore
     @cached_property
     def tokens(self) -> int:
         return sum([e.tokens for e in self.elements])
+
+    @computed_field  # type: ignore
+    @cached_property
+    def images(self) -> List[ImageElement]:
+        return [e for e in self.elements if e.variant == NodeVariant.IMAGE]
 
     @computed_field  # type: ignore
     @cached_property
@@ -568,7 +589,7 @@ class Node(BaseModel):
         return ReadingOrder(min_page=min_page, y_position=y_position, min_x0=min_x0)
 
     def overlaps(
-            self, other: "Node", x_error_margin: float = 0.0, y_error_margin: float = 0.0
+        self, other: "Node", x_error_margin: float = 0.0, y_error_margin: float = 0.0
     ) -> bool:
         for bbox in self.bbox:
             other_bboxes = [
@@ -577,13 +598,13 @@ class Node(BaseModel):
 
             for other_bbox in other_bboxes:
                 x_overlap = not (
-                        bbox.x0 - x_error_margin > other_bbox.x1 + x_error_margin
-                        or other_bbox.x0 - x_error_margin > bbox.x1 + x_error_margin
+                    bbox.x0 - x_error_margin > other_bbox.x1 + x_error_margin
+                    or other_bbox.x0 - x_error_margin > bbox.x1 + x_error_margin
                 )
 
                 y_overlap = not (
-                        bbox.y0 - y_error_margin > other_bbox.y1 + y_error_margin
-                        or other_bbox.y0 - y_error_margin > bbox.y1 + y_error_margin
+                    bbox.y0 - y_error_margin > other_bbox.y1 + y_error_margin
+                    or other_bbox.y0 - y_error_margin > bbox.y1 + y_error_margin
                 )
 
                 if x_overlap and y_overlap:
@@ -612,7 +633,7 @@ class Node(BaseModel):
             return NotImplemented
 
         assert (
-                self.coordinate_system == other.coordinate_system
+            self.coordinate_system == other.coordinate_system
         ), "Coordinate systems must match."
 
         return self.reading_order < other.reading_order
@@ -705,7 +726,7 @@ class ParsedDocument(BaseModel):
         for i in range(len(li_nodes) - 1):
             li_nodes[i].relationships[NodeRelationship.NEXT] = li_nodes[
                 i + 1
-                ].as_related_node_info()
+            ].as_related_node_info()
 
             li_nodes[i + 1].relationships[NodeRelationship.PREVIOUS] = li_nodes[
                 i

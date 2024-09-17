@@ -1,7 +1,10 @@
+import base64
 from typing import List
 
+import fitz
+
 from openparse.pdf import Pdf
-from openparse.schemas import Bbox, LineElement, TextElement, TextSpan, ImageElement
+from openparse.schemas import Bbox, ImageElement, LineElement, TextElement, TextSpan
 
 
 def flags_decomposer(flags: int) -> str:
@@ -66,6 +69,17 @@ def _lines_from_ocr_output(lines: dict, error_margin: float = 0) -> List[LineEle
     return combined
 
 
+def _extract_base64_image(doc: fitz.Document, xref: int) -> tuple[str, str]:
+    img = doc.extract_image(xref)
+    image_bytes = img["image"]
+    image_ext = img["ext"]
+
+    base64_image = base64.b64encode(image_bytes).decode("utf-8")
+
+    mime_type = f"image/{image_ext}"
+    return base64_image, mime_type
+
+
 def ingest(
     doc: Pdf,
 ) -> List[TextElement]:
@@ -76,14 +90,18 @@ def ingest(
         page_ocr = page.get_textpage_ocr(flags=0, full=False)
         for node in page.get_text("dict", textpage=page_ocr, sort=True)["blocks"]:
             # Flip y-coordinates to match the top-left origin system
-            fy0 = page.rect.height - node["bbox"][1]
-            fy1 = page.rect.height - node["bbox"][3]
+            fy0 = page.rect.height - node["bbox"][3]
+            fy1 = page.rect.height - node["bbox"][1]
             if node["type"] == 1:
                 img_info = page.get_images(node["bbox"])
-                if len(img_info) > 0:
-                    name = f'{img_info[0][7]}.{node["ext"]}'
+                if img_info:
+                    xref = img_info[0][0]
+                    base64_image, mime_type = _extract_base64_image(pdoc, xref)
+                    name = f'{img_info[0][7]}.{mime_type.split("/")[-1]}'
                 else:
+                    base64_image, mime_type = "", "unknown"
                     name = f'test.{node["ext"]}'
+
                 elements.append(
                     ImageElement(
                         bbox=Bbox(
@@ -95,8 +113,8 @@ def ingest(
                             page_width=page.rect.width,
                             page_height=page.rect.height,
                         ),
-                        image=node["image"],
-                        ext=node["ext"],
+                        image=base64_image,
+                        image_mimetype=mime_type,
                         text=name,
                     )
                 )
