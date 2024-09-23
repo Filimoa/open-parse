@@ -1,5 +1,6 @@
-import openparse
 import re
+
+import openparse
 
 
 def test_parse_doc():

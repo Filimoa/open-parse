@@ -8,6 +8,7 @@ from typing import Any, Dict, Iterator, List, Literal, Optional, Tuple, Union
 
 from pdfminer.high_level import extract_pages
 from pdfminer.layout import LTPage
+from PIL import Image
 from pydantic import BaseModel
 from pypdf import PdfReader, PdfWriter
 
@@ -237,3 +238,23 @@ class Pdf:
             x1=bbox.x1,
             y1=fy1,
         )
+
+    def to_imgs(self, page_numbers: Optional[List[int]] = None) -> List[Image.Image]:
+        doc = self.to_pymupdf_doc()
+        images = []
+
+        if not doc.is_pdf:
+            raise ValueError("The document is not in PDF format.")
+        if doc.needs_pass:
+            raise ValueError("The PDF document is password protected.")
+
+        if page_numbers is None:
+            page_numbers = list(range(doc.page_count))
+
+        for n in page_numbers:
+            page = doc[n]
+            pix = page.get_pixmap()
+            image = Image.frombytes("RGB", (pix.width, pix.height), pix.samples)
+            images.append(image)
+
+        return images
