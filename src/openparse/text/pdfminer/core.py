@@ -1,10 +1,19 @@
-from typing import Any, Iterable, List, Tuple, Union
+import base64
+from io import BytesIO
+from typing import Any, Iterable, List, Optional, Tuple, Union
 
-from pdfminer.layout import LTAnno, LTChar, LTTextContainer, LTTextLine
+from pdfminer.layout import (
+    LTAnno,
+    LTChar,
+    LTFigure,
+    LTImage,
+    LTTextContainer,
+    LTTextLine,
+)
 from pydantic import BaseModel, model_validator
 
 from openparse.pdf import Pdf
-from openparse.schemas import Bbox, LineElement, TextElement, TextSpan
+from openparse.schemas import Bbox, ImageElement, LineElement, TextElement, TextSpan
 
 
 class CharElement(BaseModel):
@@ -52,6 +61,24 @@ def _extract_chars(text_line: LTTextLine) -> List[CharElement]:
         )
 
     return chars
+
+
+def get_mime_type(pdf_object: LTImage) -> Optional[str]:
+    subtype = pdf_object.stream.attrs.get("Subtype", {"name": None}).name
+    filter_ = pdf_object.stream.attrs.get("Filter", {"name": None}).name
+    if subtype == "Image":
+        if filter_ == "DCTDecode":
+            return "image/jpeg"
+        elif filter_ == "FlateDecode":
+            return "image/png"  # Most likely, but could also be TIFF
+        elif filter_ == "JPXDecode":
+            return "image/jp2"
+        elif filter_ == "CCITTFaxDecode":
+            return "image/tiff"
+        elif filter_ == "JBIG2Decode":
+            return "image/jbig2"
+
+    return None
 
 
 def _group_chars_into_spans(chars: Iterable[CharElement]) -> List[TextSpan]:
@@ -115,8 +142,8 @@ def _get_bbox(lines: List[LineElement]) -> Tuple[float, float, float, float]:
     return x0, y0, x1, y1
 
 
-def ingest(pdf_input: Union[Pdf]) -> List[TextElement]:
-    """Parse PDF and return a list of LineElement objects."""
+def ingest(pdf_input: Pdf) -> List[Union[TextElement, ImageElement]]:
+    """Parse PDF and return a list of TextElement and ImageElement objects."""
     elements = []
     page_layouts = pdf_input.extract_layout_pages()
 
@@ -148,5 +175,27 @@ def ingest(pdf_input: Union[Pdf]) -> List[TextElement]:
                         lines=tuple(lines),
                     )
                 )
-
+            elif isinstance(element, LTFigure):
+                for e in element._objs:
+                    if isinstance(e, LTImage):
+                        mime_type = get_mime_type(e)
+                        if mime_type:
+                            img_data = BytesIO(e.stream.get_data()).getvalue()
+                            base64_string = base64.b64encode(img_data).decode("utf-8")
+                            elements.append(
+                                ImageElement(
+                                    bbox=Bbox(
+                                        x0=e.bbox[0],
+                                        y0=e.bbox[1],
+                                        x1=e.bbox[2],
+                                        y1=e.bbox[3],
+                                        page=page_num,
+                                        page_width=page_width,
+                                        page_height=page_height,
+                                    ),
+                                    image=base64_string,
+                                    image_mimetype=mime_type or "unknown",
+                                    text="",
+                                )
+                            )
     return elements

@@ -37,4 +37,5 @@ notebooks/
 sample-docs/
 weights/
 .env
+uv.lock
 

@@ -1,15 +1,20 @@
-from typing import Tuple, List
+import base64
+import io
+from pathlib import Path
+from typing import List, Tuple
 from unittest.mock import MagicMock
 
 from pdfminer.layout import LTAnno, LTChar
+from PIL import Image, ImageChops
 
-from openparse.schemas import TextSpan
+from openparse.pdf import Pdf
+from openparse.schemas import NodeVariant, TextSpan
 from openparse.text.pdfminer.core import (
     CharElement,
-    _group_chars_into_spans,
     _extract_chars,
+    _group_chars_into_spans,
+    ingest,
 )
-
 
 raw_chars = [
     CharElement(text="1", fontname="bold", size=9.0),
@@ -198,3 +203,51 @@ def test_extract_chars_with_ltannos():
 
     # Assert the result matches the expected output
     assert result == expected_output
+
+
+def _images_are_similar(img1_bytes, img2_bytes, max_pct_diff=1.0, pixel_threshold=10):
+    """
+    Compare two images and determine if the percentage of differing pixels is below a threshold.
+
+    :param img1_bytes: Byte content of the first image.
+    :param img2_bytes: Byte content of the second image.
+    :param max_pct_diff: Maximum allowed percentage of differing pixels.
+    :param pixel_threshold: Per-pixel difference threshold to consider a pixel as different.
+    :return: Boolean indicating if images are similar within the allowed percentage difference.
+    """
+    img1 = Image.open(io.BytesIO(img1_bytes)).convert("RGB")
+    img2 = Image.open(io.BytesIO(img2_bytes)).convert("RGB")
+
+    if img1.size != img2.size:
+        print(f"Image sizes do not match: {img1.size} vs {img2.size}")
+        return False
+
+    diff = ImageChops.difference(img1, img2)
+
+    diff_gray = diff.convert("L")
+
+    differing_pixels = sum(
+        1 for pixel in diff_gray.getdata() if pixel > pixel_threshold
+    )
+    total_pixels = img1.size[0] * img1.size[1]
+    pct_diff = (differing_pixels / total_pixels) * 100
+
+    print(f"Percentage of differing pixels: {pct_diff:.2f}%")
+    return pct_diff <= max_pct_diff
+
+
+def test_parse_pdf_with_images():
+    doc_with_image_path = Path("src/tests/sample_data/pdf-with-image.pdf")
+    pdf = Pdf(doc_with_image_path)
+
+    elems = ingest(pdf)
+    assert elems[-1].variant == NodeVariant.IMAGE
+    assert elems[-1].image_mimetype == "image/jpeg"
+    extracted_image_data = base64.b64decode(elems[-1].image)
+
+    # Read the raw image data
+    raw_image_path = Path("src/tests/sample_data/europe.jpg")
+    with raw_image_path.open("rb") as img_file:
+        raw_image_data = img_file.read()
+
+    assert _images_are_similar(raw_image_data, extracted_image_data)

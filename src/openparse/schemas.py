@@ -15,7 +15,6 @@ bullet_regex = re.compile(
     r"^(\s*[\-•](?!\*)|\s*\*(?!\*)|\s*\d+\.\s|\s*\([a-zA-Z0-9]+\)\s|\s*[a-zA-Z]\.\s)"
 )
 
-
 ReadingOrder = namedtuple("ReadingOrder", "min_page y_position min_x0")
 
 
@@ -260,7 +259,9 @@ class TextElement(BaseModel):
         return (self.bbox.x1 - self.bbox.x0) * (self.bbox.y1 - self.bbox.y0)
 
     def is_at_similar_height(
-        self, other: Union["TableElement", "TextElement"], error_margin: float = 1
+        self,
+        other: Union["TableElement", "TextElement", "ImageElement"],
+        error_margin: float = 1,
     ) -> bool:
         y_distance = abs(self.bbox.y1 - other.bbox.y1)
 
@@ -320,7 +321,64 @@ class TableElement(BaseModel):
         return num_tokens(self.text)
 
     def is_at_similar_height(
-        self, other: Union["TableElement", "TextElement"], error_margin: float = 1
+        self,
+        other: Union["TableElement", "TextElement", "ImageElement"],
+        error_margin: float = 1,
+    ) -> bool:
+        y_distance = abs(self.bbox.y1 - other.bbox.y1)
+
+        return y_distance <= error_margin
+
+
+######################
+### IMAGE ELEMENTS ###
+######################
+
+
+class ImageElement(BaseModel):
+    text: str
+    bbox: Bbox
+    image: str  # base64 encoded image
+    image_mimetype: Union[
+        Literal[
+            "image/jpeg",
+            "image/png",
+            "image/bmp",
+            "image/jbig2",
+            "image/webp",
+            "unknown",
+        ],
+        str,
+    ]
+    _embed_text: Optional[str] = None
+    variant: Literal[NodeVariant.IMAGE] = NodeVariant.IMAGE
+
+    model_config = ConfigDict(frozen=True)
+
+    @computed_field  # type: ignore
+    @cached_property
+    def embed_text(self) -> str:
+        if self._embed_text:
+            return self._embed_text
+
+        return self.text
+
+    @cached_property
+    def area(self) -> float:
+        return (self.bbox.x1 - self.bbox.x0) * (self.bbox.y1 - self.bbox.y0)
+
+    @cached_property
+    def page(self) -> int:
+        return self.bbox.page
+
+    @cached_property
+    def tokens(self) -> int:
+        return 512  # Placeholder for image tokenization
+
+    def is_at_similar_height(
+        self,
+        other: Union["TableElement", "TextElement", "ImageElement"],
+        error_margin: float = 1,
     ) -> bool:
         y_distance = abs(self.bbox.y1 - other.bbox.y1)
 
@@ -362,7 +420,7 @@ class Node(BaseModel):
         description="Unique ID of the node.",
         exclude=True,
     )
-    elements: Tuple[Union[TextElement, TableElement], ...] = Field(
+    elements: Tuple[Union[TextElement, TableElement, ImageElement], ...] = Field(
         exclude=True, frozen=True
     )
     tokenization_lower_limit: int = Field(
@@ -385,13 +443,18 @@ class Node(BaseModel):
 
     @computed_field  # type: ignore
     @cached_property
-    def variant(self) -> Set[Literal["text", "table"]]:
+    def variant(self) -> Set[Literal["text", "table", "image"]]:
         return {e.variant.value for e in self.elements}
 
     @computed_field  # type: ignore
     @cached_property
     def tokens(self) -> int:
         return sum([e.tokens for e in self.elements])
+
+    @computed_field  # type: ignore
+    @cached_property
+    def images(self) -> List[ImageElement]:
+        return [e for e in self.elements if e.variant == NodeVariant.IMAGE]
 
     @computed_field  # type: ignore
     @cached_property
