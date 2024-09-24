@@ -1,10 +1,7 @@
-import base64
 from typing import List
 
-import fitz
-
 from openparse.pdf import Pdf
-from openparse.schemas import Bbox, ImageElement, LineElement, TextElement, TextSpan
+from openparse.schemas import Bbox, LineElement, TextElement, TextSpan
 
 
 def flags_decomposer(flags: int) -> str:
@@ -69,17 +66,6 @@ def _lines_from_ocr_output(lines: dict, error_margin: float = 0) -> List[LineEle
     return combined
 
 
-def _extract_base64_image(doc: fitz.Document, xref: int) -> tuple[str, str]:
-    img = doc.extract_image(xref)
-    image_bytes = img["image"]
-    image_ext = img["ext"]
-
-    base64_image = base64.b64encode(image_bytes).decode("utf-8")
-
-    mime_type = f"image/{image_ext}"
-    return base64_image, mime_type
-
-
 def ingest(
     doc: Pdf,
 ) -> List[TextElement]:
@@ -89,50 +75,28 @@ def ingest(
     for page_num, page in enumerate(pdoc):
         page_ocr = page.get_textpage_ocr(flags=0, full=False)
         for node in page.get_text("dict", textpage=page_ocr, sort=True)["blocks"]:
+            if node["type"] != 0:
+                continue
+
+            lines = _lines_from_ocr_output(node["lines"])
+
             # Flip y-coordinates to match the top-left origin system
             fy0 = page.rect.height - node["bbox"][3]
             fy1 = page.rect.height - node["bbox"][1]
-            if node["type"] == 1:
-                img_info = page.get_images(node["bbox"])
-                if img_info:
-                    xref = img_info[0][0]
-                    base64_image, mime_type = _extract_base64_image(pdoc, xref)
-                    name = f'{img_info[0][7]}.{mime_type.split("/")[-1]}'
-                else:
-                    base64_image, mime_type = "", "unknown"
-                    name = f'test.{node["ext"]}'
 
-                elements.append(
-                    ImageElement(
-                        bbox=Bbox(
-                            x0=node["bbox"][0],
-                            y0=fy0,
-                            x1=node["bbox"][2],
-                            y1=fy1,
-                            page=page_num,
-                            page_width=page.rect.width,
-                            page_height=page.rect.height,
-                        ),
-                        image=base64_image,
-                        image_mimetype=mime_type,
-                        text=name,
-                    )
+            elements.append(
+                TextElement(
+                    bbox=Bbox(
+                        x0=node["bbox"][0],
+                        y0=fy0,
+                        x1=node["bbox"][2],
+                        y1=fy1,
+                        page=page_num,
+                        page_width=page.rect.width,
+                        page_height=page.rect.height,
+                    ),
+                    text="\n".join(line.text for line in lines),
+                    lines=tuple(lines),
                 )
-            if node["type"] == 0:
-                lines = _lines_from_ocr_output(node["lines"])
-                elements.append(
-                    TextElement(
-                        bbox=Bbox(
-                            x0=node["bbox"][0],
-                            y0=fy0,
-                            x1=node["bbox"][2],
-                            y1=fy1,
-                            page=page_num,
-                            page_width=page.rect.width,
-                            page_height=page.rect.height,
-                        ),
-                        text="\n".join(line.text for line in lines),
-                        lines=tuple(lines),
-                    )
-                )
+            )
     return elements
