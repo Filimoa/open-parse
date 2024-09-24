@@ -1,6 +1,6 @@
 import base64
 from io import BytesIO
-from typing import Any, Iterable, List, Tuple, Union
+from typing import Any, Iterable, List, Optional, Tuple, Union
 
 from pdfminer.layout import (
     LTAnno,
@@ -63,7 +63,7 @@ def _extract_chars(text_line: LTTextLine) -> List[CharElement]:
     return chars
 
 
-def get_mime_type(pdf_object: LTImage) -> str | None:
+def get_mime_type(pdf_object: LTImage) -> Optional[str]:
     subtype = pdf_object.stream.attrs.get("Subtype", {"name": None}).name
     filter_ = pdf_object.stream.attrs.get("Filter", {"name": None}).name
     if subtype == "Image":

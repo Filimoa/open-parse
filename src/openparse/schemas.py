@@ -350,7 +350,6 @@ class ImageElement(BaseModel):
         ],
         str,
     ]
-    ocr_context: Optional[dict] = None
     _embed_text: Optional[str] = None
     variant: Literal[NodeVariant.IMAGE] = NodeVariant.IMAGE
 
