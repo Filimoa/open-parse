@@ -15,7 +15,7 @@ from .ingest import (
     NoOpIngestionPipeline,
     SemanticIngestionPipeline,
 )
-from .semantic_transforms import CombineNodesSemantically, OpenAIEmbeddings
+from .semantic_transforms import CombineNodesSemantically, OpenAIEmbeddings, AzureOpenAIEmbeddings
 
 __all__ = [
     "ProcessingStep",
@@ -33,4 +33,5 @@ __all__ = [
     "RemoveNodesBelowNTokens",
     "CombineNodesSemantically",
     "OpenAIEmbeddings",
+    "AzureOpenAIEmbeddings",
 ]
