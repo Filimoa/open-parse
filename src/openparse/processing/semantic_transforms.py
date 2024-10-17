@@ -89,7 +89,6 @@ class OpenAIEmbeddings(BaseEmbeddings):
 class AzureOpenAIEmbeddings(BaseEmbeddings):
     def __init__(
         self,
-        model: EmbeddingModel,
         api_key: str,
         api_endpoint: str,
         api_version: str,
@@ -111,7 +110,6 @@ class AzureOpenAIEmbeddings(BaseEmbeddings):
         self.api_endpoint = api_endpoint
         self.api_version = api_version
         self.deployment = deployment
-        self.model = model
         self.batch_size = batch_size
         self.client = self._create_client()
 
