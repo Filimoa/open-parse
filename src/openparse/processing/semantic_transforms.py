@@ -91,8 +91,8 @@ class AzureOpenAIEmbeddings(BaseEmbeddings):
         self,
         api_key: str,
         api_endpoint: str,
-        api_version: str,
         deployment: str,
+        api_version: str = "2024-02-15-preview",
         batch_size: int = 256,
     ):
         """
