@@ -10,6 +10,7 @@ from pdfminer.layout import (
     LTTextContainer,
     LTTextLine,
 )
+from pdfminer.psparser import PSLiteral
 from pydantic import BaseModel, model_validator
 
 from openparse.pdf import Pdf
@@ -64,8 +65,8 @@ def _extract_chars(text_line: LTTextLine) -> List[CharElement]:
 
 
 def get_mime_type(pdf_object: LTImage) -> Optional[str]:
-    subtype = pdf_object.stream.attrs.get("Subtype", {"name": None}).name
-    filter_ = pdf_object.stream.attrs.get("Filter", {"name": None}).name
+    subtype = pdf_object.stream.attrs.get("Subtype", PSLiteral(None)).name
+    filter_ = pdf_object.stream.attrs.get("Filter", PSLiteral(None)).name
     if subtype == "Image":
         if filter_ == "DCTDecode":
             return "image/jpeg"
