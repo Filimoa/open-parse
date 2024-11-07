@@ -108,6 +108,7 @@ class DocumentParser:
             table_nodes = self._elems_to_nodes(table_elems)
 
         nodes = text_nodes + table_nodes
+	nodes = [node for node in nodes if node.text.strip() != ""] # remove empty nodes
         nodes = self.processing_pipeline.run(nodes)
 
         parsed_doc = ParsedDocument(
