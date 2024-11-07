@@ -2,7 +2,6 @@ from pathlib import Path
 
 import openparse
 
-
 project_root = Path(__file__).resolve().parent.parent
 SAMPLE_PDF_DIR = project_root / "evals/data"
 EXPORT_DIR = project_root / "evals/parsed-data"

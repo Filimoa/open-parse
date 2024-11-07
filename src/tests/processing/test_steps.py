@@ -1,24 +1,23 @@
 import pytest
+
+from openparse import consts
 from openparse.processing import (
-    ProcessingStep,
-    RemoveTextInsideTables,
-    RemoveRepeatedElements,
-    RemoveFullPageStubs,
-    CombineNodesSpatially,
     CombineBullets,
     CombineHeadingsWithClosestText,
+    CombineNodesSpatially,
+    RemoveFullPageStubs,
     RemoveNodesBelowNTokens,
+    RemoveRepeatedElements,
+    RemoveTextInsideTables,
 )
-from openparse import consts
 from openparse.schemas import (
-    Node,
-    TextElement,
-    TableElement,
     Bbox,
     LineElement,
+    Node,
+    TableElement,
+    TextElement,
     TextSpan,
 )
-from unittest.mock import MagicMock, PropertyMock
 
 
 class TestNode:

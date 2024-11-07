@@ -1,4 +1,5 @@
 import pytest
+
 from openparse.tables.table_transformers.geometry import (
     calc_bbox_intersection,
 )

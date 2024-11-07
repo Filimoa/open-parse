@@ -1,4 +1,6 @@
 import pytest
+
+from openparse import consts
 from openparse.schemas import (
     Bbox,
     LineElement,
@@ -7,7 +9,6 @@ from openparse.schemas import (
     TextSpan,
     bullet_regex,
 )
-from openparse import consts
 
 BOLD_FLAG = 2**4
 ITALIC_FLAG = 2**1

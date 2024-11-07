@@ -9,9 +9,13 @@ from openparse.processing import (
     IngestionPipeline,
     NoOpIngestionPipeline,
 )
-from openparse.schemas import Node, ParsedDocument, TableElement, TextElement
-
-from openparse.schemas import ImageElement
+from openparse.schemas import (
+    ImageElement,
+    Node,
+    ParsedDocument,
+    TableElement,
+    TextElement,
+)
 
 IngestionPipelineType = TypeVar("IngestionPipelineType", bound=IngestionPipeline)
 

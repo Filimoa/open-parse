@@ -1,5 +1,4 @@
 from bs4 import BeautifulSoup
-from .sample_pred_outputs import sample_preds
 
 
 def get_table_structure(html_string):
