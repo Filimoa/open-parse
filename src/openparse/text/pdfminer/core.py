@@ -10,7 +10,9 @@ from pdfminer.layout import (
     LTTextContainer,
     LTTextLine,
 )
+from pdfminer.pdftypes import resolve1
 from pdfminer.psparser import PSLiteral
+from PIL import Image
 from pydantic import BaseModel, model_validator
 
 from openparse.pdf import Pdf
@@ -65,21 +67,32 @@ def _extract_chars(text_line: LTTextLine) -> List[CharElement]:
 
 
 def get_mime_type(pdf_object: LTImage) -> Optional[str]:
-    subtype = pdf_object.stream.attrs.get("Subtype", PSLiteral(None)).name
-    filter_ = pdf_object.stream.attrs.get("Filter", PSLiteral(None)).name
-    if subtype == "Image":
-        if filter_ == "DCTDecode":
-            return "image/jpeg"
-        elif filter_ == "FlateDecode":
-            return "image/png"  # Most likely, but could also be TIFF
-        elif filter_ == "JPXDecode":
-            return "image/jp2"
-        elif filter_ == "CCITTFaxDecode":
-            return "image/tiff"
-        elif filter_ == "JBIG2Decode":
-            return "image/jbig2"
+    """Determine the MIME type of an image in a PDF based on its filters."""
+    # Resolve the stream attributes
+    stream_attrs = pdf_object.stream.attrs
+    subtype = resolve1(stream_attrs.get("Subtype", ""))
+    filters = resolve1(stream_attrs.get("Filter", ""))
 
-    return None
+    if isinstance(filters, list):
+        filter_names = [str(f).lstrip("/").strip("\"'") for f in filters]
+    else:
+        filter_names = [str(filters).lstrip("/").strip("\"'")] if filters else []
+
+    mime_type = None
+    if "DCTDecode" in filter_names:
+        mime_type = "image/jpeg"
+    elif "JPXDecode" in filter_names:
+        mime_type = "image/jp2"
+    elif "FlateDecode" in filter_names:
+        # Could be PNG or TIFF; may need additional information
+        # For simplicity, assume PNG
+        mime_type = "image/png"
+    elif "CCITTFaxDecode" in filter_names:
+        mime_type = "image/tiff"
+    elif "JBIG2Decode" in filter_names:
+        mime_type = "image/jbig2"
+
+    return mime_type
 
 
 def _group_chars_into_spans(chars: Iterable[CharElement]) -> List[TextSpan]:
@@ -143,6 +156,75 @@ def _get_bbox(lines: List[LineElement]) -> Tuple[float, float, float, float]:
     return x0, y0, x1, y1
 
 
+def group_overlapping_images(
+    image_elements: List[ImageElement], buffer: float = 1.0
+) -> List[List[ImageElement]]:
+    """Group images that overlap or are adjacent."""
+    groups = []
+    used = set()
+
+    for i, elem1 in enumerate(image_elements):
+        if i in used:
+            continue
+        group = [elem1]
+        used.add(i)
+        for j, elem2 in enumerate(image_elements[i + 1 :], start=i + 1):
+            if j in used:
+                continue
+            if any(elem2.overlaps(e, buffer=buffer) for e in group):
+                group.append(elem2)
+                used.add(j)
+        groups.append(group)
+    return groups
+
+
+def _process_png_image(e: LTImage) -> Optional[bytes]:
+    try:
+        # Extract image attributes
+        width = e.stream.attrs.get("Width")
+        height = e.stream.attrs.get("Height")
+        color_space = e.stream.attrs.get("ColorSpace", "DeviceRGB")
+
+        # Resolve indirect references in ColorSpace
+        color_space = resolve1(color_space)
+
+        # Ensure color_space is a string
+        if isinstance(color_space, list):
+            color_space = color_space[0]
+        if isinstance(color_space, PSLiteral):
+            color_space = color_space.name
+        if isinstance(color_space, str):
+            color_space = color_space.strip("/")
+        else:
+            print(f"Unsupported color space type: {type(color_space)}")
+            return None
+
+        # Map PDF color space to PIL mode
+        if color_space == "DeviceRGB":
+            mode = "RGB"
+        elif color_space == "DeviceGray":
+            mode = "L"
+        elif color_space == "DeviceCMYK":
+            mode = "CMYK"
+        else:
+            print(f"Unsupported color space: {color_space}")
+            return None
+
+        # Get the image data after filters have been applied
+        img_data = e.stream.get_data()
+
+        # Create image using Pillow
+        img = Image.frombytes(mode, (width, height), img_data)
+
+        # Convert to PNG bytes
+        output = BytesIO()
+        img.save(output, format="PNG")
+        return output.getvalue()
+    except Exception as ex:
+        print(f"Error processing PNG image: {ex}")
+        return None
+
+
 def ingest(pdf_input: Pdf) -> List[Union[TextElement, ImageElement]]:
     """Parse PDF and return a list of TextElement and ImageElement objects."""
     elements = []
@@ -151,6 +233,7 @@ def ingest(pdf_input: Pdf) -> List[Union[TextElement, ImageElement]]:
     for page_num, page_layout in enumerate(page_layouts):
         page_width = page_layout.width
         page_height = page_layout.height
+        text_elements = []
         for element in page_layout:
             if isinstance(element, LTTextContainer):
                 lines = []
@@ -161,7 +244,7 @@ def ingest(pdf_input: Pdf) -> List[Union[TextElement, ImageElement]]:
                     continue
                 bbox = _get_bbox(lines)
 
-                elements.append(
+                text_elements.append(
                     TextElement(
                         bbox=Bbox(
                             x0=bbox[0],
@@ -177,26 +260,35 @@ def ingest(pdf_input: Pdf) -> List[Union[TextElement, ImageElement]]:
                     )
                 )
             elif isinstance(element, LTFigure):
-                for e in element._objs:
+                for e in element:
                     if isinstance(e, LTImage):
                         mime_type = get_mime_type(e)
                         if mime_type:
-                            img_data = BytesIO(e.stream.get_data()).getvalue()
-                            base64_string = base64.b64encode(img_data).decode("utf-8")
-                            elements.append(
-                                ImageElement(
-                                    bbox=Bbox(
-                                        x0=e.bbox[0],
-                                        y0=e.bbox[1],
-                                        x1=e.bbox[2],
-                                        y1=e.bbox[3],
-                                        page=page_num,
-                                        page_width=page_width,
-                                        page_height=page_height,
-                                    ),
-                                    image=base64_string,
-                                    image_mimetype=mime_type or "unknown",
-                                    text="",
+                            if mime_type == "image/png":
+                                img_data = _process_png_image(e)
+                            else:
+                                img_data = e.stream.get_data()
+                            if img_data:
+                                base64_string = base64.b64encode(img_data).decode(
+                                    "utf-8"
                                 )
-                            )
+                                elements.append(
+                                    ImageElement(
+                                        bbox=Bbox(
+                                            x0=e.bbox[0],
+                                            y0=e.bbox[1],
+                                            x1=e.bbox[2],
+                                            y1=e.bbox[3],
+                                            page=page_num,
+                                            page_width=page_width,
+                                            page_height=page_height,
+                                        ),
+                                        image=base64_string,
+                                        image_mimetype=mime_type or "unknown",
+                                        text="",
+                                    )
+                                )
+
+        # Add text elements
+        elements.extend(text_elements)
     return elements

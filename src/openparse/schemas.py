@@ -360,7 +360,6 @@ class ImageElement(BaseModel):
     def embed_text(self) -> str:
         if self._embed_text:
             return self._embed_text
-
         return self.text
 
     @cached_property
@@ -381,7 +380,6 @@ class ImageElement(BaseModel):
         error_margin: float = 1,
     ) -> bool:
         y_distance = abs(self.bbox.y1 - other.bbox.y1)
-
         return y_distance <= error_margin
 
 
