@@ -2,11 +2,22 @@ import base64
 import io
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from typing import Dict, List, Literal
+from typing import Dict, List, Literal, Type, TypeVar
 
 from PIL import Image
 
-from openparse.schemas import Bbox, ImageElement, Node, TextElement
+from openparse.schemas import Bbox, ImageElement, Node, TableElement, TextElement
+
+E = TypeVar("E", TextElement, ImageElement, TableElement)
+
+
+def get_elements_of_type(nodes: List[Node], element_type: Type[E]) -> List[E]:
+    elements: List[E] = []
+    for node in nodes:
+        for element in node.elements:
+            if isinstance(element, element_type):
+                elements.append(element)
+    return elements
 
 
 class ProcessingStep(ABC):
@@ -34,7 +45,7 @@ class CombineSlicedImages(ProcessingStep):
         for node in image_elements:
             image_data = base64.b64decode(node.image)
             image = Image.open(io.BytesIO(image_data))
-            image = image.rotate(180)
+            # image = image.rotate(180)
             images.append(image)
 
         # Determine the width and total height of the final image
@@ -98,11 +109,11 @@ class CombineSlicedImages(ProcessingStep):
         for page, page_nodes in nodes_by_page.items():
             image_nodes = [e for e in page_nodes if e.variant == {"image"}]
             if image_nodes:
-                image_elements: List[ImageElement] = [
-                    sub_e for e in image_nodes for sub_e in e.elements
-                ]  # type: ignore
+                image_elements = get_elements_of_type(image_nodes, ImageElement)
+                text_elements = get_elements_of_type(page_nodes, TextElement)
+
                 combined_image = self._combine_images_in_group(image_elements)
-                new_nodes.append(Node(elements=(combined_image,)))
+                new_nodes.append(Node(elements=(combined_image, *text_elements)))
             else:
                 new_nodes.extend(page_nodes)
         return new_nodes

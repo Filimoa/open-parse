@@ -157,15 +157,17 @@ def _get_bbox(lines: List[LineElement]) -> Tuple[float, float, float, float]:
     return x0, y0, x1, y1
 
 
-def _process_png_image(e: LTImage) -> Optional[bytes]:
+def _process_png_image(e: LTImage, page_rotation: int = 0) -> Optional[bytes]:
     try:
         # Extract image attributes
         width = e.stream.attrs.get("Width", 0)
         height = e.stream.attrs.get("Height", 0)
         color_space = e.stream.attrs.get("ColorSpace", "DeviceRGB")
+        decode = e.stream.attrs.get("Decode", None)
 
-        # Resolve indirect references in ColorSpace
+        # Resolve indirect references
         color_space = resolve1(color_space)
+        decode = resolve1(decode)
 
         # Ensure color_space is a string
         if isinstance(color_space, list):
@@ -175,7 +177,7 @@ def _process_png_image(e: LTImage) -> Optional[bytes]:
         if isinstance(color_space, str):
             color_space = color_space.strip("/")
         else:
-            print(f"Unsupported color space type: {type(color_space)}")
+            logging.info(f"Unsupported color space type: {type(color_space)}")
             return None
 
         # Map PDF color space to PIL mode
@@ -200,7 +202,7 @@ def _process_png_image(e: LTImage) -> Optional[bytes]:
         img.save(output, format="PNG")
         return output.getvalue()
     except Exception as ex:
-        print(f"Error processing PNG image: {ex}")
+        logging.error(f"Error processing PNG image: {ex}")
         return None
 
 
