@@ -360,7 +360,6 @@ class ImageElement(BaseModel):
     def embed_text(self) -> str:
         if self._embed_text:
             return self._embed_text
-
         return self.text
 
     @cached_property
@@ -381,8 +380,19 @@ class ImageElement(BaseModel):
         error_margin: float = 1,
     ) -> bool:
         y_distance = abs(self.bbox.y1 - other.bbox.y1)
-
         return y_distance <= error_margin
+
+    def overlaps(self, other: "ImageElement", buffer: float = 1.0) -> bool:
+        """Check if this image overlaps or is adjacent to another image, considering a buffer."""
+        if self.bbox.page != other.bbox.page:
+            return False
+
+        return not (
+            self.bbox.x1 + buffer < other.bbox.x0 - buffer
+            or self.bbox.x0 - buffer > other.bbox.x1 + buffer
+            or self.bbox.y1 + buffer < other.bbox.y0 - buffer
+            or self.bbox.y0 - buffer > other.bbox.y1 + buffer
+        )
 
 
 #############
@@ -641,7 +651,20 @@ class Node(BaseModel):
         """
         When called in a Jupyter environment, this will display the node as Markdown, which Jupyter will then render as HTML.
         """
-        return self.text
+        markdown_parts = []
+        for element in self.elements:
+            if element.variant == NodeVariant.TEXT:
+                markdown_parts.append(element.text)
+            elif element.variant == NodeVariant.IMAGE:
+                image_data = element.image
+                mime_type = element.image_mimetype
+                if mime_type == "unknown":
+                    mime_type = "image/png"
+                markdown_image = f"![Image](data:{mime_type};base64,{image_data})"
+                markdown_parts.append(markdown_image)
+            elif element.variant == NodeVariant.TABLE:
+                markdown_parts.append(element.text)
+        return "\n\n".join(markdown_parts)
 
     def __add__(self, other: "Node") -> "Node":
         """
