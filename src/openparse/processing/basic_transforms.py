@@ -1,8 +1,12 @@
+import base64
+import io
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from typing import Dict, List, Literal
 
-from openparse.schemas import Bbox, Node, TextElement
+from PIL import Image
+
+from openparse.schemas import Bbox, ImageElement, Node, TextElement
 
 
 class ProcessingStep(ABC):
@@ -12,6 +16,96 @@ class ProcessingStep(ABC):
         Process a list of Nodes and return a modified list of Nodes.
         """
         raise NotImplementedError("Subclasses must implement this method.")
+
+
+class CombineSlicedImages(ProcessingStep):
+    """
+    PDF will slice images into multiple pieces if they are too large. This combines them back together.
+    """
+
+    def _combine_images_in_group(
+        self, image_elements: List[ImageElement]
+    ) -> ImageElement:
+        """Combine a list of ImageElements into a single ImageElement."""
+        if not image_elements:
+            raise ValueError("No images to combine.")
+
+        images = []
+        for node in image_elements:
+            image_data = base64.b64decode(node.image)
+            image = Image.open(io.BytesIO(image_data))
+            image = image.rotate(180)
+            images.append(image)
+
+        # Determine the width and total height of the final image
+        width = max(img.width for img in images)
+        total_height = sum(img.height for img in images)
+
+        # Create a new blank image
+        new_image = Image.new("RGB", (width, total_height))
+
+        # Paste images one below the other
+        y_offset = 0
+        for img in images:
+            new_image.paste(img, (0, y_offset))
+            y_offset += img.height
+
+        # Save or encode the final image
+        buffered = io.BytesIO()
+        new_image.save(buffered, format="PNG")
+        final_base64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
+
+        return ImageElement(
+            bbox=image_elements[0].bbox,
+            image=final_base64,
+            image_mimetype="image/png",
+            text="",
+        )
+
+    def _group_overlapping_images(
+        self, image_elements: List[ImageElement], buffer: float = 1.0
+    ) -> List[List[ImageElement]]:
+        """Group images that overlap or are adjacent."""
+        groups = []
+        used = set()
+
+        for i, elem1 in enumerate(image_elements):
+            if i in used:
+                continue
+            group = [elem1]
+            used.add(i)
+            queue = [elem1]
+            while queue:
+                current = queue.pop()
+                for j, elem2 in enumerate(image_elements):
+                    if j in used:
+                        continue
+                    if current.overlaps(elem2, buffer=buffer):
+                        group.append(elem2)
+                        used.add(j)
+                        queue.append(elem2)
+            groups.append(group)
+        return groups
+
+    def process(self, nodes: List[Node]) -> List[Node]:
+        nodes_by_page: Dict[int, List[Node]] = defaultdict(list)
+        for node in nodes:
+            pages = {element.bbox.page for element in node.elements}
+            for page in pages:
+                nodes_by_page[page].append(node)
+
+        new_nodes = []
+        for page, page_nodes in nodes_by_page.items():
+            image_nodes = [e for e in page_nodes if e.variant == {"image"}]
+            if image_nodes:
+                image_elements: List[ImageElement] = [
+                    sub_e for e in image_nodes for sub_e in e.elements
+                ]  # type: ignore
+                combined_image = self._combine_images_in_group(image_elements)
+                new_nodes.append(Node(elements=(combined_image,)))
+            else:
+                new_nodes.extend(page_nodes)
+        return new_nodes
 
 
 class RemoveTextInsideTables(ProcessingStep):
@@ -162,7 +256,12 @@ class RemoveNodesBelowNTokens(ProcessingStep):
         self.min_tokens = min_tokens
 
     def process(self, nodes: List[Node]) -> List[Node]:
-        return [node for node in nodes if node.tokens >= self.min_tokens]
+        res = []
+        for node in nodes:
+            if node.tokens <= self.min_tokens and "image" not in node.variant:
+                continue
+            res.append(node)
+        return res
 
 
 class CombineNodesSpatially(ProcessingStep):

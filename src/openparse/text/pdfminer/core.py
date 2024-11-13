@@ -1,4 +1,5 @@
 import base64
+import logging
 from io import BytesIO
 from typing import Any, Iterable, List, Optional, Tuple, Union
 
@@ -66,7 +67,7 @@ def _extract_chars(text_line: LTTextLine) -> List[CharElement]:
     return chars
 
 
-def get_mime_type(pdf_object: LTImage) -> Optional[str]:
+def _get_mime_type(pdf_object: LTImage) -> Optional[str]:
     """Determine the MIME type of an image in a PDF based on its filters."""
     # Resolve the stream attributes
     stream_attrs = pdf_object.stream.attrs
@@ -156,33 +157,11 @@ def _get_bbox(lines: List[LineElement]) -> Tuple[float, float, float, float]:
     return x0, y0, x1, y1
 
 
-def group_overlapping_images(
-    image_elements: List[ImageElement], buffer: float = 1.0
-) -> List[List[ImageElement]]:
-    """Group images that overlap or are adjacent."""
-    groups = []
-    used = set()
-
-    for i, elem1 in enumerate(image_elements):
-        if i in used:
-            continue
-        group = [elem1]
-        used.add(i)
-        for j, elem2 in enumerate(image_elements[i + 1 :], start=i + 1):
-            if j in used:
-                continue
-            if any(elem2.overlaps(e, buffer=buffer) for e in group):
-                group.append(elem2)
-                used.add(j)
-        groups.append(group)
-    return groups
-
-
 def _process_png_image(e: LTImage) -> Optional[bytes]:
     try:
         # Extract image attributes
-        width = e.stream.attrs.get("Width")
-        height = e.stream.attrs.get("Height")
+        width = e.stream.attrs.get("Width", 0)
+        height = e.stream.attrs.get("Height", 0)
         color_space = e.stream.attrs.get("ColorSpace", "DeviceRGB")
 
         # Resolve indirect references in ColorSpace
@@ -207,7 +186,7 @@ def _process_png_image(e: LTImage) -> Optional[bytes]:
         elif color_space == "DeviceCMYK":
             mode = "CMYK"
         else:
-            print(f"Unsupported color space: {color_space}")
+            logging.info(f"Unsupported color space: {color_space}")
             return None
 
         # Get the image data after filters have been applied
@@ -233,7 +212,7 @@ def ingest(pdf_input: Pdf) -> List[Union[TextElement, ImageElement]]:
     for page_num, page_layout in enumerate(page_layouts):
         page_width = page_layout.width
         page_height = page_layout.height
-        text_elements = []
+        page_elements = []
         for element in page_layout:
             if isinstance(element, LTTextContainer):
                 lines = []
@@ -244,7 +223,7 @@ def ingest(pdf_input: Pdf) -> List[Union[TextElement, ImageElement]]:
                     continue
                 bbox = _get_bbox(lines)
 
-                text_elements.append(
+                page_elements.append(
                     TextElement(
                         bbox=Bbox(
                             x0=bbox[0],
@@ -262,7 +241,7 @@ def ingest(pdf_input: Pdf) -> List[Union[TextElement, ImageElement]]:
             elif isinstance(element, LTFigure):
                 for e in element:
                     if isinstance(e, LTImage):
-                        mime_type = get_mime_type(e)
+                        mime_type = _get_mime_type(e)
                         if mime_type:
                             if mime_type == "image/png":
                                 img_data = _process_png_image(e)
@@ -272,7 +251,7 @@ def ingest(pdf_input: Pdf) -> List[Union[TextElement, ImageElement]]:
                                 base64_string = base64.b64encode(img_data).decode(
                                     "utf-8"
                                 )
-                                elements.append(
+                                page_elements.append(
                                     ImageElement(
                                         bbox=Bbox(
                                             x0=e.bbox[0],
@@ -288,7 +267,5 @@ def ingest(pdf_input: Pdf) -> List[Union[TextElement, ImageElement]]:
                                         text="",
                                     )
                                 )
-
-        # Add text elements
-        elements.extend(text_elements)
+        elements.extend(page_elements)
     return elements
