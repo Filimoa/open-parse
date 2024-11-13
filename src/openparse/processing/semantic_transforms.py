@@ -37,7 +37,7 @@ class OpenAIEmbeddings:
         self.batch_size = batch_size
         self.client = self._create_client()
 
-    def embed_many(self, texts: list[str]) -> list[list[float]]:
+    def embed_many(self, texts: List[str]) -> List[List[float]]:
         res = []
         non_empty_texts = [text for text in texts if text]
 
