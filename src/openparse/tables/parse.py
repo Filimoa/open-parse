@@ -68,18 +68,19 @@ def _ingest_with_pymupdf(
             if verbose:
                 print(f"Page {page_num} - Table {i + 1}:\n{text}\n")
 
-            # Flip y-coordinates to match the top-left origin system
             bbox = pymupdf.combine_header_and_table_bboxes(tab.bbox, tab.header.bbox)
-            fy0 = page.rect.height - bbox[3]
-            fy1 = page.rect.height - bbox[1]
+            # No need for flipping coordinates, pymupdf already returns coordinates in top-left origin system and bottom-left is handled while sorting
+            # # Flip y-coordinates to match the top-left origin system
+            # fy0 = page.rect.height - bbox[3]
+            # fy1 = page.rect.height - bbox[1]
 
             table = TableElement(
                 bbox=Bbox(
                     page=page_num,
                     x0=bbox[0],
-                    y0=fy0,
+                    y0=bbox[1],
                     x1=bbox[2],
-                    y1=fy1,
+                    y1=bbox[3],
                     page_width=page.rect.width,
                     page_height=page.rect.height,
                 ),
@@ -131,18 +132,19 @@ def _ingest_with_table_transformers(
             elif args.table_output_format == "html":
                 table_text = table.to_html_str()
 
-            # Flip y-coordinates to match the top-left origin system
-            # FIXME: incorporate padding into bbox
-            fy0 = page.rect.height - table_bbox.bbox[3]
-            fy1 = page.rect.height - table_bbox.bbox[1]
+            # No need for flipping coordinates, pymupdf already returns coordinates in top-left origin system and bottom-left is handled while sorting
+            # # Flip y-coordinates to match the top-left origin system
+            # # FIXME: incorporate padding into bbox
+            # fy0 = page.rect.height - table_bbox.bbox[3]
+            # fy1 = page.rect.height - table_bbox.bbox[1]
 
             table_elem = TableElement(
                 bbox=Bbox(
                     page=page_num,
                     x0=table_bbox.bbox[0],
-                    y0=fy0,
+                    y0=table_bbox.bbox[1],
                     x1=table_bbox.bbox[2],
-                    y1=fy1,
+                    y1=table_bbox.bbox[3],
                     page_width=page.rect.width,
                     page_height=page.rect.height,
                 ),
@@ -193,18 +195,19 @@ def _ingest_with_unitable(
             table_img = crop_img_with_padding(pdf_as_imgs[page_num], padded_bbox)
 
             table_str = table_img_to_html(table_img)
-
-            # Flip y-coordinates to match the top-left origin system
-            fy0 = page.rect.height - padded_bbox[3]
-            fy1 = page.rect.height - padded_bbox[1]
+            
+            # No need for flipping coordinates, pymupdf already returns coordinates in top-left origin system and bottom-left is handled while sorting
+            # # Flip y-coordinates to match the top-left origin system
+            # fy0 = page.rect.height - padded_bbox[3]
+            # fy1 = page.rect.height - padded_bbox[1]
 
             table_elem = TableElement(
                 bbox=Bbox(
                     page=page_num,
                     x0=padded_bbox[0],
-                    y0=fy0,
+                    y0=padded_bbox[1],
                     x1=padded_bbox[2],
-                    y1=fy1,
+                    y1=padded_bbox[3],
                     page_width=page.rect.width,
                     page_height=page.rect.height,
                 ),
