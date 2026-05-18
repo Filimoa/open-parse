@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import List, Literal, TypedDict, TypeVar, Union
+from pypdf import PdfReader
 
 from openparse import consts, tables, text
 from openparse._types import NOT_GIVEN, NotGiven
@@ -82,7 +83,7 @@ class DocumentParser:
 
     def parse(
         self,
-        file: Union[str, Path],
+        file: Union[str, Path, PdfReader],
         ocr: bool = False,
     ) -> ParsedDocument:
         """
