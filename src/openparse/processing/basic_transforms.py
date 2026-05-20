@@ -109,11 +109,13 @@ class CombineSlicedImages(ProcessingStep):
         for page, page_nodes in nodes_by_page.items():
             image_nodes = [e for e in page_nodes if e.variant == {"image"}]
             if image_nodes:
-                image_elements = get_elements_of_type(image_nodes, ImageElement)
+                image_elements = get_elements_of_type(
+                    image_nodes, ImageElement)
                 text_elements = get_elements_of_type(page_nodes, TextElement)
 
                 combined_image = self._combine_images_in_group(image_elements)
-                new_nodes.append(Node(elements=(combined_image, *text_elements)))
+                new_nodes.append(
+                    Node(elements=(combined_image, *text_elements)))
             else:
                 new_nodes.extend(page_nodes)
         return new_nodes
@@ -130,7 +132,8 @@ class RemoveTextInsideTables(ProcessingStep):
         for node in nodes:
             if node.variant == {"table"}:
                 for table_element in node.elements:
-                    tables_by_page[table_element.page].append(table_element.bbox)
+                    tables_by_page[table_element.page].append(
+                        table_element.bbox)
 
         updated_nodes = []
         for node in nodes:
@@ -148,7 +151,6 @@ class RemoveTextInsideTables(ProcessingStep):
                 )
                 if should_include:
                     new_elements.append(element)
-
             if new_elements and len(new_elements) != len(node.elements):
                 updated_nodes.append(Node(elements=tuple(new_elements)))
             elif len(new_elements) == len(node.elements):

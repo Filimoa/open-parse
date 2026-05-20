@@ -1,17 +1,18 @@
-from typing import List, Literal, Union
+from typing import List, Literal, Union, Dict
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from openparse.pdf import Pdf
 from openparse.schemas import Bbox, TableElement
-from openparse.tables.utils import adjust_bbox_with_padding, crop_img_with_padding
+from openparse.tables.utils import adjust_bbox_with_padding, crop_img_with_padding, pdf_plumber_table_data_to_markdown
 
 from . import pymupdf
 
 
 class ParsingArgs(BaseModel):
     parsing_algorithm: str
-    table_output_format: Literal["str", "markdown", "html"] = Field(default="html")
+    table_output_format: Literal["str",
+                                 "markdown", "html"] = Field(default="html")
 
 
 class TableTransformersArgs(BaseModel):
@@ -20,14 +21,16 @@ class TableTransformersArgs(BaseModel):
     )
     min_table_confidence: float = Field(default=0.75, ge=0.0, le=1.0)
     min_cell_confidence: float = Field(default=0.95, ge=0.0, le=1.0)
-    table_output_format: Literal["str", "markdown", "html"] = Field(default="html")
+    table_output_format: Literal["str",
+                                 "markdown", "html"] = Field(default="html")
 
     model_config = ConfigDict(extra="forbid")
 
 
 class PyMuPDFArgs(BaseModel):
     parsing_algorithm: Literal["pymupdf"] = Field(default="pymupdf")
-    table_output_format: Literal["str", "markdown", "html"] = Field(default="html")
+    table_output_format: Literal["str",
+                                 "markdown", "html"] = Field(default="html")
 
     model_config = ConfigDict(extra="forbid")
 
@@ -37,6 +40,13 @@ class UnitableArgs(BaseModel):
     min_table_confidence: float = Field(default=0.75, ge=0.0, le=1.0)
     table_output_format: Literal["html"] = Field(default="html")
 
+    model_config = ConfigDict(extra="forbid")
+
+
+class PDfPlumberArgs(BaseModel):
+    parsing_algorithm: Literal["pdfplumber"] = Field(default="pdfplumber")
+    table_output_format: Literal["markdown"] = Field(default="html")
+    table_parse_settings: Dict = Field(default_factory=dict)
     model_config = ConfigDict(extra="forbid")
 
 
@@ -69,7 +79,8 @@ def _ingest_with_pymupdf(
                 print(f"Page {page_num} - Table {i + 1}:\n{text}\n")
 
             # Flip y-coordinates to match the top-left origin system
-            bbox = pymupdf.combine_header_and_table_bboxes(tab.bbox, tab.header.bbox)
+            bbox = pymupdf.combine_header_and_table_bboxes(
+                tab.bbox, tab.header.bbox)
             fy0 = page.rect.height - bbox[3]
             fy1 = page.rect.height - bbox[1]
 
@@ -108,7 +119,8 @@ def _ingest_with_table_transformers(
 
     pages_with_tables = {}
     for page_num, img in enumerate(pdf_as_imgs):
-        pages_with_tables[page_num] = find_table_bboxes(img, args.min_table_confidence)
+        pages_with_tables[page_num] = find_table_bboxes(
+            img, args.min_table_confidence)
 
     tables = []
     for page_num, table_bboxes in pages_with_tables.items():
@@ -177,7 +189,8 @@ def _ingest_with_unitable(
 
     pages_with_tables = {}
     for page_num, img in enumerate(pdf_as_imgs):
-        pages_with_tables[page_num] = find_table_bboxes(img, args.min_table_confidence)
+        pages_with_tables[page_num] = find_table_bboxes(
+            img, args.min_table_confidence)
 
     tables = []
     for page_num, table_bboxes in pages_with_tables.items():
@@ -190,7 +203,8 @@ def _ingest_with_unitable(
                 page_height=page.rect.height,
                 padding_pct=padding_pct,
             )
-            table_img = crop_img_with_padding(pdf_as_imgs[page_num], padded_bbox)
+            table_img = crop_img_with_padding(
+                pdf_as_imgs[page_num], padded_bbox)
 
             table_str = table_img_to_html(table_img)
 
@@ -216,9 +230,55 @@ def _ingest_with_unitable(
     return tables
 
 
+def _ingest_with_pdfplumber(
+    doc: Pdf,
+    args: PDfPlumberArgs,
+    verbose: bool = False,
+) -> List[TableElement]:
+    try:
+        import pdfplumber
+    except ImportError as e:
+        raise ImportError(
+            "Table detection and extraction requires the `pdfplumber` library to be installed.",
+            e,
+        ) from e
+
+    pdf_plumber_doc = pdfplumber.open(doc.file_path)
+    found_tables = []
+    table_settings = getattr(args, "table_parse_settings", {})
+    for page_number, page in enumerate(pdf_plumber_doc.pages):
+        tables = page.find_tables(table_settings)
+        if not tables:
+            continue
+        for table in tables:
+            table_bounding_box = table.bbox
+            table_data = table.extract()
+            table_markdown = pdf_plumber_table_data_to_markdown(table_data)
+            # the application seems to use pdfminer style coordinates system, let make sure their are  align with the pdfplumber ones.
+
+            # check this discussion https://github.com/jsvine/pdfplumber/issues/198
+            # table bounding 3 is the bottom
+            # table bounding 1 is the top
+            y0 = page.height - table_bounding_box[3]
+            y1 = page.height - table_bounding_box[1]
+            table_bbox = Bbox(
+                page=page_number,
+                x0=table_bounding_box[0],
+                y0=y0,
+                x1=table_bounding_box[2],
+                y1=y1,
+                page_width=page.width,
+                page_height=page.height)
+            table_element = TableElement(
+                bbox=table_bbox, text=table_markdown)
+            found_tables.append(table_element)
+    return found_tables
+
+
 def ingest(
     doc: Pdf,
-    parsing_args: Union[TableTransformersArgs, PyMuPDFArgs, UnitableArgs, None] = None,
+    parsing_args: Union[TableTransformersArgs,
+                        PyMuPDFArgs, UnitableArgs, None] = None,
     verbose: bool = False,
 ) -> List[TableElement]:
     if isinstance(parsing_args, TableTransformersArgs):
@@ -227,5 +287,7 @@ def ingest(
         return _ingest_with_pymupdf(doc, parsing_args, verbose)
     elif isinstance(parsing_args, UnitableArgs):
         return _ingest_with_unitable(doc, parsing_args, verbose)
+    elif isinstance(parsing_args, PDfPlumberArgs):
+        return _ingest_with_pdfplumber(doc, parsing_args, verbose)
     else:
         raise ValueError("Unsupported parsing_algorithm.")

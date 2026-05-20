@@ -19,6 +19,8 @@ dependencies = [
     "tiktoken >= 0.3",
     "openai >= 1.0.0",
     "numpy",
+    "pdfplumber==0.11.7", 
+    "pypdfium2==4.30.0"
 ]
 
 [project.urls]

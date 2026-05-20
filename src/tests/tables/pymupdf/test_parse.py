@@ -11,7 +11,8 @@ def test_parse_output_to_markdown():
         "| 2022 | 100,000 | 50,000 |\n"
         "| 2021 | 90,000 | 45,000 |\n"
     )
-    assert output_to_markdown(headers, rows) == expected_output, "Standard case failed"
+    assert output_to_markdown(
+        headers, rows) == expected_output, "Standard case failed"
 
     # Case with missing values
     headers = ["Year", "Revenue", "Expenses"]
@@ -48,7 +49,8 @@ def test_output_to_html():
         "<tr><td>2021</td><td>90,000</td><td>45,000</td></tr>\n"
         "</table>"
     )
-    assert output_to_html(headers, rows) == expected_output, "Standard case failed"
+    assert output_to_html(
+        headers, rows) == expected_output, "Standard case failed"
 
     # Case with missing values
     headers = ["Year", "Revenue", "Expenses"]

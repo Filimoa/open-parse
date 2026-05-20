@@ -62,7 +62,8 @@ def doc_to_imgs(doc) -> List[Image.Image]:
         for n in page_numbers:
             page = doc[n]
             pix = page.get_pixmap()
-            image = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+            image = Image.frombytes(
+                "RGB", [pix.width, pix.height], pix.samples)
             images.append(image)
 
     except ValueError as e:
@@ -189,9 +190,31 @@ def adjust_bbox_with_padding(
     # Adjust the bounding box coordinates with padding
     padded_x0 = max(x0 - padding_x, 0)  # Ensure x0 is not less than 0
     padded_y0 = max(y0 - padding_y, 0)  # Ensure y0 is not less than 0
-    padded_x1 = min(x1 + padding_x, page_width)  # Ensure x1 does not exceed page width
+    # Ensure x1 does not exceed page width
+    padded_x1 = min(x1 + padding_x, page_width)
     padded_y1 = min(
         y1 + padding_y, page_height
     )  # Ensure y1 does not exceed page height
 
     return padded_x0, padded_y0, padded_x1, padded_y1
+
+
+# pdf plumber utils
+
+def pdf_plumber_table_data_to_markdown(table_data: List[List[str | None]]) -> str:
+    """ Convert a 2D list of table data into a markdown table string."""
+    if not table_data or not table_data[0]:
+        return ""
+    header = table_data[0]
+    rows = table_data[1:]
+    # Build header row
+    table_markdown = "| " + \
+        " | ".join(str(h) if h is not None else "" for h in header) + " |\n"
+    # Build separator row
+    table_markdown += "| " + " | ".join("---" for _ in header) + " |\n"
+    # Build data rows
+    for row in rows:
+        table_markdown += "| " + \
+            " | ".join(
+                str(cell) if cell is not None else "" for cell in row) + " |\n"
+    return table_markdown

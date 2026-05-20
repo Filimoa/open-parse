@@ -13,7 +13,8 @@ from openparse.schemas import Node, ParsedDocument, TableElement, TextElement
 
 from openparse.schemas import ImageElement
 
-IngestionPipelineType = TypeVar("IngestionPipelineType", bound=IngestionPipeline)
+IngestionPipelineType = TypeVar(
+    "IngestionPipelineType", bound=IngestionPipeline)
 
 
 class UnitableArgsDict(TypedDict, total=False):
@@ -34,15 +35,22 @@ class PyMuPDFArgsDict(TypedDict, total=False):
     table_output_format: Literal["markdown", "html"]
 
 
+class PDfPlumberArgsDict(TypedDict, total=False):
+    parsing_algorithm: Literal["pdfplumber"]
+    table_output_format: Literal["markdown", "html"]
+
+
 def _table_args_dict_to_model(
-    args_dict: Union[TableTransformersArgsDict, PyMuPDFArgsDict],
-) -> Union[tables.TableTransformersArgs, tables.PyMuPDFArgs]:
+    args_dict: Union[TableTransformersArgsDict, PyMuPDFArgsDict, PDfPlumberArgsDict],
+) -> Union[tables.TableTransformersArgs, tables.PyMuPDFArgs, tables.PDfPlumberArgs]:
     if args_dict["parsing_algorithm"] == "table-transformers":
         return tables.TableTransformersArgs(**args_dict)
     elif args_dict["parsing_algorithm"] == "pymupdf":
         return tables.PyMuPDFArgs(**args_dict)
     elif args_dict["parsing_algorithm"] == "unitable":
         return tables.UnitableArgs(**args_dict)
+    elif args_dict["parsing_algorithm"] == "pdfplumber":
+        return tables.PDfPlumberArgs(**args_dict)
     else:
         raise ValueError(
             f"Unsupported parsing_algorithm: {args_dict['parsing_algorithm']}"
@@ -63,7 +71,8 @@ class DocumentParser:
     def __init__(
         self,
         *,
-        processing_pipeline: Union[IngestionPipeline, NotGiven, None] = NOT_GIVEN,
+        processing_pipeline: Union[IngestionPipeline,
+                                   NotGiven, None] = NOT_GIVEN,
         table_args: Union[
             TableTransformersArgsDict, PyMuPDFArgsDict, NotGiven
         ] = NOT_GIVEN,
@@ -104,7 +113,8 @@ class DocumentParser:
         table_args_obj = None
         if self.table_args:
             table_args_obj = _table_args_dict_to_model(self.table_args)
-            table_elems = tables.ingest(doc, table_args_obj, verbose=self._verbose)
+            table_elems = tables.ingest(
+                doc, table_args_obj, verbose=self._verbose)
             table_nodes = self._elems_to_nodes(table_elems)
 
         nodes = text_nodes + table_nodes
