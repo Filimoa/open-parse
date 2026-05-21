@@ -18,6 +18,7 @@ from openparse.processing.semantic_transforms import (
     CombineNodesSemantically,
     EmbeddingModel,
     OpenAIEmbeddings,
+    AzureOpenAIEmbeddings
 )
 from openparse.schemas import Node
 
@@ -99,12 +100,24 @@ class SemanticIngestionPipeline(IngestionPipeline):
 
     def __init__(
         self,
-        openai_api_key: str,
+        api_key: str,
+        api_endpoint: str,
+        deployment: str,
+        api_version: str = "2024-02-15-preview",
         model: EmbeddingModel = "text-embedding-3-large",
         min_tokens: int = consts.TOKENIZATION_LOWER_LIMIT,
         max_tokens: int = consts.TOKENIZATION_UPPER_LIMIT,
     ) -> None:
-        embedding_client = OpenAIEmbeddings(api_key=openai_api_key, model=model)
+        # if an api endpoint is provided, use AzureOpenAIEmbeddings
+        if api_endpoint is not None:
+            embedding_client = AzureOpenAIEmbeddings(
+                api_key=api_key,
+                api_endpoint=api_endpoint,
+                deployment=deployment,
+                api_version=api_version
+            )
+        else:
+            embedding_client = OpenAIEmbeddings(api_key=api_key, model=model)
 
         self.transformations = [
             RemoveTextInsideTables(),
