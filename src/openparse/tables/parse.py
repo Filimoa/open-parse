@@ -68,18 +68,19 @@ def _ingest_with_pymupdf(
             if verbose:
                 print(f"Page {page_num} - Table {i + 1}:\n{text}\n")
 
-            # Flip y-coordinates to match the top-left origin system
             bbox = pymupdf.combine_header_and_table_bboxes(tab.bbox, tab.header.bbox)
-            fy0 = page.rect.height - bbox[3]
-            fy1 = page.rect.height - bbox[1]
+            # No need for flipping coordinates, pymupdf already returns coordinates in top-left origin system and bottom-left is handled while sorting
+            # # Flip y-coordinates to match the top-left origin system
+            # fy0 = page.rect.height - bbox[3]
+            # fy1 = page.rect.height - bbox[1]
 
             table = TableElement(
                 bbox=Bbox(
                     page=page_num,
                     x0=bbox[0],
-                    y0=fy0,
+                    y0=bbox[1],
                     x1=bbox[2],
-                    y1=fy1,
+                    y1=bbox[3],
                     page_width=page.rect.width,
                     page_height=page.rect.height,
                 ),
@@ -96,19 +97,49 @@ def _ingest_with_table_transformers(
 ) -> List[TableElement]:
     try:
         from openparse.tables.utils import doc_to_imgs
-
-        from .table_transformers.ml import find_table_bboxes, get_table_content
+        from ultralyticsplus import YOLO
+        from .table_transformers.ml import get_table_content
+        from .table_transformers.schemas import _TableModelOutput
+        
+        # for weights_only update in torch.load()
+        # safe_globals wasn't a great solution, required to add each layer individually
+        # A FIX could be to go to ultralytics.nn.tasks -> search function "torch_safe_load" and edit `return` with
+        # return torch.load(file, map_location="cpu", weights_only=False), file  # load
     except ImportError as e:
         raise ImportError(
-            "Table detection and extraction requires the `torch`, `torchvision` and `transformers` libraries to be installed.",
+            "Table detection and extraction requires the `torch`, `torchvision` and `transformers`, `ultralyticsplus` libraries to be installed.",
             e,
         ) from e
     pdoc = doc.to_pymupdf_doc()  # type: ignore
     pdf_as_imgs = doc_to_imgs(pdoc)
 
+    #FIXME: Detect tables in the pages where there are no tables present
+    # pages_with_tables = {}
+    # for page_num, img in enumerate(pdf_as_imgs):
+    #     pages_with_tables[page_num] = find_table_bboxes(img, args.min_table_confidence)
+    # print(pages_with_tables)
+
     pages_with_tables = {}
-    for page_num, img in enumerate(pdf_as_imgs):
-        pages_with_tables[page_num] = find_table_bboxes(img, args.min_table_confidence)
+    model = YOLO("keremberke/yolov8m-table-extraction")
+    results = model.predict(pdf_as_imgs, stream=True, conf=0.75, iou=0.45, agnostic_nms=False, max_det=1000)
+    for i, result in enumerate(results):
+        detections = result.boxes.cls
+        if len(detections) == 0:
+            continue
+        conf_scores = result.boxes.conf.cpu().numpy()
+        bboxes = result.boxes.xyxy.cpu().numpy()
+        tables = []
+        for conf, bbox in zip(conf_scores, bboxes):
+            tables.append(
+                _TableModelOutput(
+                    label="table",
+                    confidence=conf,
+                    bbox=bbox,
+                )
+            )
+        pages_with_tables[i] = tables
+
+    # print(pages_with_tables)
 
     tables = []
     for page_num, table_bboxes in pages_with_tables.items():
@@ -131,18 +162,19 @@ def _ingest_with_table_transformers(
             elif args.table_output_format == "html":
                 table_text = table.to_html_str()
 
-            # Flip y-coordinates to match the top-left origin system
-            # FIXME: incorporate padding into bbox
-            fy0 = page.rect.height - table_bbox.bbox[3]
-            fy1 = page.rect.height - table_bbox.bbox[1]
+            # No need for flipping coordinates, pymupdf already returns coordinates in top-left origin system and bottom-left is handled while sorting
+            # # Flip y-coordinates to match the top-left origin system
+            # # FIXME: incorporate padding into bbox
+            # fy0 = page.rect.height - table_bbox.bbox[3]
+            # fy1 = page.rect.height - table_bbox.bbox[1]
 
             table_elem = TableElement(
                 bbox=Bbox(
                     page=page_num,
                     x0=table_bbox.bbox[0],
-                    y0=fy0,
+                    y0=table_bbox.bbox[1],
                     x1=table_bbox.bbox[2],
-                    y1=fy1,
+                    y1=table_bbox.bbox[3],
                     page_width=page.rect.width,
                     page_height=page.rect.height,
                 ),
@@ -193,18 +225,19 @@ def _ingest_with_unitable(
             table_img = crop_img_with_padding(pdf_as_imgs[page_num], padded_bbox)
 
             table_str = table_img_to_html(table_img)
-
-            # Flip y-coordinates to match the top-left origin system
-            fy0 = page.rect.height - padded_bbox[3]
-            fy1 = page.rect.height - padded_bbox[1]
+            
+            # No need for flipping coordinates, pymupdf already returns coordinates in top-left origin system and bottom-left is handled while sorting
+            # # Flip y-coordinates to match the top-left origin system
+            # fy0 = page.rect.height - padded_bbox[3]
+            # fy1 = page.rect.height - padded_bbox[1]
 
             table_elem = TableElement(
                 bbox=Bbox(
                     page=page_num,
                     x0=padded_bbox[0],
-                    y0=fy0,
+                    y0=padded_bbox[1],
                     x1=padded_bbox[2],
-                    y1=fy1,
+                    y1=padded_bbox[3],
                     page_width=page.rect.width,
                     page_height=page.rect.height,
                 ),

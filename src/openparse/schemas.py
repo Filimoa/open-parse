@@ -590,9 +590,12 @@ class Node(BaseModel):
 
         if self.coordinate_system == "bottom-left":
             y_position = -min(element.bbox.y0 for element in self.elements)
+        # Add support for top-left coordinate system for sorting
+        elif self.coordinate_system == "top-left":
+            y_position = min(element.bbox.y0 for element in self.elements)
         else:
             raise NotImplementedError(
-                "Only 'bottom-left' coordinate system is supported."
+                "Only 'top-left' and 'bottom-left' coordinate system is supported."
             )
 
         return ReadingOrder(min_page=min_page, y_position=y_position, min_x0=min_x0)

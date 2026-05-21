@@ -10,3 +10,4 @@ torch
 transformers
 torchvision
 torchtext
+ultralyticsplus>=0.1.0
