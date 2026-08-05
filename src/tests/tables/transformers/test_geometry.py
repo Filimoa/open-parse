@@ -9,12 +9,16 @@ from openparse.tables.table_transformers.geometry import (
     [
         # Test case 1: Intersecting without margin
         ((10, 10, 20, 20), (15, 15, 25, 25), 0, (15, 15, 20, 20)),
-        # Test case 2: Intersecting with margin - adjusted to expect None for a point intersection
-        ((10, 10, 20, 20), (20, 20, 30, 30), 5, None),  # Adjusted expectation
+        # Test case 2: Boxes touching at a corner are within the margin, so the
+        # margin-expanded intersection is returned.
+        ((10, 10, 20, 20), (20, 20, 30, 30), 5, (15, 15, 25, 25)),
         # Test case 3: Not intersecting, no margin
         ((10, 10, 20, 20), (25, 25, 35, 35), 0, None),
-        # Test case 4: Not intersecting, with margin
-        ((10, 10, 20, 20), (26, 26, 36, 36), 5, None),
+        # Test case 4: Boxes 6 apart are within a margin of 5 on each side, so
+        # the expanded intersection is returned.
+        ((10, 10, 20, 20), (26, 26, 36, 36), 5, (21, 21, 25, 25)),
+        # Test case 5: Boxes far apart stay non-intersecting even with a margin.
+        ((0, 0, 10, 10), (100, 100, 110, 110), 5, None),
     ],
 )
 def test_calc_bbox_intersection(bbox1, bbox2, safety_margin, expected):
