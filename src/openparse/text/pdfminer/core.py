@@ -140,10 +140,73 @@ def _group_chars_into_spans(chars: Iterable[CharElement]) -> List[TextSpan]:
     return spans
 
 
+def _iter_char_records(text_line: LTTextLine):
+    """Yield span fields without constructing a CharElement per glyph."""
+    first_char = next(
+        (char for char in text_line if isinstance(char, LTChar)), None
+    )
+    last_fontname = first_char.fontname if first_char is not None else ""
+    last_size = first_char.size if first_char is not None else 0.0
+    rounded_size = round(last_size, 2)
+
+    for char in text_line:
+        if not isinstance(char, LTChar) and not isinstance(char, LTAnno):
+            continue
+        if isinstance(char, LTChar):
+            last_fontname = char.fontname
+            if char.size != last_size:
+                last_size = char.size
+                rounded_size = round(last_size, 2)
+        yield (
+            char.get_text(),
+            "Bold" in last_fontname or "bold" in last_fontname,
+            "Italic" in last_fontname or "italic" in last_fontname,
+            rounded_size,
+        )
+
+
+def _group_char_records_into_spans(records) -> List[TextSpan]:
+    spans = []
+    current_text = ""
+    current_style = (False, False, 0.0)
+
+    for text, is_bold, is_italic, size in records:
+        char_style = (is_bold, is_italic, size)
+        if text.isspace():
+            if not current_text.endswith(" "):
+                current_text += " "
+            continue
+        if char_style != current_style and current_text:
+            spans.append(
+                TextSpan(
+                    text=current_text.rstrip()
+                    + (" " if current_text.endswith(" ") else ""),
+                    is_bold=current_style[0],
+                    is_italic=current_style[1],
+                    size=current_style[2],
+                )
+            )
+            current_text = text
+        else:
+            current_text += text
+        current_style = char_style
+
+    if current_text:
+        spans.append(
+            TextSpan(
+                text=current_text.rstrip()
+                + (" " if current_text.endswith(" ") else ""),
+                is_bold=current_style[0],
+                is_italic=current_style[1],
+                size=current_style[2],
+            )
+        )
+    return spans
+
+
 def _create_line_element(text_line: LTTextLine) -> LineElement:
     """Create a LineElement from a text line."""
-    chars = _extract_chars(text_line)
-    spans = _group_chars_into_spans(chars)
+    spans = _group_char_records_into_spans(_iter_char_records(text_line))
     bbox = (text_line.x0, text_line.y0, text_line.x1, text_line.y1)
     return LineElement(bbox=bbox, spans=tuple(spans))
 
